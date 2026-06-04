@@ -1,0 +1,31 @@
+# Core
+gradio>=5.0.0
+fastapi
+uvicorn
+
+# Data Ingestion
+requests
+feedparser
+arxiv
+beautifulsoup4
+sec-edgar-downloader
+
+# Model & Inference
+transformers
+torch
+accelerate
+peft
+bitsandbytes
+unsloth
+vllm
+datasets
+huggingface_hub
+
+# Signal Processing
+pandas
+numpy
+
+# Utilities
+python-dotenv
+schedule
+tqdm
