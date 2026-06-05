@@ -7,13 +7,16 @@ while maintaining Gradio's backend queuing and streaming capabilities.
 
 import os
 from gradio import Server
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 app = Server()
 
 # Serve static assets (CSS, JS)
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../frontend")
+
+# Mount static files
+app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
 
 
 @app.api(name="get_signals", concurrency_limit=2)
