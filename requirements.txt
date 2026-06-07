@@ -1,31 +1,23 @@
-# Core
+# Core (HF Spaces deployment)
 gradio>=5.0.0
-fastapi
-uvicorn
+spaces
+transformers>=4.45.0
+torch>=2.0.0
+accelerate
+peft
+bitsandbytes
+sentencepiece
+protobuf
 
-# Data Ingestion
+# Data Ingestion (for local/development use)
 requests
 feedparser
 arxiv
 beautifulsoup4
-sec-edgar-downloader
-
-# Model & Inference
-transformers
-torch
-accelerate
-peft
-bitsandbytes
-unsloth
-vllm
-datasets
-huggingface_hub
 
 # Signal Processing
 pandas
 numpy
 
 # Utilities
-python-dotenv
-schedule
 tqdm
