@@ -1,13 +1,12 @@
 """
 Quantum Alpha Intelligence Platform
-Entry point for Hugging Face Spaces deployment with ZeroGPU support.
-
-This app uses the fine-tuned Qwen3-8B model to analyze quantum computing
-news and generate structured trading signals.
+NLP-driven alpha signal generator for quantitative trading systems.
+Designed for integration into automated trading pipelines.
 """
 
 import os
 import json
+import time
 import torch
 import spaces
 import gradio as gr
@@ -16,32 +15,38 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 # Model configuration
 MODEL_ID = "build-small-hackathon/quantum-alpha-qwen3-8b"
 
-# System prompt (same as training)
-SYSTEM_PROMPT = """You are an expert quantum computing financial analyst with deep knowledge of both quantum physics and capital markets. Your role is to analyze news articles, press releases, academic papers, and regulatory filings related to the quantum computing sector and produce structured intelligence reports.
+# Quant-focused system prompt with improved output schema
+SYSTEM_PROMPT = """You are a quantitative NLP signal generator for the quantum computing sector. Your job is to extract actionable trading signals from text that can be consumed by an automated execution system.
 
 You must output a valid JSON object with the following fields:
 
 {
     "sentiment": "strongly_bearish" | "bearish" | "neutral" | "bullish" | "strongly_bullish",
-    "confidence": 0.0 to 1.0,
+    "expected_move_magnitude": "negligible" | "moderate" | "significant" | "major",
+    "expected_move_pct_range": [lower_bound, upper_bound],
+    "time_horizon": "intraday" | "2-5 days" | "1-2 weeks" | "1+ month",
+    "signal_decay": "fast" | "medium" | "slow",
+    "information_novelty": "high" | "medium" | "low",
     "event_type": one of ["physical_qubit_milestone", "logical_qubit_breakthrough", "error_correction_advance", "quantum_volume_increase", "government_funding", "commercial_partnership", "revenue_earnings", "executive_change", "patent_grant", "academic_publication", "product_launch", "competitive_development", "regulatory_filing", "analyst_rating_change"],
-    "affected_tickers": ["IONQ", "RGTI", etc.],
-    "urgency": "low" | "medium" | "high",
-    "technical_translation": "A 2-3 sentence explanation of what this means commercially, written for an investor who does not have a physics background. Explain WHY this matters for the company's competitive position and valuation.",
+    "primary_ticker": "IONQ" | "RGTI" | "QBTS" | "QUBT" | "IBM" | "GOOGL" | "MSFT" | "HON" | "NVDA",
+    "cross_asset_signals": [
+        {"ticker": "XXXX", "direction": "bullish" | "bearish", "magnitude": "negligible" | "moderate" | "significant", "reason": "brief explanation"}
+    ],
+    "technical_translation": "2-3 sentences explaining the commercial significance for a portfolio manager who does not have a physics background.",
     "key_facts": ["fact1", "fact2", "fact3"],
-    "competitive_context": "How does this development position the company relative to competitors in the quantum computing space?"
+    "signal_rationale": "Why this specific magnitude and time horizon? What historical precedent or sector dynamics justify this estimate?"
 }
 
-Guidelines for your analysis:
-- Sentiment should reflect the impact on the specific company's stock, not general market sentiment.
-- For academic papers, assess whether the research has near-term commercial implications or is purely theoretical.
-- Distinguish between physical qubits (less significant individually) and logical qubits (highly significant).
-- Error correction advances are typically more significant than raw qubit count increases.
-- Government funding announcements are bullish for the entire sector, not just the recipient.
-- Be skeptical of press releases that announce "quantum advantage" without peer-reviewed validation.
-- Consider the competitive dynamics: a breakthrough by one company may be bearish for competitors.
+Guidelines:
+- expected_move_pct_range: Estimate the likely stock price move as [low%, high%]. Use negative values for bearish. Example: [3.0, 8.0] or [-12.0, -5.0].
+- signal_decay: "fast" = priced in same session, "medium" = 2-3 days, "slow" = gradual diffusion over 1-2 weeks (typical for highly technical announcements that analysts need time to interpret).
+- information_novelty: "high" = first to report or pre-publication leak, "medium" = same-day coverage, "low" = widely reported for 24h+.
+- cross_asset_signals: Identify second-order effects on competitors or adjacent companies. A breakthrough by one company is often bearish for direct competitors.
+- Logical qubit milestones and error correction advances are typically "significant" to "major" with "slow" decay because most market participants don't understand the technical implications.
+- Revenue misses are typically "fast" decay (priced in immediately).
+- Government funding is "moderate" magnitude with "medium" decay across the entire sector.
 
-Output ONLY the JSON object. No additional text, no markdown formatting, no code blocks."""
+Output ONLY the JSON object. No additional text."""
 
 # Load model and tokenizer at startup
 print(f"Loading tokenizer for {MODEL_ID}...")
@@ -60,23 +65,30 @@ print("Model loaded successfully!")
 
 
 @spaces.GPU
-def run_inference(text: str, source: str = "news") -> str:
-    """Run model inference with GPU allocation via ZeroGPU."""
-    user_message = f"Analyze the following {source} content about the quantum computing sector and provide a structured intelligence report:\n\n{text}"
+def run_inference(text: str, source: str = "news", enable_thinking: bool = False) -> tuple:
+    """Run model inference. Returns (raw_output, thinking_text, latency_ms)."""
+    start_time = time.time()
+
+    user_message = f"Analyze the following {source} content and generate a quantitative trading signal:\n\n{text}"
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_message},
     ]
 
+    # Apply chat template with thinking toggle
     inputs = tokenizer.apply_chat_template(
-        messages, return_tensors="pt", add_generation_prompt=True, return_dict=True
+        messages,
+        return_tensors="pt",
+        add_generation_prompt=True,
+        return_dict=True,
+        enable_thinking=enable_thinking,
     ).to(model.device)
 
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
-            max_new_tokens=1024,
+            max_new_tokens=2048 if enable_thinking else 1024,
             temperature=0.3,
             do_sample=True,
             pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
@@ -85,44 +97,84 @@ def run_inference(text: str, source: str = "news") -> str:
     generated_ids = outputs[0][inputs["input_ids"].shape[-1]:]
     raw_output = tokenizer.decode(generated_ids, skip_special_tokens=True)
 
-    # Strip thinking tags if present
+    latency_ms = int((time.time() - start_time) * 1000)
+
+    # Separate thinking from output
+    thinking_text = ""
+    signal_text = raw_output
+
     if "<think>" in raw_output:
         parts = raw_output.split("</think>")
         if len(parts) > 1:
-            raw_output = parts[-1].strip()
+            thinking_text = parts[0].replace("<think>", "").strip()
+            signal_text = parts[-1].strip()
 
-    return raw_output
+    return signal_text, thinking_text, latency_ms
 
 
-def analyze_article(text: str, source: str = "news") -> tuple:
+def analyze_article(text: str, source: str, enable_thinking: bool) -> tuple:
     """
     Analyze a quantum computing article and return structured signals.
-    Returns (formatted_json, sentiment_label, confidence, tickers, translation)
+    Returns (json_output, sentiment, magnitude, time_horizon, tickers, translation, thinking, api_response)
     """
     if not text or not text.strip():
-        return "Please enter an article to analyze.", "", "", "", ""
+        return "", "", "", "", "", "", "", ""
 
-    raw_output = run_inference(text, source)
+    signal_text, thinking_text, latency_ms = run_inference(text, source, enable_thinking)
 
     # Parse JSON from output
     try:
-        start = raw_output.find("{")
-        end = raw_output.rfind("}") + 1
+        start = signal_text.find("{")
+        end = signal_text.rfind("}") + 1
         if start != -1 and end > start:
-            signal = json.loads(raw_output[start:end])
+            signal = json.loads(signal_text[start:end])
         else:
-            signal = json.loads(raw_output)
+            signal = json.loads(signal_text)
 
-        formatted = json.dumps(signal, indent=2)
+        # Extract display fields
+        formatted_json = json.dumps(signal, indent=2)
         sentiment = signal.get("sentiment", "unknown")
-        confidence = f"{signal.get('confidence', 0):.0%}"
-        tickers = ", ".join(signal.get("affected_tickers", []))
+        magnitude = signal.get("expected_move_magnitude", "unknown")
+        pct_range = signal.get("expected_move_pct_range", [0, 0])
+        pct_str = f"{pct_range[0]:+.1f}% to {pct_range[1]:+.1f}%" if isinstance(pct_range, list) and len(pct_range) == 2 else str(pct_range)
+        time_horizon = signal.get("time_horizon", "unknown")
+        decay = signal.get("signal_decay", "unknown")
+        novelty = signal.get("information_novelty", "unknown")
+
+        primary = signal.get("primary_ticker", "")
+        cross = signal.get("cross_asset_signals", [])
+        cross_str = ", ".join([f"{c['ticker']} ({c['direction']})" for c in cross]) if cross else "None"
+        tickers_display = f"{primary} (primary) | Cross-asset: {cross_str}"
+
         translation = signal.get("technical_translation", "")
 
-        return formatted, sentiment, confidence, tickers, translation
+        # Build the API response mock
+        api_response = json.dumps({
+            "status": "success",
+            "latency_ms": latency_ms,
+            "model": MODEL_ID,
+            "thinking_enabled": enable_thinking,
+            "signal": signal,
+            "metadata": {
+                "source_type": source,
+                "input_length_chars": len(text),
+                "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        }, indent=2)
+
+        # Build summary line
+        summary = f"{sentiment.upper()} | {magnitude} ({pct_str}) | Horizon: {time_horizon} | Decay: {decay} | Novelty: {novelty}"
+
+        return formatted_json, summary, tickers_display, translation, thinking_text, api_response
 
     except (json.JSONDecodeError, Exception) as e:
-        return f"Parse error: {e}\n\nRaw output:\n{raw_output}", "error", "0%", "", ""
+        error_api = json.dumps({
+            "status": "error",
+            "latency_ms": latency_ms,
+            "error": str(e),
+            "raw_output": signal_text[:500],
+        }, indent=2)
+        return f"Parse error: {e}\n\nRaw:\n{signal_text}", "ERROR", "", "", thinking_text, error_api
 
 
 # Build the Gradio interface
@@ -132,61 +184,68 @@ with gr.Blocks(
         primary_hue="emerald",
         neutral_hue="slate",
     ),
-    css="""
-    .main-header { text-align: center; margin-bottom: 1rem; }
-    .signal-box { border: 1px solid #333; border-radius: 8px; padding: 1rem; }
-    """
 ) as app:
 
     gr.Markdown(
         """
-        # Quantum Alpha Intelligence Platform
-        ### NLP-Driven Alpha Signal Generator for the Quantum Computing Sector
+        # Quantum Alpha Intelligence
+        ### Quantitative NLP Signal Generator for the Quantum Computing Sector
 
-        Powered by a fine-tuned Qwen3-8B model trained on quantum computing financial data.
-        Paste any quantum computing news article, press release, or research abstract below.
-        """,
-        elem_classes="main-header"
+        Generates structured trading signals from unstructured text. Designed for integration
+        into automated quantitative trading pipelines. Powered by a fine-tuned Qwen3-8B model.
+        """
     )
 
     with gr.Row():
-        with gr.Column(scale=2):
+        with gr.Column(scale=3):
             input_text = gr.Textbox(
-                label="Article / News Text",
-                placeholder="Paste a quantum computing news article, press release, or arXiv abstract here...",
-                lines=10,
+                label="Input Text (Article / Press Release / Abstract)",
+                placeholder="Paste quantum computing news, press release, arXiv abstract, or earnings excerpt...",
+                lines=8,
             )
-            source_type = gr.Dropdown(
-                choices=["news", "arxiv", "sec_filing", "press_release", "social_media", "earnings_call"],
-                value="news",
-                label="Source Type",
-            )
-            analyze_btn = gr.Button("Analyze", variant="primary", size="lg")
+            with gr.Row():
+                source_type = gr.Dropdown(
+                    choices=["news", "arxiv", "sec_filing", "press_release", "social_media", "earnings_call"],
+                    value="news",
+                    label="Source Type",
+                    scale=2,
+                )
+                thinking_toggle = gr.Checkbox(
+                    label="Enable Thinking (slower, shows reasoning)",
+                    value=False,
+                    scale=2,
+                )
+            analyze_btn = gr.Button("Generate Signal", variant="primary", size="lg")
 
         with gr.Column(scale=2):
-            sentiment_output = gr.Textbox(label="Sentiment", interactive=False)
-            confidence_output = gr.Textbox(label="Confidence", interactive=False)
-            tickers_output = gr.Textbox(label="Affected Tickers", interactive=False)
-            translation_output = gr.Textbox(label="Technical Translation (For Investors)", lines=3, interactive=False)
+            signal_summary = gr.Textbox(label="Signal Summary", interactive=False)
+            tickers_output = gr.Textbox(label="Affected Tickers & Cross-Asset Signals", interactive=False)
+            translation_output = gr.Textbox(label="Technical Translation (For Portfolio Managers)", lines=3, interactive=False)
 
     with gr.Row():
-        json_output = gr.Code(label="Full Structured Signal (JSON)", language="json", lines=20)
+        with gr.Column():
+            json_output = gr.Code(label="Structured Signal (JSON)", language="json", lines=18)
+        with gr.Column():
+            thinking_output = gr.Textbox(label="Model Reasoning (when thinking enabled)", lines=18, interactive=False)
 
-    # Example articles for quick testing
+    with gr.Accordion("API Response (for system integration)", open=False):
+        api_output = gr.Code(label="Mock API Response", language="json", lines=20)
+
+    # Examples
     gr.Examples(
         examples=[
-            ["IonQ announced today that its latest trapped-ion quantum processor has achieved 35 algorithmic qubits, representing a significant improvement in the number of high-fidelity qubits available for running quantum algorithms. The company stated that this milestone brings them closer to achieving quantum advantage for commercially relevant problems in optimization and machine learning. IonQ's stock rose 8% in pre-market trading following the announcement.", "news"],
-            ["Rigetti Computing reported Q1 2026 revenue of $4.2 million, missing analyst expectations of $5.1 million. The company cited delays in its 84-qubit Ankaa-3 system deployment as the primary factor. CEO Subodh Kulkarni noted that while hardware development is on track, customer adoption has been slower than anticipated.", "news"],
-            ["Title: Demonstration of fault-tolerant quantum computation with 48 logical qubits\n\nAbstract: We demonstrate fault-tolerant quantum computation using 48 logical qubits encoded in a surface code architecture. Our system achieves a logical error rate of 10^-6 per round of error correction, representing a 100x improvement over the physical error rate.", "arxiv"],
+            ["IonQ announced today that its latest trapped-ion quantum processor has achieved 35 algorithmic qubits, representing a significant improvement in the number of high-fidelity qubits available for running quantum algorithms. The company stated that this milestone brings them closer to achieving quantum advantage for commercially relevant problems in optimization and machine learning. IonQ's stock rose 8% in pre-market trading following the announcement.", "news", False],
+            ["Rigetti Computing reported Q1 2026 revenue of $4.2 million, missing analyst expectations of $5.1 million. The company cited delays in its 84-qubit Ankaa-3 system deployment as the primary factor. CEO Subodh Kulkarni noted that while hardware development is on track, customer adoption has been slower than anticipated.", "news", False],
+            ["Title: Demonstration of fault-tolerant quantum computation with 48 logical qubits\n\nAbstract: We demonstrate fault-tolerant quantum computation using 48 logical qubits encoded in a surface code architecture. Our system achieves a logical error rate of 10^-6 per round of error correction, representing a 100x improvement over the physical error rate. This result establishes a clear path toward scalable, fault-tolerant quantum computing.", "arxiv", True],
         ],
-        inputs=[input_text, source_type],
-        label="Example Articles (click to load)",
+        inputs=[input_text, source_type, thinking_toggle],
+        label="Example Inputs",
     )
 
     analyze_btn.click(
         fn=analyze_article,
-        inputs=[input_text, source_type],
-        outputs=[json_output, sentiment_output, confidence_output, tickers_output, translation_output],
+        inputs=[input_text, source_type, thinking_toggle],
+        outputs=[json_output, signal_summary, tickers_output, translation_output, thinking_output, api_output],
     )
 
 if __name__ == "__main__":
