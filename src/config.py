@@ -83,6 +83,21 @@ MODEL_CONFIG = {
     "gradient_accumulation_steps": 4,
 }
 
+# Modal Configuration
+MODAL_CONFIG = {
+    "workspace_id": "ac-PGYLNihy2INHkVQupXFTUV",
+    "app_name": "quantum-alpha-finetune",
+    "gpu": "A100",
+}
+
+# Qwen Cloud (DashScope) Configuration
+QWEN_CLOUD_CONFIG = {
+    "base_url": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "teacher_model": "qwen3.7-max",
+    "temperature": 0.3,
+    "max_tokens": 1024,
+}
+
 # Signal Thresholds
 SIGNAL_CONFIG = {
     "high_urgency_threshold": 0.8,
