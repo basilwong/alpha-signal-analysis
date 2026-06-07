@@ -14,7 +14,7 @@ import gradio as gr
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Model configuration
-MODEL_ID = "basilwong/quantum-alpha-qwen3-8b"
+MODEL_ID = "build-small-hackathon/quantum-alpha-qwen3-8b"
 
 # System prompt (same as training)
 SYSTEM_PROMPT = """You are an expert quantum computing financial analyst with deep knowledge of both quantum physics and capital markets. Your role is to analyze news articles, press releases, academic papers, and regulatory filings related to the quantum computing sector and produce structured intelligence reports.
