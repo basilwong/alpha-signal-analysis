@@ -118,7 +118,7 @@ def analyze_article(text: str, source: str, enable_thinking: bool) -> tuple:
     Returns (json_output, sentiment, magnitude, time_horizon, tickers, translation, thinking, api_response)
     """
     if not text or not text.strip():
-        return "", "", "", "", "", "", "", ""
+        return "Please enter text to analyze.", "", "", "", "", "", ""
 
     signal_text, thinking_text, latency_ms = run_inference(text, source, enable_thinking)
 
@@ -162,10 +162,10 @@ def analyze_article(text: str, source: str, enable_thinking: bool) -> tuple:
             }
         }, indent=2)
 
-        # Build summary line
-        summary = f"{sentiment.upper()} | {magnitude} ({pct_str}) | Horizon: {time_horizon} | Decay: {decay} | Novelty: {novelty}"
+        # Build summary line with latency
+        summary = f"{sentiment.upper()} | {magnitude} ({pct_str}) | Horizon: {time_horizon} | Decay: {decay} | Novelty: {novelty} | Latency: {latency_ms}ms"
 
-        return formatted_json, summary, tickers_display, translation, thinking_text, api_response
+        return formatted_json, summary, tickers_display, translation, thinking_text, api_response, f"{latency_ms}ms"
 
     except (json.JSONDecodeError, Exception) as e:
         error_api = json.dumps({
@@ -174,7 +174,7 @@ def analyze_article(text: str, source: str, enable_thinking: bool) -> tuple:
             "error": str(e),
             "raw_output": signal_text[:500],
         }, indent=2)
-        return f"Parse error: {e}\n\nRaw:\n{signal_text}", "ERROR", "", "", thinking_text, error_api
+        return f"Parse error: {e}\n\nRaw:\n{signal_text}", "ERROR", "", "", thinking_text, error_api, f"{latency_ms}ms"
 
 
 # Build the Gradio interface
@@ -218,7 +218,9 @@ with gr.Blocks(
             analyze_btn = gr.Button("Generate Signal", variant="primary", size="lg")
 
         with gr.Column(scale=2):
-            signal_summary = gr.Textbox(label="Signal Summary", interactive=False)
+            with gr.Row():
+                signal_summary = gr.Textbox(label="Signal Summary", interactive=False, scale=4)
+                latency_output = gr.Textbox(label="Latency", interactive=False, scale=1)
             tickers_output = gr.Textbox(label="Affected Tickers & Cross-Asset Signals", interactive=False)
             translation_output = gr.Textbox(label="Technical Translation (For Portfolio Managers)", lines=3, interactive=False)
 
@@ -245,7 +247,7 @@ with gr.Blocks(
     analyze_btn.click(
         fn=analyze_article,
         inputs=[input_text, source_type, thinking_toggle],
-        outputs=[json_output, signal_summary, tickers_output, translation_output, thinking_output, api_output],
+        outputs=[json_output, signal_summary, tickers_output, translation_output, thinking_output, api_output, latency_output],
     )
 
 if __name__ == "__main__":
