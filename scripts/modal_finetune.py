@@ -18,7 +18,14 @@ app = modal.App("quantum-alpha-finetune")
 finetune_image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
     .entrypoint([])
-    .pip_install(
+    .apt_install("git")
+    .pip_install(  # Install PyTorch first (required by flash-attn build)
+        "torch==2.5.0",
+        "torchvision",
+        "torchaudio",
+        index_url="https://download.pytorch.org/whl/cu124",
+    )
+    .pip_install(  # Then install Unsloth and other deps
         "unsloth[cu124-ampere-torch250] @ git+https://github.com/unslothai/unsloth.git",
         "datasets",
         "huggingface_hub",
@@ -64,7 +71,7 @@ TRAINING_CONFIG = {
         "/root/.cache/huggingface": hf_cache_vol,
         "/outputs": output_vol,
     },
-    secrets=[modal.Secret.from_name("huggingface-secret")],
+    # secrets=[modal.Secret.from_name("huggingface-secret")],  # Uncomment after: modal secret create huggingface-secret HF_TOKEN=your_token
 )
 def train(dataset_path: str = "/outputs/quantum_alpha_train.jsonl"):
     """Run the QLoRA fine-tuning job."""
