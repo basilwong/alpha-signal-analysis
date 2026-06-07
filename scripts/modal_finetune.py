@@ -20,13 +20,11 @@ finetune_image = (
     .entrypoint([])
     .apt_install("git")
     .pip_install(  # Install PyTorch first (required by flash-attn build)
-        "torch==2.5.0",
+        "torch",
         "torchvision",
         "torchaudio",
-        index_url="https://download.pytorch.org/whl/cu124",
     )
-    .pip_install(  # Then install Unsloth and other deps
-        "unsloth[cu124-ampere-torch250] @ git+https://github.com/unslothai/unsloth.git",
+    .pip_install(  # Install core ML deps
         "datasets",
         "huggingface_hub",
         "trl",
@@ -35,6 +33,11 @@ finetune_image = (
         "peft",
         "bitsandbytes",
         "wandb",
+        "xformers",
+    )
+    .run_commands(  # Install Unsloth separately (needs torch available)
+        "pip install --no-deps unsloth unsloth-zoo",
+        "pip install --no-deps cut-cross-entropy sentencepiece protobuf",
     )
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
@@ -45,7 +48,7 @@ output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=T
 
 # Training configuration
 TRAINING_CONFIG = {
-    "base_model": "unsloth/Qwen3-8B-Instruct",
+    "base_model": "Qwen/Qwen3-8B",
     "max_seq_length": 4096,
     "lora_rank": 64,
     "lora_alpha": 16,
@@ -71,7 +74,7 @@ TRAINING_CONFIG = {
         "/root/.cache/huggingface": hf_cache_vol,
         "/outputs": output_vol,
     },
-    # secrets=[modal.Secret.from_name("huggingface-secret")],  # Uncomment after: modal secret create huggingface-secret HF_TOKEN=your_token
+    secrets=[modal.Secret.from_name("huggingface-secret")],
 )
 def train(dataset_path: str = "/outputs/quantum_alpha_train.jsonl"):
     """Run the QLoRA fine-tuning job."""
@@ -79,7 +82,6 @@ def train(dataset_path: str = "/outputs/quantum_alpha_train.jsonl"):
     from unsloth import FastLanguageModel
     from datasets import load_dataset
     from trl import SFTTrainer
-    from transformers import TrainingArguments
 
     print("=" * 60)
     print("QUANTUM ALPHA INTELLIGENCE: Fine-Tuning Pipeline")
@@ -134,8 +136,10 @@ def train(dataset_path: str = "/outputs/quantum_alpha_train.jsonl"):
 
     dataset = dataset.map(format_example)
 
-    # Training arguments
-    training_args = TrainingArguments(
+    from trl import SFTConfig
+
+    # Training configuration
+    sft_config = SFTConfig(
         output_dir=TRAINING_CONFIG["output_dir"],
         num_train_epochs=TRAINING_CONFIG["num_epochs"],
         per_device_train_batch_size=TRAINING_CONFIG["per_device_train_batch_size"],
@@ -145,12 +149,15 @@ def train(dataset_path: str = "/outputs/quantum_alpha_train.jsonl"):
         warmup_steps=TRAINING_CONFIG["warmup_steps"],
         lr_scheduler_type=TRAINING_CONFIG["lr_scheduler_type"],
         logging_steps=10,
-        save_steps=100,
-        save_total_limit=2,
-        fp16=not model.config.torch_dtype == "float16",
-        bf16=model.config.torch_dtype == "bfloat16" if hasattr(model.config, "torch_dtype") else True,
+        save_strategy="epoch",
+        save_total_limit=4,
+        fp16=False,
+        bf16=True,
         seed=TRAINING_CONFIG["seed"],
         report_to="none",
+        dataset_text_field="text",
+        max_seq_length=TRAINING_CONFIG["max_seq_length"],
+        packing=True,
     )
 
     # Initialize the SFT trainer
@@ -158,10 +165,7 @@ def train(dataset_path: str = "/outputs/quantum_alpha_train.jsonl"):
         model=model,
         tokenizer=tokenizer,
         train_dataset=dataset,
-        args=training_args,
-        dataset_text_field="text",
-        max_seq_length=TRAINING_CONFIG["max_seq_length"],
-        packing=True,
+        args=sft_config,
     )
 
     print("Starting training...")
@@ -221,7 +225,7 @@ def test_setup():
     print("Testing environment setup...")
     print(f"CUDA available: {torch.cuda.is_available()}")
     print(f"GPU: {torch.cuda.get_device_name(0)}")
-    print(f"VRAM: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB")
+    print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
     # Test model loading
     model, tokenizer = FastLanguageModel.from_pretrained(
