@@ -69,7 +69,18 @@ def run_inference(text: str, source: str = "news", enable_thinking: bool = False
     """Run model inference. Returns (raw_output, thinking_text, latency_ms)."""
     start_time = time.time()
 
-    user_message = f"Analyze the following {source} content and generate a quantitative trading signal:\n\n{text}"
+    # Source-specific analysis instructions
+    source_instructions = {
+        "news": "This is a financial news article. Focus on: (1) whether this is already widely reported and priced in, (2) the likely speed of market reaction, (3) whether the headline overstates the actual development. News signals typically have fast decay unless the content is highly technical.",
+        "arxiv": "This is an academic research paper abstract. Most papers are incremental and have negligible trading signal. Focus on: (1) whether this represents a genuine breakthrough vs. incremental progress, (2) whether it has near-term commercial implications or is purely theoretical, (3) which companies could commercialize this research. Academic signals typically have slow decay because analysts take days/weeks to digest technical content.",
+        "sec_filing": "This is a regulatory filing (SEC). Extract factual financial data: revenue figures, guidance changes, material contracts, insider transactions. These are high-reliability signals. Decay is typically fast because filings are priced in immediately upon publication.",
+        "press_release": "This is a company press release. Be skeptical. Companies routinely overstate significance. Focus on: (1) concrete numbers and verifiable claims vs. vague language, (2) whether claims have peer-reviewed validation, (3) what is NOT being said. Discount superlatives and marketing language. Look for the actual technical substance beneath the spin.",
+        "social_media": "This is a social media post. High noise, low reliability. Focus on: (1) is the author an insider or credible domain expert, (2) does this reveal information not yet in formal channels, (3) could this be a leak or early signal before an official announcement. Assign low confidence unless the source is clearly authoritative.",
+        "earnings_call": "This is from an earnings call transcript. Focus on: (1) forward guidance changes (more important than backward-looking results), (2) management tone and language shifts compared to prior quarters, (3) specific customer/contract mentions, (4) changes in R&D spending or timeline commitments. Revenue misses with maintained guidance are less bearish than guidance cuts.",
+    }
+
+    instruction = source_instructions.get(source, source_instructions["news"])
+    user_message = f"{instruction}\n\nAnalyze the following content and generate a quantitative trading signal:\n\n{text}"
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
