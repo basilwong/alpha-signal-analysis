@@ -1,88 +1,112 @@
-# Scripts Directory
+# Scripts: Pipeline Runbook
 
-This directory contains the infrastructure scripts for training, data generation, and deployment.
+All commands should be run from the project root (`quantum-alpha-intelligence/`).
 
-## Setup
-
-### 1. Install Modal CLI
+## Prerequisites
 
 ```bash
+# Install Python dependencies
+pip install arxiv feedparser openai
+
+# Install Modal CLI (for fine-tuning)
 pip install modal
-modal setup  # This will open a browser for authentication
+modal token set --token-id ak-O0yCWJtr9WXovf2nFqg9mI --token-secret as-frqox6GMOfq88Mdq7jk8sJ
 ```
 
-### 2. Set Up Modal Secrets
+## Step 1: Collect Raw Articles
 
-The fine-tuning script needs your Hugging Face token to push the trained model:
-
-```bash
-modal secret create huggingface-secret HF_TOKEN=hf_your_token_here
-```
-
-### 3. Set Up Qwen Cloud API Key
-
-The data generation script uses the Qwen Cloud API (DashScope):
+Collects quantum computing news and papers from the last 2 years.
 
 ```bash
-export DASHSCOPE_API_KEY="your-dashscope-api-key"
-```
+# Full collection (arXiv + Google News RSS + samples) — takes ~5 min
+python scripts/collect_historical_articles.py --output data/raw/articles.jsonl
 
-## Pipeline Workflow
+# Skip arXiv (faster, news only)
+python scripts/collect_historical_articles.py --output data/raw/articles.jsonl --skip-arxiv
 
-### Step 1: Collect Raw Articles
-
-```bash
-# Collect from all sources (samples + arXiv + RSS)
-python scripts/collect_articles.py --output data/raw/articles.jsonl
-
-# Or just use the built-in samples for testing
+# Samples only (instant, for testing)
 python scripts/collect_articles.py --output data/raw/articles.jsonl --sources samples
 ```
 
-### Step 2: Generate Training Data (Teacher Model)
+Expected output: `data/raw/articles.jsonl` with 200-600+ articles.
+
+## Step 2: Generate Training Data (Teacher Model)
+
+Uses `qwen3-max` (Alibaba Cloud Model Studio, Singapore free tier) to label each article.
 
 ```bash
-# Generate labels for all articles (uses Qwen3.7-Max as teacher)
-python scripts/generate_training_data.py \
-    --input data/raw/articles.jsonl \
-    --output data/training/quantum_alpha_train.jsonl
-
-# Test with just 5 articles first
+# Test with 5 articles first (verify quality)
 python scripts/generate_training_data.py \
     --input data/raw/articles.jsonl \
     --output data/training/quantum_alpha_train.jsonl \
     --limit 5
+
+# Generate 200 labeled examples (recommended for first training run)
+python scripts/generate_training_data.py \
+    --input data/raw/articles.jsonl \
+    --output data/training/quantum_alpha_train.jsonl \
+    --limit 200
 ```
 
-### Step 3: Upload Training Data to Modal Volume
+API configuration is hardcoded in the script (Singapore endpoint, qwen3-max model).
+To override, set the environment variable:
+```bash
+export DASHSCOPE_API_KEY="your-key-here"
+```
+
+Expected output: `data/training/quantum_alpha_train.jsonl` with instruction-tuning pairs.
+
+## Step 3: Upload Training Data to Modal
 
 ```bash
 modal volume put quantum-alpha-outputs data/training/quantum_alpha_train.jsonl quantum_alpha_train.jsonl
 ```
 
-### Step 4: Test the Training Environment
+## Step 4: Test Modal Environment
+
+Verifies GPU access, model loading, and basic inference on Modal.
 
 ```bash
 modal run scripts/modal_finetune.py --test
 ```
 
-### Step 5: Run Full Fine-Tuning
+Expected: Prints GPU info, loads Qwen3-8B, runs a test inference.
+Cost: ~$0.21 (5 min on A100).
+
+## Step 5: Run Fine-Tuning
 
 ```bash
 modal run scripts/modal_finetune.py
 ```
 
-### Step 6: Verify the Model on HF Hub
+Configuration (in `scripts/modal_finetune.py`):
+- Base model: `unsloth/Qwen3-8B-Instruct`
+- Method: QLoRA (4-bit quantization)
+- LoRA rank: 64
+- Epochs: 4
+- Checkpoints: Saved per epoch
+- Output: Auto-pushed to `basilwong/quantum-alpha-qwen3-8b` on HF Hub
 
-After training completes, the model will be available at:
-https://huggingface.co/basilwong/quantum-alpha-qwen3-8b
+Cost estimate: ~$2.50-5.00 (30-60 min on A100).
 
-## Cost Estimates
+## Step 6: Verify Model on HF Hub
 
-| Operation | GPU | Estimated Time | Estimated Cost |
-|-----------|-----|---------------|----------------|
-| Environment test | A100 | 5 min | ~$0.21 |
-| Fine-tuning (500 examples, 4 epochs) | A100 | 30-60 min | ~$1.25-2.50 |
-| Fine-tuning (2000 examples, 4 epochs) | A100 | 2-3 hours | ~$5.00-7.50 |
+After training, check: https://huggingface.co/basilwong/quantum-alpha-qwen3-8b
 
-Total estimated cost for the full pipeline: **$5-10** out of your $280 Modal credits.
+## Scripts Reference
+
+| Script | Purpose | Dependencies |
+|--------|---------|-------------|
+| `collect_articles.py` | Basic article collection (samples + arXiv + RSS) | arxiv, feedparser |
+| `collect_historical_articles.py` | Full 2-year historical collection | arxiv, feedparser |
+| `generate_training_data.py` | Teacher model labeling pipeline | openai |
+| `modal_finetune.py` | QLoRA fine-tuning on Modal GPUs | modal, unsloth |
+
+## Cost Summary
+
+| Step | Resource | Estimated Cost |
+|------|----------|---------------|
+| Data generation (200 articles) | Qwen Cloud free tier | ~200K tokens (of 1M free) |
+| Modal env test | Modal A100 | ~$0.21 |
+| Fine-tuning (200 examples, 4 epochs) | Modal A100 | ~$2.50 |
+| **Total** | | **~$2.71 of $280 Modal + free Qwen tokens** |

@@ -22,10 +22,13 @@ import time
 from pathlib import Path
 from openai import OpenAI
 
-# Qwen Cloud (DashScope) configuration
-DASHSCOPE_API_KEY = os.environ.get("DASHSCOPE_API_KEY")
-DASHSCOPE_BASE_URL = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
-TEACHER_MODEL = "qwen3.7-max"
+# Alibaba Cloud Model Studio (Singapore region) configuration
+DASHSCOPE_API_KEY = os.environ.get(
+    "DASHSCOPE_API_KEY",
+    "sk-ws-H.IIMPYP.OVEd.MEYCIQCgnJiyfu3TI7aOMuMio4dSrWTf5zbFNrCpKP-NTyUGagIhAJQ6AGEG4uC8C9LmDEqJCLQGSUnilOLV6lQ1QR7QvVBi"
+)
+DASHSCOPE_BASE_URL = "https://ws-wuyspztgv1cyxvbr.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+TEACHER_MODEL = "qwen3-max"
 
 # System prompt that defines the teacher's role and output format
 SYSTEM_PROMPT = """You are an expert quantum computing financial analyst with deep knowledge of both quantum physics and capital markets. Your role is to analyze news articles, press releases, academic papers, and regulatory filings related to the quantum computing sector and produce structured intelligence reports.
