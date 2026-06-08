@@ -1,177 +1,254 @@
-# Roadmap: Current State to Final MVP
+# Quantum Alpha Intelligence Platform: Project Roadmap
 
-## Current State (What's Done)
+## Project Overview
 
-- GitHub repo with full project structure
-- HF Space created (`build-small-hackathon/quantum-alpha-intelligence`)
-- 611 raw articles collected (arXiv + news, Aug 2024 to Jun 2026)
-- 199 training examples generated (old schema: single-ticker sentiment)
-- Qwen3-8B fine-tuned on Modal (old schema, LoRA rank 64, loss 1.96)
-- Model published to HF Hub (`basilwong/quantum-alpha-qwen3-8b`)
-- Basic Gradio app deployed (single-article analysis, current schema)
-- Qwen Cloud API confirmed working (Singapore free tier, qwen3-max)
-- Modal infrastructure confirmed working (A100 GPU access)
-- Research docs: prior art, evaluation methodology, library analysis
-- Frontend design V2 spec written
+Quantum Alpha Intelligence is an NLP-driven alpha signal generator for the quantum computing sector. It uses a fine-tuned small language model (Qwen3-8B) to analyze news articles, research papers, press releases, and other text sources, producing cross-sectional trading signals across all public quantum computing companies simultaneously.
 
-## What Needs to Change
+The project is being submitted to two hackathons:
+1. **Build Small** (Hugging Face/Gradio) - Deadline: June 15, 2026
+2. **Qwen Cloud Global AI Hackathon** (Memory Agent track) - Deadline: July 9, 2026
 
-The output schema has fundamentally changed. The model now needs to produce a **full signal vector across all 9 tickers** for every article, instead of just a primary ticker sentiment. This requires regenerating training data and retraining the model.
+## Core Architecture
 
-## Complete Roadmap
+```
+Raw Text Input (news, arXiv, SEC, press releases)
+    │
+    ▼
+┌─────────────────────────────────────────────────┐
+│  Fine-tuned Qwen3-8B (signal vector schema)     │
+│  Produces scores for ALL 9 tickers per article  │
+└─────────────────────────────────────────────────┘
+    │
+    ▼
+Signal Vector: {IONQ: +1.8, RGTI: -0.7, QBTS: -0.3, ...}
+    + event_type, time_horizon, signal_decay, reasoning
+    │
+    ▼
+┌─────────────────────────────────────────────────┐
+│  Evaluation Pipeline (Alphalens + custom)        │
+│  Computes IC, CAR, signal decay vs actual prices│
+└─────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────┐
+│  Gradio Frontend (3 tabs)                        │
+│  Signal Explorer | Evaluation Dashboard | Map   │
+└─────────────────────────────────────────────────┘
+```
 
-### Phase 1: New Output Schema and Training Data
+## Quantum Computing Universe (9 Tickers)
 
-**Objective**: Generate high-quality training data with the new cross-sectional signal vector schema.
+| Ticker | Company | Technology | Quantum Revenue |
+|--------|---------|-----------|-----------------|
+| IONQ | IonQ | Trapped Ion | 100% |
+| RGTI | Rigetti Computing | Superconducting | 100% |
+| QBTS | D-Wave Quantum | Quantum Annealing | 100% |
+| QUBT | Quantum Computing Inc. | Neutral Atom | 100% |
+| IBM | IBM | Superconducting | ~2% |
+| GOOGL | Alphabet/Google | Superconducting | <0.1% |
+| MSFT | Microsoft | Topological | <0.1% |
+| HON | Honeywell (Quantinuum) | Trapped Ion | ~5% |
+| NVDA | NVIDIA | Adjacent/Enabler | ~1% |
 
-| Step | Task | Dependency | Estimated Time | Resource |
-|------|------|------------|----------------|----------|
-| 1.1 | Write new system prompt with signal vector schema | None | 30 min | Local |
-| 1.2 | Define static sector data (technology clusters, revenue exposures, competitive relationships) | None | 30 min | Local |
-| 1.3 | Test new prompt with qwen3-max on 5 articles (verify output quality) | 1.1, 1.2 | 10 min | Qwen Cloud free tier |
-| 1.4 | Generate training data for all 611 articles with new schema | 1.3 | ~60 min | Qwen Cloud free tier (~600K tokens) |
-| 1.5 | Quality check: manually review 20 examples for correctness | 1.4 | 30 min | Manual |
-| 1.6 | Split dataset: 200 for training, 411 for evaluation (temporal split) | 1.5 | 5 min | Local |
+## Infrastructure
 
-**Output**: `data/training/quantum_alpha_train_v2.jsonl` (200 examples, new schema)
+| Service | Purpose | Credentials |
+|---------|---------|-------------|
+| GitHub | Development repo (`basilwong/quantum-alpha-intelligence`) | PAT with repo scope |
+| HF Space | Public deployment (`build-small-hackathon/quantum-alpha-intelligence`) | Write token |
+| HF Hub | Model hosting (`basilwong/quantum-alpha-qwen3-8b`) | Write token |
+| Modal | GPU compute (fine-tuning + batch inference) | Workspace: `ac-PGYLNihy2INHkVQupXFTUV` |
+| Qwen Cloud | Teacher model (qwen3-max, Singapore free tier) | DashScope API key |
+| Yahoo Finance | Market data (free, no key needed) | N/A |
 
-### Phase 2: Model Retraining
+## Current Status (Updated June 8, 2026)
 
-**Objective**: Fine-tune Qwen3-8B on the new signal vector schema.
+### Completed
 
-| Step | Task | Dependency | Estimated Time | Resource |
-|------|------|------------|----------------|----------|
-| 2.1 | Upload new training data to Modal volume | 1.6 | 1 min | Modal |
-| 2.2 | Run fine-tuning (QLoRA, rank 64, 4 epochs, save per epoch) | 2.1 | ~5 min | Modal A100 (~$1.50) |
-| 2.3 | Test inference on 5 held-out articles (verify signal vector output) | 2.2 | 5 min | Modal A100 (~$0.50) |
-| 2.4 | Push model to HF Hub (`build-small-hackathon/quantum-alpha-qwen3-8b-v2`) | 2.3 | 2 min | Modal |
-| 2.5 | (Optional) Run base Qwen3-8B on same 5 articles for comparison | 2.3 | 5 min | Modal A100 (~$0.50) |
+| Phase | Status | Key Outcome |
+|-------|--------|-------------|
+| Phase 1: Signal Vector Schema | DONE | 199/200 training examples generated with cross-sectional schema |
+| Phase 2: Model Retraining | DONE | Qwen3-8B fine-tuned on V2 schema, loss 1.36, pushed to HF Hub |
+| Phase 4: Market Data | DONE | 608 trading days for all 10 tickers (Jan 2024 - Jun 2026) |
+| Phase 3: Batch Predictions | IN PROGRESS | 49/411 successful so far, retry running with cleaned inputs |
 
-**Output**: Fine-tuned model on HF Hub producing full signal vectors
+### In Progress
 
-### Phase 3: Generate Predictions for Evaluation
+**Phase 3 (Batch Predictions)** is running on Modal (detached). The second run includes:
+- HTML/URL stripping from article inputs (fixes JSON parse errors)
+- Resume support (carries forward 49 previous successes)
+- Per-article timing data for performance analysis
+- 3-hour timeout
 
-**Objective**: Run the fine-tuned model on all 411 evaluation articles to produce predictions.
+Run URL: https://modal.com/apps/basilwong/main/ap-ylQ60BU6z3Od8hlXUirIS6
 
-| Step | Task | Dependency | Estimated Time | Resource |
-|------|------|------------|----------------|----------|
-| 3.1 | Write batch prediction script (runs model on all eval articles) | 2.4 | 30 min | Local |
-| 3.2 | Run predictions on 411 evaluation articles | 3.1 | ~60 min | Modal A100 (~$3.00) |
-| 3.3 | (Optional) Run base model predictions for comparison | 3.1 | ~60 min | Modal A100 (~$3.00) |
-| 3.4 | Save predictions to `data/eval/predictions_v2.jsonl` | 3.2 | Automatic | Modal |
+### Lessons Learned
 
-**Output**: `data/eval/predictions_v2.jsonl` (411 signal vectors with all tickers)
+1. **Modal timeout issues**: `modal run` ties the remote function's lifecycle to the local client. If the sandbox connection drops, the app stops. Solution: use `modal run --detach` and make the function fully self-contained (reads from volume, writes to volume).
 
-### Phase 4: Market Data and Abnormal Returns
+2. **JSON parse errors (21% failure rate on first run)**: The fine-tuned model produces malformed JSON for ~20% of articles. Root cause: many RSS-sourced articles contain HTML tags and Google News redirect URLs that confuse the model. Solution: strip HTML/URLs before inference. Longer-term: more training data or constrained decoding.
 
-**Objective**: Download historical prices and compute abnormal returns for evaluation.
+3. **Training data quality**: Some articles in our dataset are not actually about quantum computing (arXiv search was too broad) and some are just headlines with URLs (RSS artifacts). These are kept in the evaluation set intentionally to test whether the model correctly identifies irrelevant content.
 
-| Step | Task | Dependency | Estimated Time | Resource |
-|------|------|------------|----------------|----------|
-| 4.1 | Download historical prices for all tickers + SPY (yfinance) | None | 5 min | Free |
-| 4.2 | Compute daily returns for all tickers | 4.1 | 2 min | Local |
-| 4.3 | Construct quantum sector basket (equal-weight IONQ+RGTI+QBTS) | 4.2 | 5 min | Local |
-| 4.4 | For each event: estimate market model (OLS, 180-day window) | 4.2, 3.4 | 10 min | Local |
-| 4.5 | Compute abnormal returns and CAR at windows (+1, +2, +5, +10, +20, +60) | 4.4 | 10 min | Local |
-| 4.6 | Save to `data/eval/abnormal_returns.parquet` | 4.5 | 1 min | Local |
+4. **Speed**: Processing 411 articles on A100 takes ~60-90 minutes (8-15 seconds per article depending on input length). The model generates ~500-1000 output tokens per article for the full signal vector schema.
 
-**Output**: Abnormal returns for every (event, ticker) pair at multiple horizons
+## Remaining Roadmap
 
-### Phase 5: Evaluation Metrics (Alphalens + Custom)
+### Phase 3 (Completion): Batch Predictions
 
-**Objective**: Compute IC, signal decay, and all evaluation metrics.
+Currently running. When complete:
+- Download results: `modal volume get quantum-alpha-outputs predictions_v2_final.jsonl data/eval/predictions_v2_final.jsonl`
+- Download timing: `modal volume get quantum-alpha-outputs prediction_timing.jsonl data/eval/prediction_timing.jsonl`
+- Analyze error rate and timing distribution
 
-| Step | Task | Dependency | Estimated Time | Resource |
-|------|------|------------|----------------|----------|
-| 5.1 | Install alphalens-reloaded, format data for alphalens input | 4.6, 3.4 | 30 min | Local |
-| 5.2 | Run alphalens: compute IC, quantile returns, decay curve | 5.1 | 5 min | Local |
-| 5.3 | Compute custom metrics: direction accuracy, magnitude accuracy, cross-asset accuracy | 5.1 | 30 min | Local |
-| 5.4 | Compute signal decay curve (IC at horizons 1,2,5,10,20,60) | 5.1 | 10 min | Local |
-| 5.5 | Compute IC by subset (source, ticker, event type) with Bonferroni | 5.2 | 10 min | Local |
-| 5.6 | Bootstrap confidence intervals (1000 resamples) | 5.2 | 5 min | Local |
-| 5.7 | (If base model predictions available) Compute comparison metrics | 5.2, 3.3 | 10 min | Local |
-| 5.8 | Save all results to `data/eval/results.json` | 5.2-5.7 | 1 min | Local |
+### Phase 5: Evaluation Metrics
 
-**Output**: `data/eval/results.json` with all metrics, `data/eval/charts/` with visualizations
+**Objective**: Compute IC, signal decay, and all evaluation metrics using Alphalens and custom code.
+
+| Step | Task | Estimated Time |
+|------|------|----------------|
+| 5.1 | Install alphalens-reloaded, format predictions as factor panel | 30 min |
+| 5.2 | Compute abnormal returns (custom OLS market model, 180-day estimation window) | 30 min |
+| 5.3 | Run alphalens: IC analysis, quantile returns, forward return spreads | 10 min |
+| 5.4 | Compute signal decay curve (IC at horizons 1, 2, 5, 10, 20, 60 days) | 10 min |
+| 5.5 | Compute IC by subset (source type, ticker, event type) with Bonferroni correction | 15 min |
+| 5.6 | Bootstrap confidence intervals (1000 resamples) | 5 min |
+| 5.7 | Compute direction accuracy, magnitude calibration, cross-asset accuracy | 20 min |
+| 5.8 | Generate all visualization charts (Plotly) | 30 min |
+| 5.9 | Save structured results to `data/eval/results.json` | 5 min |
+
+**Dependencies**: Phase 3 complete + Phase 4 complete (both done or in progress)
 
 ### Phase 6: Frontend Build
 
-**Objective**: Build the three-tab Gradio interface per the V2 design spec.
+**Objective**: Build the three-tab Gradio interface per the V2 design spec (`docs/frontend_design_v2.md`).
 
-| Step | Task | Dependency | Estimated Time | Resource |
-|------|------|------------|----------------|----------|
-| 6.1 | Write static sector data file (clusters, exposures, profiles) | 1.2 | 30 min | Local |
-| 6.2 | Build Tab 1: Signal Explorer (event navigation + signal vector chart) | 3.4, 4.6 | 3 hours | Local |
-| 6.3 | Build Tab 1: Predicted vs Actual time series overlay | 4.6 | 2 hours | Local |
-| 6.4 | Build Tab 1: Event metrics cards + reasoning trace | 5.8 | 1 hour | Local |
-| 6.5 | Build Tab 1: Live analysis mode (paste article, run inference) | 2.4 | 1 hour | Local |
-| 6.6 | Build Tab 1: Model selector toggle | 2.4, 2.5 | 1 hour | Local |
-| 6.7 | Build Tab 2: Evaluation Dashboard (summary metrics, charts) | 5.8 | 2 hours | Local |
-| 6.8 | Build Tab 3: Sector Map (network graph + propagation simulator) | 6.1 | 2 hours | Local |
-| 6.9 | Add info tooltips to all metrics | 6.2-6.8 | 1 hour | Local |
-| 6.10 | Test full app locally | 6.2-6.9 | 1 hour | Local |
+| Step | Task | Estimated Time |
+|------|------|----------------|
+| 6.1 | Build Tab 1: Signal Explorer - event navigation (timeline slider + filters) | 2 hours |
+| 6.2 | Build Tab 1: Signal vector bar chart (hero element) | 1.5 hours |
+| 6.3 | Build Tab 1: Predicted vs Actual time series overlay (Plotly) | 2 hours |
+| 6.4 | Build Tab 1: Event metrics cards + forward returns table | 1 hour |
+| 6.5 | Build Tab 1: Model reasoning trace (expandable) | 30 min |
+| 6.6 | Build Tab 1: Live analysis mode (paste text, run inference) | 1.5 hours |
+| 6.7 | Build Tab 1: Model selector toggle (base vs fine-tuned) | 1 hour |
+| 6.8 | Build Tab 2: Evaluation Dashboard (summary metrics, decay curve, IC by subset, scatter) | 2.5 hours |
+| 6.9 | Build Tab 3: Sector Map (network graph + signal propagation simulator) | 2 hours |
+| 6.10 | Add info tooltips (i buttons) to all metrics and charts | 1 hour |
+| 6.11 | End-to-end testing | 1 hour |
 
-**Output**: Complete Gradio app with all three tabs functional
+**Total estimated: ~16 hours**
 
 ### Phase 7: Deployment and Submission
 
-**Objective**: Deploy to HF Space and prepare hackathon submission materials.
+| Step | Task | Estimated Time |
+|------|------|----------------|
+| 7.1 | Push final app + pre-computed data to HF Space | 15 min |
+| 7.2 | Verify ZeroGPU works for live analysis mode | 30 min |
+| 7.3 | Record 2-minute demo video | 1 hour |
+| 7.4 | Write social media post (required for submission) | 15 min |
+| 7.5 | Write Field Notes blog post (for Well-Tuned badge) | 1.5 hours |
+| 7.6 | Final submission to Build Small hackathon | 10 min |
 
-| Step | Task | Dependency | Estimated Time | Resource |
-|------|------|------------|----------------|----------|
-| 7.1 | Push final app + pre-computed data to HF Space | 6.10 | 10 min | HF |
-| 7.2 | Verify app runs on ZeroGPU (live analysis mode) | 7.1 | 15 min | HF |
-| 7.3 | Record 2-minute demo video | 7.2 | 1 hour | Local |
-| 7.4 | Write social media post | 7.3 | 15 min | Local |
-| 7.5 | Write Field Notes blog post (for badge) | 5.8 | 1 hour | Local |
-| 7.6 | Submit to Build Small hackathon | 7.3, 7.4 | 10 min | HF |
+### Phase 8: Qwen Cloud Hackathon (Post June 15)
 
-**Output**: Live hackathon submission
+| Step | Task | Estimated Time |
+|------|------|----------------|
+| 8.1 | Experiment: DoRA fine-tuning, compare IC vs LoRA | 2 hours |
+| 8.2 | Experiment: Qwen3-32B fine-tuning (final version) | 4 hours |
+| 8.3 | Experiment: Curriculum ordering (simple to complex) | 2 hours |
+| 8.4 | Add persistent memory layer (Qwen3.7-Max + vector DB on Alibaba Cloud) | 6 hours |
+| 8.5 | Deploy full backend on Alibaba Cloud ECS | 3 hours |
+| 8.6 | Architecture diagram + public repo + demo video | 2 hours |
+| 8.7 | Submit to Qwen Cloud hackathon (July 9 deadline) | 1 hour |
 
-### Phase 8: Experimentation (Post-Submission, for Qwen Cloud Hackathon)
+## Resource Budget (Updated)
 
-| Step | Task | Dependency | Estimated Time | Resource |
-|------|------|------------|----------------|----------|
-| 8.1 | Experiment: DoRA fine-tuning, compare IC vs LoRA | 2.4 | 2 hours | Modal |
-| 8.2 | Experiment: Qwen3-32B fine-tuning (final version) | 1.6 | 4 hours | Modal |
-| 8.3 | Experiment: Curriculum ordering | 1.6 | 2 hours | Modal |
-| 8.4 | Add persistent memory (ChromaDB) for V1 agent | 7.1 | 4 hours | Local |
-| 8.5 | Deploy on Alibaba Cloud ECS | 8.4 | 2 hours | Alibaba Cloud |
-| 8.6 | Submit to Qwen Cloud hackathon (July 9) | 8.5 | 2 hours | DevPost |
+| Resource | Budget | Used So Far | Remaining |
+|----------|--------|-------------|-----------|
+| Modal credits | $280 | ~$8 (training runs + batch predictions) | ~$272 |
+| Qwen Cloud free tier | 1M tokens | ~800K (V2 training data generation) | ~200K |
+| HF ZeroGPU | $20 credits | ~$0.50 (initial app testing) | ~$19.50 |
+| Time to Build Small deadline | 7 days (June 8 - June 15) | Day 1 in progress | 6 days |
 
-## Resource Budget
-
-| Resource | Budget | Estimated Usage | Remaining |
-|----------|--------|-----------------|-----------|
-| Modal credits | $280 | ~$12 (training + inference runs) | ~$268 |
-| Qwen Cloud free tier | 1M tokens | ~800K tokens (training data gen) | ~200K |
-| HF ZeroGPU | $20 credits | Minimal (live inference only) | ~$19 |
-| Time (to Build Small deadline, June 15) | 8 days | Phases 1-7 | Tight but doable |
-
-## Critical Path
-
-The longest dependency chain determines the minimum time to completion:
+## Key Files and Directories
 
 ```
-Schema design (30min)
-    → Training data generation (60min)
-        → Fine-tuning (5min)
-            → Batch predictions on eval set (60min)
-                → Market data + abnormal returns (30min)
-                    → Alphalens evaluation (30min)
-                        → Frontend build (12+ hours)
-                            → Deployment + submission (2 hours)
+quantum-alpha-intelligence/
+├── app.py                              # Gradio app entry point (current: basic, needs V2 rebuild)
+├── ROADMAP.md                          # This file
+├── TODO.md                             # Task checklist
+├── requirements.txt                    # Python dependencies
+├── src/
+│   ├── config.py                       # Tickers, model config
+│   ├── sector_data.py                  # Technology clusters, revenue exposures, competitive relationships
+│   ├── model/inference.py              # Model loading and inference wrapper
+│   └── api/app.py                      # Original Gradio Server app (to be replaced by V2)
+├── eval/
+│   ├── market_data.py                  # Yahoo Finance data provider + sector basket
+│   └── (abnormal_returns.py)           # To be built (Phase 5)
+├── scripts/
+│   ├── generate_training_data_v2.py    # Teacher model pipeline (V2 signal vector schema)
+│   ├── generate_predictions_v2.py      # Batch prediction on Modal (cleaned inputs, timing)
+│   ├── modal_finetune.py               # Fine-tuning script (Unsloth + QLoRA on Modal)
+│   ├── test_finetuned_model.py         # Inference test (3/3 correct on V1)
+│   ├── collect_historical_articles.py  # Article collection (arXiv + RSS)
+│   └── analyze_eval_articles.py        # Data quality analysis
+├── data/
+│   ├── raw/articles.jsonl              # 611 raw articles (Aug 2024 - Jun 2026)
+│   ├── training/
+│   │   ├── quantum_alpha_train.jsonl   # V1 training data (199 examples, old schema)
+│   │   └── quantum_alpha_train_v2.jsonl # V2 training data (199 examples, signal vector)
+│   ├── eval/
+│   │   ├── predictions_v2.jsonl        # First run results (49 success, 13 errors)
+│   │   ├── predictions_v2_final.jsonl  # (In progress) Cleaned retry results
+│   │   └── problematic_articles.json   # Articles flagged for quality issues
+│   └── market/
+│       ├── IONQ.parquet                # Historical prices (608 trading days)
+│       ├── RGTI.parquet
+│       ├── ... (all 9 tickers + SPY)
+│       └── SPY.parquet
+├── docs/
+│   ├── end_to_end_design.md            # System architecture
+│   ├── frontend_design_v2.md           # V2 frontend spec (3 tabs)
+│   ├── evaluation_pipeline_design.md   # Evaluation engineering design
+│   ├── quantitative_evaluation_deep_dive.md  # AR, IC, signal decay methodology
+│   ├── library_background_alphalens_eventstudy.md  # Library analysis
+│   ├── research_prior_art_report.md    # Academic literature review
+│   ├── evaluation_methodology_report.md # Evaluation framework
+│   ├── hackathon_opportunities_report.md # Multi-hackathon strategy
+│   └── huggingface_space_setup.md      # Deployment guide
+└── frontend/                           # Original custom HTML/CSS/JS (to be replaced)
 ```
 
-**Minimum calendar time**: 3-4 days of focused work.
+## Hackathon Submission Requirements
 
-The frontend (Phase 6) is the largest single block of work at ~12 hours. Everything before it is pipeline work that can run mostly unattended (data generation, training, batch predictions).
+### Build Small (June 15)
 
-## Suggested Execution Order (Parallelizable)
+- Gradio app hosted on HF Space under `build-small-hackathon` org
+- Model must be 32B parameters or fewer
+- 2-minute demo video
+- Social media post
+- Badges targeting: Well-Tuned, Off-Brand, Field Notes
 
-**Day 1**: Phases 1 + 2 (new schema, training data, retrain model)
-**Day 2**: Phases 3 + 4 (batch predictions + market data, runs in parallel)
-**Day 3-4**: Phase 5 + 6 (evaluation + frontend build)
-**Day 5**: Phase 7 (deployment, video, submission)
+### Qwen Cloud Global (July 9)
 
-This gets us to submission by June 12, with 3 days of buffer before the June 15 deadline.
+- Must use Qwen models via Qwen Cloud (DashScope API)
+- Must deploy backend on Alibaba Cloud infrastructure
+- Public repo with license file
+- Architecture diagram
+- Demo video under 3 minutes
+- Track: Memory Agent (persistent memory that accumulates domain expertise)
+
+## Decision Log
+
+| Date | Decision | Reasoning |
+|------|----------|-----------|
+| Jun 5 | Base model: Qwen3-8B | Best zero-shot baseline in benchmarks, strong financial sentiment |
+| Jun 5 | Fine-tuning: QLoRA rank 64 | Balance between quality and VRAM usage on A100 40GB |
+| Jun 6 | Teacher model: qwen3-max (Singapore free tier) | Free, strongest model available, no API cost |
+| Jun 7 | Output schema: cross-sectional signal vector | Required for Alphalens evaluation, more realistic for quant integration |
+| Jun 8 | Evaluation: Alphalens + custom abnormal returns | Alphalens is industry standard for IC; custom code for CAR avoids GPL |
+| Jun 8 | Input cleaning: strip HTML/URLs | Fixes 21% JSON parse failure rate from RSS artifacts |
+| Jun 8 | Keep non-quantum articles in eval set | Tests model's ability to correctly identify irrelevant content |
+| Jun 8 | Modal --detach for long runs | Prevents sandbox timeout from killing remote GPU jobs |
