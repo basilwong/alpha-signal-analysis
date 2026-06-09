@@ -252,3 +252,50 @@ quantum-alpha-intelligence/
 | Jun 8 | Input cleaning: strip HTML/URLs | Fixes 21% JSON parse failure rate from RSS artifacts |
 | Jun 8 | Keep non-quantum articles in eval set | Tests model's ability to correctly identify irrelevant content |
 | Jun 8 | Modal --detach for long runs | Prevents sandbox timeout from killing remote GPU jobs |
+
+
+## Next Iteration (Planned)
+
+The following improvements are planned based on evaluation results and external review feedback. They are ordered by priority.
+
+### Priority 1: Methodological Fixes
+
+These address issues that could affect the validity of our evaluation results.
+
+| Item | Issue | Fix | Effort |
+|------|-------|-----|--------|
+| Temporal split | Training data is newer than evaluation data (inverted walk-forward) | Re-sort articles chronologically, use date-based cutoff (train on pre-2026, eval on 2026) | 2 hours (re-sort + retrain + re-evaluate) |
+| Outcome contamination | Some training articles contain explicit price movements ("stock rose 8%") | Audit training data, strip sentences containing price outcomes | 1 hour |
+| Narrow eval window | Evaluation predictions cluster in 12 calendar days (May 10-22, 2026) | Collect articles with broader date distribution, ensure eval spans full 2-year range | 2 hours |
+
+### Priority 2: Result Improvements
+
+These would improve the quality and credibility of results without changing the core methodology.
+
+| Item | Current State | Improvement | Effort |
+|------|--------------|-------------|--------|
+| JSON compliance | 7% error rate | More training data (500+ examples) or constrained decoding | 3 hours |
+| Institutional metrics | IC + direction accuracy only | Add factor turnover and cross-sectional dispersion | 30 min |
+| Training data volume | 199 examples | Scale to 500-1000 examples for better generalization | 2 hours (Qwen Cloud tokens needed) |
+| arXiv signal quality | IC = -0.013 (not working) | Investigate why academic papers don't produce useful signals; may need different prompting | 2 hours |
+
+### Priority 3: Experiments (Qwen Cloud Hackathon)
+
+| Experiment | Hypothesis | Effort |
+|-----------|-----------|--------|
+| DoRA fine-tuning | May outperform LoRA on structured output tasks | 2 hours |
+| Qwen3-32B fine-tuning | Larger model = higher IC, better JSON compliance | 4 hours |
+| Curriculum ordering | Training on simple articles first, complex later, improves final quality | 2 hours |
+| Persistent memory (Qwen3.7-Max + vector DB) | Agent that accumulates sector expertise over time produces better signals | 6 hours |
+| Signal smoothing (Kalman filter) | Reduces noise in multi-article-per-day scenarios | 1 hour |
+
+### Priority 4: Submission Materials
+
+| Item | Status | Deadline |
+|------|--------|----------|
+| Deploy final V2 app to HF Space | Frontend built, needs deployment with real eval data | June 14 |
+| Demo video (2 min) | Not started | June 15 |
+| Social media post | Not started | June 15 |
+| Field Notes blog post | Not started | June 15 |
+| Qwen Cloud architecture diagram | Not started | July 9 |
+| Qwen Cloud demo video (3 min) | Not started | July 9 |
