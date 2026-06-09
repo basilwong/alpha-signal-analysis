@@ -50,21 +50,14 @@ TECH_CLUSTERS = {
 
 # Load predictions
 def load_predictions():
-    """Load pre-computed predictions from file."""
+    """Load pre-computed predictions from file (prefer final version)."""
     predictions = []
-    pred_path = EVAL_DIR / "predictions_v2.jsonl"
+    # Try final file first, fall back to intermediate
+    pred_path = EVAL_DIR / "predictions_v2_final.jsonl"
+    if not pred_path.exists():
+        pred_path = EVAL_DIR / "predictions_v2.jsonl"
     if pred_path.exists():
         with open(pred_path) as f:
-            for line in f:
-                if line.strip():
-                    p = json.loads(line)
-                    if p.get("status") == "success":
-                        predictions.append(p)
-    # Also try the final file
-    pred_final = EVAL_DIR / "predictions_v2_final.jsonl"
-    if pred_final.exists():
-        predictions = []  # Use final if available
-        with open(pred_final) as f:
             for line in f:
                 if line.strip():
                     p = json.loads(line)
@@ -305,25 +298,31 @@ def create_sector_map() -> go.Figure:
 
 
 def create_decay_curve_chart() -> go.Figure:
-    """Placeholder for signal decay curve (will use real data from Phase 5)."""
-    horizons = [1, 2, 5, 10, 20, 60]
-    # Placeholder data
-    ic_values = [0.03, 0.05, 0.07, 0.06, 0.04, 0.02]
+    """Signal decay curve from actual evaluation results."""
+    horizons = [1, 2, 5, 10, 20]
+    ic_values = [0.0108, 0.0160, 0.0483, 0.0876, 0.0469]
+    p_values = [0.537, 0.362, 0.006, 0.000, 0.016]
 
     fig = go.Figure()
+    # Color markers by significance
+    colors = ['#888888' if p > 0.05 else '#00d4aa' for p in p_values]
     fig.add_trace(go.Scatter(
         x=horizons, y=ic_values,
         mode='lines+markers',
         name='Overall IC',
         line=dict(color='#00d4aa', width=2),
-        marker=dict(size=8),
+        marker=dict(size=10, color=colors, line=dict(width=2, color='white')),
+        hovertext=[f'IC={ic:.4f}, p={p:.4f}{" ***" if p<0.01 else " **" if p<0.05 else ""}' for ic, p in zip(ic_values, p_values)],
+        hoverinfo='text',
     ))
     fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+    # Add significance threshold annotation
+    fig.add_annotation(x=10, y=0.0876, text="Peak: IC=0.088***", showarrow=True, arrowhead=2, font=dict(color='#00d4aa'))
     fig.update_layout(
-        title="Signal Decay Curve (IC by Holding Period)",
+        title="Signal Decay Curve (IC by Holding Period) | Green = statistically significant",
         xaxis_title="Holding Period (Trading Days)",
         yaxis_title="Information Coefficient",
-        height=300,
+        height=350,
         template="plotly_dark",
         paper_bgcolor="#1a1a2e",
         plot_bgcolor="#16213e",
@@ -459,9 +458,9 @@ with gr.Blocks(
             """)
 
             with gr.Row():
-                gr.Textbox(value="0.07", label="Overall IC (ℹ️ Spearman rank correlation between predicted signals and realized abnormal returns)", interactive=False)
-                gr.Textbox(value="68%", label="Direction Accuracy (ℹ️ % of events where predicted direction matched actual)", interactive=False)
-                gr.Textbox(value="5 days", label="Optimal Horizon (ℹ️ Holding period with highest IC)", interactive=False)
+                gr.Textbox(value="+0.088 (p<0.001)", label="Overall IC at +10d (ℹ️ Spearman rank correlation between predicted signals and realized abnormal returns)", interactive=False)
+                gr.Textbox(value="+0.048 (p=0.006)", label="Overall IC at +5d", interactive=False)
+                gr.Textbox(value="10 days", label="Optimal Horizon (ℹ️ Holding period with highest IC)", interactive=False)
                 gr.Textbox(value=f"{len(PREDICTIONS)}", label="Events Evaluated", interactive=False)
 
             with gr.Row():
