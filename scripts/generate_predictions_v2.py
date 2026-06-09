@@ -145,14 +145,24 @@ def run_all_predictions():
     prev_results_path = "/outputs/predictions_v2.jsonl"
     output_path = "/outputs/predictions_v2_final.jsonl"
 
-    # Load articles (evaluation set: index 200+)
+    # Load evaluation articles (proper walk-forward split)
     articles = []
-    with open(articles_path, "r") as f:
-        for i, line in enumerate(f):
-            if line.strip() and i >= 200:
-                article = json.loads(line)
-                article["idx"] = i
-                articles.append(article)
+    eval_path = "/outputs/articles_eval.jsonl"
+    if os.path.exists(eval_path):
+        with open(eval_path, "r") as f:
+            for i, line in enumerate(f):
+                if line.strip():
+                    article = json.loads(line)
+                    article["idx"] = i
+                    articles.append(article)
+    else:
+        # Fallback to old method
+        with open(articles_path, "r") as f:
+            for i, line in enumerate(f):
+                if line.strip() and i >= 200:
+                    article = json.loads(line)
+                    article["idx"] = i
+                    articles.append(article)
 
     print(f"Total evaluation articles: {len(articles)}")
 

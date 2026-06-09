@@ -18,6 +18,8 @@ beautifulsoup4
 # Signal Processing
 pandas
 numpy
+plotly
+pyarrow
 
 # Utilities
 tqdm
