@@ -236,70 +236,55 @@ def create_price_overlay_chart(prediction: dict) -> go.Figure:
 
 
 def create_sector_map() -> go.Figure:
-    """Create a network visualization of the quantum computing sector."""
+    """Create a grouped bar chart showing companies by technology cluster and revenue exposure."""
     fig = go.Figure()
 
-    # Position clusters
-    positions = {
-        "Trapped Ion": (0.2, 0.8),
-        "Superconducting": (0.7, 0.8),
-        "Annealing": (0.1, 0.3),
-        "Topological": (0.5, 0.3),
-        "Neutral Atom": (0.9, 0.3),
-        "Adjacent": (0.5, 0.05),
+    # Organize data by cluster
+    cluster_order = ["Trapped Ion", "Superconducting", "Annealing", "Topological", "Neutral Atom", "Adjacent"]
+    cluster_colors = {
+        "Trapped Ion": "#00d4aa",
+        "Superconducting": "#4dabf7",
+        "Annealing": "#ffa94d",
+        "Topological": "#ffd43b",
+        "Neutral Atom": "#a78bfa",
+        "Adjacent": "#74c0fc",
     }
 
-    # Draw cluster backgrounds
-    for cluster, pos in positions.items():
-        tickers = TECH_CLUSTERS[cluster]
-        fig.add_trace(go.Scatter(
-            x=[pos[0]], y=[pos[1]],
-            mode='markers+text',
-            marker=dict(size=50 + len(tickers) * 20, color='rgba(100,100,200,0.1)'),
-            text=[cluster],
-            textposition='top center',
-            textfont=dict(size=11, color='white'),
-            showlegend=False,
-            hoverinfo='skip',
-        ))
+    tickers_ordered = []
+    exposures = []
+    colors = []
+    labels = []
 
-    # Draw company nodes
-    for cluster, tickers_in_cluster in TECH_CLUSTERS.items():
-        pos = positions[cluster]
-        for j, ticker in enumerate(tickers_in_cluster):
-            offset_x = (j - len(tickers_in_cluster)/2) * 0.08
+    for cluster in cluster_order:
+        for ticker in TECH_CLUSTERS[cluster]:
             info = COMPANY_INFO[ticker]
-            node_size = 15 + info["exposure"] * 25
+            tickers_ordered.append(f"{ticker} ({info['name']})")
+            exposures.append(info["exposure"] * 100)
+            colors.append(cluster_colors[cluster])
+            labels.append(cluster)
 
-            fig.add_trace(go.Scatter(
-                x=[pos[0] + offset_x], y=[pos[1] - 0.08],
-                mode='markers+text',
-                marker=dict(size=node_size, color=info["color"], line=dict(width=1, color='white')),
-                text=[ticker],
-                textposition='bottom center',
-                textfont=dict(size=9, color='white'),
-                showlegend=False,
-                hovertext=f"{info['name']}<br>Tech: {info['tech']}<br>Quantum Revenue: {info['exposure']*100:.1f}%",
-                hoverinfo='text',
-            ))
+    fig.add_trace(go.Bar(
+        y=tickers_ordered,
+        x=exposures,
+        orientation='h',
+        marker_color=colors,
+        text=[f"{e:.1f}%" for e in exposures],
+        textposition='outside',
+        hovertext=[f"{t}<br>Cluster: {l}<br>Quantum Revenue: {e:.1f}%<br>Max Signal: +/-{min(2.0, e/50):.2f}" for t, l, e in zip(tickers_ordered, labels, exposures)],
+        hoverinfo='text',
+    ))
 
-    # Draw competitive edges
-    edges = [
-        ("IONQ", "RGTI", "competes"),
-        ("IONQ", "IBM", "competes"),
-        ("RGTI", "IBM", "competes"),
-        ("RGTI", "GOOGL", "competes"),
-        ("HON", "IONQ", "allies"),
-    ]
-
+    # Add cluster annotations
     fig.update_layout(
-        title="Quantum Computing Sector Map",
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-0.1, 1.1]),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-0.1, 1.0]),
-        height=500,
+        title="Revenue Exposure to Quantum Computing (determines signal scaling)",
+        xaxis_title="Quantum Revenue (%)",
+        yaxis_title="",
+        height=400,
+        margin=dict(l=180, r=80, t=50, b=50),
         template="plotly_dark",
         paper_bgcolor="#1a1a2e",
-        plot_bgcolor="#1a1a2e",
+        plot_bgcolor="#16213e",
+        xaxis=dict(range=[0, 110]),
     )
     return fig
 
@@ -595,6 +580,8 @@ with gr.Blocks(
 
             article_info = gr.Markdown(value="Select an event to view details.")
 
+            gr.Markdown("**Signal Vector** — Shows the model's predicted price impact for each ticker. Green bars = bullish (stock expected to go up). Red bars = bearish. Bar length = predicted magnitude. Scores are scaled by revenue exposure (pure-play quantum stocks can reach +/-2.0, diversified companies are capped lower).")
+
             with gr.Row():
                 with gr.Column(scale=3):
                     signal_chart = gr.Plot(label="Signal Vector")
@@ -602,6 +589,8 @@ with gr.Blocks(
                     signal_summary = gr.Textbox(label="Signal Summary", interactive=False)
                     translation_box = gr.Textbox(label="Technical Translation (ℹ️ What this means for investors)", lines=3, interactive=False)
                     rationale_box = gr.Textbox(label="Signal Rationale (ℹ️ Why these scores)", lines=3, interactive=False)
+
+            gr.Markdown("**Actual Price Movement** — Shows what actually happened to the top affected stocks in the 20 trading days after this event. Cumulative abnormal return (%) is the stock's movement minus what we'd expect from overall market movements. Dashed lines show the model's predicted direction.")
 
             price_chart = gr.Plot(label="Actual Price Movement After Event")
 
@@ -688,11 +677,23 @@ with gr.Blocks(
         with gr.Tab("Sector Map"):
             gr.Markdown("""
             ### Quantum Computing Competitive Landscape
-            Companies grouped by technology approach. Node size reflects quantum revenue exposure.
-            *ℹ️ Revenue exposure determines how much quantum-specific news affects the stock price.*
+
+            This tab explains the structure of the quantum computing sector and how our model assigns signals.
+            Understanding the competitive dynamics is key to interpreting the signal vectors.
             """)
 
-            sector_chart = gr.Plot(value=create_sector_map(), label="Sector Map")
+            gr.Markdown("""
+            ### How Signals Propagate
+
+            When a piece of news is published, it doesn't just affect one company. The model considers:
+
+            1. **Direct impact** — The company mentioned in the article (strongest signal)
+            2. **Technology allies** — Companies using the same quantum approach benefit from validation of their technology
+            3. **Technology competitors** — Companies using rival approaches may be negatively affected (competitive gap)
+            4. **Revenue scaling** — A quantum breakthrough barely moves Google's stock (quantum is <0.1% of revenue) but can move IonQ's stock significantly (100% quantum)
+            """)
+
+            sector_chart = gr.Plot(value=create_sector_map(), label="Sector Relationship Map")
 
             gr.Markdown("""
             ### Technology Clusters
