@@ -236,7 +236,7 @@ def create_price_overlay_chart(prediction: dict) -> go.Figure:
 
 
 def create_sector_map() -> go.Figure:
-    """Create a grouped bar chart showing companies by technology cluster and revenue exposure."""
+    """Create a grouped bar chart showing companies by technology cluster and signal weight."""
     fig = go.Figure()
 
     # Organize data by cluster
@@ -580,7 +580,7 @@ with gr.Blocks(
 
             article_info = gr.Markdown(value="Select an event to view details.")
 
-            gr.Markdown("**Signal Vector** — Shows the model's predicted price impact for each ticker. Green bars = bullish (stock expected to go up). Red bars = bearish. Bar length = predicted magnitude. Scores are scaled by revenue exposure (pure-play quantum stocks can reach +/-2.0, diversified companies are capped lower).")
+            gr.Markdown("**Signal Vector** — Shows the model's predicted price impact for each ticker. Green bars = bullish (stock expected to go up). Red bars = bearish. Bar length = predicted magnitude. Scores are scaled by signal weight (pure-play quantum companies can reach +/-2.0, diversified companies are capped lower).")
 
             with gr.Row():
                 with gr.Column(scale=3):
@@ -707,15 +707,17 @@ with gr.Blocks(
             | Neutral Atom | QUBT | Highly scalable arrays |
             | Adjacent | NVDA | Simulation hardware, HPC |
 
-            ### Revenue Exposure
+            ### Signal Weight
 
-            | Ticker | Quantum Revenue | Signal Scaling |
-            |--------|----------------|----------------|
-            | IONQ, RGTI, QBTS, QUBT | 100% | Full signal (up to +/-2.0) |
-            | HON | ~5% | Scaled to max +/-0.3 |
-            | IBM | ~2% | Scaled to max +/-0.15 |
-            | NVDA | ~1% | Scaled to max +/-0.1 |
-            | GOOGL, MSFT | <0.1% | Scaled to max +/-0.05 |
+            How much quantum-specific news should move each stock. Pure-play quantum companies get full signal weight. Diversified companies are scaled down because quantum is a small part of their business.
+
+            | Ticker | Signal Weight | Max Score | Rationale |
+            |--------|--------------|-----------|----------|
+            | IONQ, RGTI, QBTS, QUBT | 100% | +/-2.0 | Pure-play quantum companies |
+            | HON | 30% | +/-0.3 | Quantinuum subsidiary |
+            | IBM | 15% | +/-0.15 | Quantum division is small vs total business |
+            | NVDA | 10% | +/-0.1 | Indirect beneficiary (simulation hardware) |
+            | GOOGL, MSFT | 5% | +/-0.05 | Quantum divisions negligible vs total market cap |
             """)
 
     # Load initial event on startup
