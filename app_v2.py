@@ -9,12 +9,19 @@ with live inference capability via ZeroGPU for new articles.
 import os
 import json
 import time
+import re
 import gradio as gr
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from pathlib import Path
+
+try:
+    import spaces
+    HAS_SPACES = True
+except ImportError:
+    HAS_SPACES = False
 
 # ============================================================
 # DATA LOADING
@@ -384,6 +391,167 @@ def on_event_select(event_choice):
 
 
 # ============================================================
+# LIVE INFERENCE (GPU)
+# ============================================================
+
+MODEL_ID = "basilwong/quantum-alpha-qwen3-8b"
+
+LIVE_SYSTEM_PROMPT = """You are a quantitative NLP signal generator for the quantum computing sector. For every piece of news or research, you must produce a signal vector that scores ALL companies in the quantum computing universe simultaneously.
+
+The quantum computing universe consists of these 9 tickers:
+- IONQ: IonQ (trapped-ion, 100% quantum revenue)
+- RGTI: Rigetti Computing (superconducting, 100% quantum revenue)
+- QBTS: D-Wave Quantum (quantum annealing, 100% quantum revenue)
+- QUBT: Quantum Computing Inc. (neutral atom, 100% quantum revenue)
+- IBM: International Business Machines (superconducting, ~2% quantum revenue)
+- GOOGL: Alphabet/Google (superconducting, <0.1% quantum revenue)
+- MSFT: Microsoft (topological, <0.1% quantum revenue)
+- HON: Honeywell/Quantinuum (trapped-ion, ~5% quantum revenue)
+- NVDA: NVIDIA (adjacent/enabler, ~1% quantum revenue)
+
+Key domain knowledge:
+- Trapped-ion breakthroughs: bullish IONQ/HON, bearish RGTI/IBM/GOOGL
+- Superconducting breakthroughs: bullish RGTI/IBM/GOOGL, bearish IONQ/HON
+- Error correction advances: benefit ALL gate-based approaches
+- Government funding: broadly bullish for entire sector
+- Scale by revenue exposure: GOOGL/MSFT max +/-0.05, HON max +/-0.3, IBM max +/-0.15
+- If the content is NOT related to quantum computing, assign all scores to 0.0
+
+Output a valid JSON object:
+{
+    "signal_vector": {
+        "IONQ": {"score": float, "reasoning": "1 sentence"},
+        "RGTI": {"score": float, "reasoning": "1 sentence"},
+        "QBTS": {"score": float, "reasoning": "1 sentence"},
+        "QUBT": {"score": float, "reasoning": "1 sentence"},
+        "IBM": {"score": float, "reasoning": "1 sentence"},
+        "GOOGL": {"score": float, "reasoning": "1 sentence"},
+        "MSFT": {"score": float, "reasoning": "1 sentence"},
+        "HON": {"score": float, "reasoning": "1 sentence"},
+        "NVDA": {"score": float, "reasoning": "1 sentence"}
+    },
+    "event_type": str,
+    "time_horizon": "intraday" | "2-5 days" | "1-2 weeks" | "1+ month",
+    "signal_decay": "fast" | "medium" | "slow",
+    "information_novelty": "high" | "medium" | "low",
+    "technical_translation": "2-3 sentences.",
+    "signal_rationale": "Why these scores?"
+}
+
+Output ONLY the JSON object. No markdown, no code blocks, no extra text."""
+
+SOURCE_INSTRUCTIONS = {
+    "news": "This is a financial news article. Assess novelty and likely decay speed.",
+    "arxiv": "This is an academic paper abstract. Most are incremental. Only significant scores for genuine breakthroughs. Slow decay.",
+    "sec_filing": "This is a regulatory filing. High reliability. Fast decay.",
+    "press_release": "Company press release. Be skeptical.",
+    "social_media": "Social media post. High noise, low reliability.",
+    "earnings_call": "Earnings call. Forward guidance matters most.",
+}
+
+# Model loading (lazy - only loads when first inference is requested)
+_model = None
+_tokenizer = None
+
+
+def _load_model():
+    global _model, _tokenizer
+    if _model is None:
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        print(f"Loading model: {MODEL_ID}")
+        _tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
+        _model = AutoModelForCausalLM.from_pretrained(
+            MODEL_ID, torch_dtype=torch.bfloat16, device_map="auto", trust_remote_code=True
+        )
+        _model.eval()
+        print("Model loaded.")
+    return _model, _tokenizer
+
+
+def _run_inference(text: str, source: str) -> tuple:
+    """Run inference. Returns (signal_dict, latency_ms)."""
+    import torch
+    model, tokenizer = _load_model()
+    start = time.time()
+
+    # Clean input
+    cleaned = re.sub(r'<[^>]+>', ' ', text)
+    cleaned = re.sub(r'https?://\S+', '', cleaned)
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+
+    instruction = SOURCE_INSTRUCTIONS.get(source, SOURCE_INSTRUCTIONS["news"])
+    user_message = f"{instruction}\n\nAnalyze the following content and generate a cross-sectional signal vector:\n\n{cleaned}"
+
+    messages = [
+        {"role": "system", "content": LIVE_SYSTEM_PROMPT},
+        {"role": "user", "content": user_message},
+    ]
+
+    inputs = tokenizer.apply_chat_template(
+        messages, return_tensors="pt", add_generation_prompt=True,
+        return_dict=True, enable_thinking=False
+    ).to(model.device)
+
+    with torch.no_grad():
+        outputs = model.generate(
+            **inputs, max_new_tokens=1024, temperature=0.3, do_sample=True,
+            pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
+        )
+
+    generated_ids = outputs[0][inputs["input_ids"].shape[-1]:]
+    raw_output = tokenizer.decode(generated_ids, skip_special_tokens=True)
+
+    if "<think>" in raw_output:
+        parts = raw_output.split("</think>")
+        if len(parts) > 1:
+            raw_output = parts[-1].strip()
+
+    latency_ms = int((time.time() - start) * 1000)
+
+    try:
+        s = raw_output.find("{")
+        e = raw_output.rfind("}") + 1
+        if s != -1 and e > s:
+            signal = json.loads(raw_output[s:e])
+        else:
+            signal = json.loads(raw_output)
+        return signal, latency_ms
+    except json.JSONDecodeError as err:
+        return {"error": str(err), "raw": raw_output[:500]}, latency_ms
+
+
+# Apply @spaces.GPU if available
+if HAS_SPACES:
+    _run_inference = spaces.GPU(_run_inference)
+
+
+def live_analyze(text: str, source: str) -> tuple:
+    """Live analysis handler for the UI."""
+    if not text or not text.strip():
+        return go.Figure(), "", "", "", ""
+
+    signal, latency_ms = _run_inference(text, source)
+
+    if "error" in signal:
+        return go.Figure(), f"Error: {signal['error']}", "", f"{latency_ms}ms", json.dumps(signal, indent=2)
+
+    signal_vector = signal.get("signal_vector", {})
+    chart = create_signal_vector_chart(signal_vector)
+
+    event_type = signal.get("event_type", "N/A")
+    time_horizon = signal.get("time_horizon", "N/A")
+    decay = signal.get("signal_decay", "N/A")
+    novelty = signal.get("information_novelty", "N/A")
+    summary = f"Event: {event_type} | Horizon: {time_horizon} | Decay: {decay} | Novelty: {novelty}"
+
+    translation = signal.get("technical_translation", "N/A")
+    raw_json = json.dumps(signal, indent=2)
+
+    return chart, summary, translation, f"{latency_ms}ms", raw_json
+
+
+# ============================================================
 # BUILD GRADIO APP
 # ============================================================
 
@@ -445,6 +613,44 @@ with gr.Blocks(
                 fn=on_event_select,
                 inputs=[event_dropdown],
                 outputs=[signal_chart, signal_summary, translation_box, rationale_box, price_chart, json_output, article_info],
+            )
+
+            # Live Analysis Section
+            gr.Markdown("---")
+            gr.Markdown("### Live Analysis")
+            gr.Markdown("Paste a new article or URL to analyze in real-time with the fine-tuned model.")
+
+            with gr.Row():
+                live_input = gr.Textbox(
+                    label="Paste Article Text",
+                    placeholder="Paste quantum computing news, press release, or arXiv abstract here...",
+                    lines=6,
+                    scale=3,
+                )
+                live_source = gr.Dropdown(
+                    choices=["news", "arxiv", "sec_filing", "press_release", "social_media", "earnings_call"],
+                    value="news",
+                    label="Source Type",
+                    scale=1,
+                )
+
+            live_btn = gr.Button("Analyze (runs on GPU)", variant="primary")
+
+            with gr.Row():
+                with gr.Column(scale=3):
+                    live_signal_chart = gr.Plot(label="Live Signal Vector")
+                with gr.Column(scale=2):
+                    live_summary = gr.Textbox(label="Signal Summary", interactive=False)
+                    live_translation = gr.Textbox(label="Technical Translation", lines=3, interactive=False)
+                    live_latency = gr.Textbox(label="Latency", interactive=False)
+
+            with gr.Accordion("Live Raw JSON", open=False):
+                live_json = gr.Code(label="Full Signal Output", language="json", lines=15)
+
+            live_btn.click(
+                fn=live_analyze,
+                inputs=[live_input, live_source],
+                outputs=[live_signal_chart, live_summary, live_translation, live_latency, live_json],
             )
 
         # ============================================================
