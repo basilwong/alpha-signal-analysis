@@ -116,6 +116,35 @@ def clean_article_text(text: str) -> str:
 BATCH_SIZE = 50  # Commit volume every 50 articles
 
 
+def repair_json(raw: str) -> dict:
+    """
+    Attempt to repair common JSON formatting issues from LLM output.
+    Handles: trailing commas, unescaped newlines in strings, missing commas.
+    """
+    import re as _re
+    # Remove trailing commas before } or ]
+    fixed = _re.sub(r',\s*([}\]])', r'\1', raw)
+    # Replace unescaped newlines inside strings
+    # (between quotes, replace literal newlines with \n)
+    fixed = _re.sub(r'(?<=")([^"]*?)\n([^"]*?)(?=")', lambda m: m.group(1) + '\\n' + m.group(2), fixed)
+    # Try to fix missing commas between key-value pairs (}\n"key" -> },\n"key")
+    fixed = _re.sub(r'(\})\s*\n\s*(")', r'\1,\n\2', fixed)
+    # Fix missing comma after string value before next key
+    fixed = _re.sub(r'("[^"]*")\s*\n\s*(")', r'\1,\n\2', fixed)
+    try:
+        return json.loads(fixed)
+    except json.JSONDecodeError:
+        # Last resort: try to extract just the signal_vector portion
+        sv_start = fixed.find('"signal_vector"')
+        if sv_start != -1:
+            # Wrap in minimal valid JSON
+            try:
+                return json.loads('{' + fixed[sv_start:] + '}')
+            except:
+                pass
+        raise
+
+
 @app.function(
     image=predict_image,
     gpu="A100",
@@ -202,10 +231,12 @@ def run_batch(batch_json: str):
 
             start = raw_output.find("{")
             end = raw_output.rfind("}") + 1
-            if start != -1 and end > start:
-                signal = json.loads(raw_output[start:end])
-            else:
-                signal = json.loads(raw_output)
+            json_str = raw_output[start:end] if (start != -1 and end > start) else raw_output
+            try:
+                signal = json.loads(json_str)
+            except json.JSONDecodeError:
+                # Attempt repair
+                signal = repair_json(json_str)
 
             article_time = time.time() - article_start
             results.append({
@@ -273,7 +304,17 @@ def main():
     print(f"Each batch takes ~50 minutes on A100")
     print(f"Processing sequentially (one batch at a time)...")
 
-    for batch in batches:
+    # Skip already-completed batches (check if file exists locally)
+    start_batch = 0
+    for b in batches:
+        batch_file = f"data/eval/predictions_batch_{b['batch_id']:03d}.jsonl"
+        if os.path.exists(batch_file):
+            print(f"Batch {b['batch_id']} already done locally, skipping.")
+            start_batch = b['batch_id'] + 1
+        else:
+            break
+
+    for batch in batches[start_batch:]:
         batch_id = batch["batch_id"]
         print(f"\n{'='*60}")
         print(f"Starting batch {batch_id} ({len(batch['articles'])} articles)")

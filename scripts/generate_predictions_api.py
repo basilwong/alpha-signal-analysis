@@ -24,6 +24,7 @@ MODEL_MAP = {
     "qwen3-8b": "qwen3-8b",
     "qwen3-32b": "qwen3-32b",
     "qwen3-max": "qwen3-max",
+    "qwen3.7-max": "qwen3.7-max-2026-05-20",
 }
 
 SYSTEM_PROMPT = """You are a quantitative NLP signal generator for the quantum computing sector. For every piece of news or research, you must produce a signal vector that scores ALL companies in the quantum computing universe simultaneously.

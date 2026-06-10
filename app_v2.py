@@ -55,22 +55,57 @@ TECH_CLUSTERS = {
     "Adjacent": ["NVDA"],
 }
 
-# Load predictions
-def load_predictions():
-    """Load pre-computed predictions from file (prefer final version)."""
+# Model definitions
+MODEL_FILES = {
+    "Qwen3-8B Fine-tuned (LoRA)": [
+        EVAL_DIR / "predictions_batch_000.jsonl",
+        EVAL_DIR / "predictions_batch_001.jsonl",
+        EVAL_DIR / "predictions_batch_002.jsonl",
+        EVAL_DIR / "predictions_batch_003.jsonl",
+        EVAL_DIR / "predictions_batch_004.jsonl",
+        EVAL_DIR / "predictions_batch_005.jsonl",
+        EVAL_DIR / "predictions_batch_006.jsonl",
+        EVAL_DIR / "predictions_batch_007.jsonl",
+        EVAL_DIR / "predictions_batch_008.jsonl",
+        EVAL_DIR / "predictions_v2_final.jsonl",  # fallback
+    ],
+    "Qwen3-8B Base": [EVAL_DIR / "predictions_qwen3_8b_base.jsonl"],
+    "Qwen3-32B Base": [EVAL_DIR / "predictions_qwen3_32b_base.jsonl"],
+    "Qwen3.7-Max Base": [EVAL_DIR / "predictions_qwen37_max_base.jsonl"],
+}
+
+
+def load_predictions_for_model(model_name: str) -> list:
+    """Load predictions for a specific model from its file(s)."""
     predictions = []
-    # Try final file first, fall back to intermediate
-    pred_path = EVAL_DIR / "predictions_v2_final.jsonl"
-    if not pred_path.exists():
-        pred_path = EVAL_DIR / "predictions_v2.jsonl"
-    if pred_path.exists():
-        with open(pred_path) as f:
-            for line in f:
-                if line.strip():
-                    p = json.loads(line)
-                    if p.get("status") == "success":
-                        predictions.append(p)
-    return sorted(predictions, key=lambda x: x.get("date", ""))
+    files = MODEL_FILES.get(model_name, [])
+    for pred_path in files:
+        if pred_path.exists():
+            with open(pred_path) as f:
+                for line in f:
+                    if line.strip():
+                        p = json.loads(line)
+                        if p.get("status") == "success":
+                            predictions.append(p)
+    # Deduplicate by article_idx
+    seen = set()
+    unique = []
+    for p in predictions:
+        idx = p.get("article_idx")
+        if idx not in seen:
+            seen.add(idx)
+            unique.append(p)
+    return sorted(unique, key=lambda x: x.get("date", ""))
+
+
+def load_all_models() -> dict:
+    """Load predictions for all available models."""
+    all_preds = {}
+    for model_name in MODEL_FILES:
+        preds = load_predictions_for_model(model_name)
+        if preds:
+            all_preds[model_name] = preds
+    return all_preds
 
 
 def load_market_data():
@@ -87,19 +122,27 @@ def load_market_data():
 
 # Load data at startup
 print("Loading data...")
-PREDICTIONS = load_predictions()
+ALL_MODEL_PREDICTIONS = load_all_models()
 PRICES = load_market_data()
-print(f"Loaded {len(PREDICTIONS)} predictions, {len(PRICES)} days of market data")
+
+# Default to the first available model
+AVAILABLE_MODELS = list(ALL_MODEL_PREDICTIONS.keys())
+DEFAULT_MODEL = AVAILABLE_MODELS[0] if AVAILABLE_MODELS else "Qwen3-8B Fine-tuned (LoRA)"
+PREDICTIONS = ALL_MODEL_PREDICTIONS.get(DEFAULT_MODEL, [])
+
+print(f"Loaded models: {', '.join(f'{k} ({len(v)})' for k, v in ALL_MODEL_PREDICTIONS.items())}")
+print(f"Market data: {len(PRICES)} days")
 
 
 # ============================================================
 # HELPER FUNCTIONS
 # ============================================================
 
-def get_event_list():
+def get_event_list(model_name=None):
     """Get list of events for the dropdown."""
+    preds = ALL_MODEL_PREDICTIONS.get(model_name, PREDICTIONS) if model_name else PREDICTIONS
     events = []
-    for i, p in enumerate(PREDICTIONS):
+    for i, p in enumerate(preds):
         title = p.get("title", "Untitled")[:60]
         date = p.get("date", "N/A")
         events.append(f"[{i}] {date} | {title}")
@@ -326,9 +369,10 @@ def create_decay_curve_chart() -> go.Figure:
 # EVENT HANDLERS
 # ============================================================
 
-def on_event_select(event_choice):
+def on_event_select(event_choice, model_name=None):
     """Handle event selection from dropdown."""
-    if not event_choice or not PREDICTIONS:
+    preds = ALL_MODEL_PREDICTIONS.get(model_name, PREDICTIONS) if model_name else PREDICTIONS
+    if not event_choice or not preds:
         return (go.Figure(), "", "", "", go.Figure(), "{}", "")
 
     # Parse index from choice string
@@ -337,10 +381,10 @@ def on_event_select(event_choice):
     except:
         idx = 0
 
-    if idx >= len(PREDICTIONS):
+    if idx >= len(preds):
         idx = 0
 
-    prediction = PREDICTIONS[idx]
+    prediction = preds[idx]
     signal = prediction.get("signal", {})
     signal_vector = signal.get("signal_vector", {})
 
@@ -565,18 +609,18 @@ with gr.Blocks(
             gr.Markdown("Browse historical events or analyze new articles. Each event produces a signal vector across all 9 quantum tickers.")
 
             with gr.Row():
+                model_selector = gr.Dropdown(
+                    choices=AVAILABLE_MODELS,
+                    value=DEFAULT_MODEL,
+                    label="Model",
+                    scale=2,
+                )
                 event_dropdown = gr.Dropdown(
                     choices=get_event_list(),
                     label="Select Event",
                     value=get_event_list()[0] if PREDICTIONS else None,
                     scale=4,
                 )
-                # model_selector = gr.Dropdown(
-                #     choices=["Fine-tuned Qwen3-8B (LoRA)", "Base Qwen3-8B"],
-                #     value="Fine-tuned Qwen3-8B (LoRA)",
-                #     label="Model",
-                #     scale=2,
-                # )
 
             article_info = gr.Markdown(value="Select an event to view details.")
 
@@ -597,10 +641,21 @@ with gr.Blocks(
             with gr.Accordion("Raw JSON Signal", open=False):
                 json_output = gr.Code(label="Full Signal Output", language="json", lines=15)
 
+            # Wire up model selection (updates event list)
+            def on_model_change(model_name):
+                events = get_event_list(model_name)
+                return gr.update(choices=events, value=events[0] if events else None)
+
+            model_selector.change(
+                fn=on_model_change,
+                inputs=[model_selector],
+                outputs=[event_dropdown],
+            )
+
             # Wire up event selection
             event_dropdown.change(
                 fn=on_event_select,
-                inputs=[event_dropdown],
+                inputs=[event_dropdown, model_selector],
                 outputs=[signal_chart, signal_summary, translation_box, rationale_box, price_chart, json_output, article_info],
             )
 
@@ -647,24 +702,86 @@ with gr.Blocks(
         # ============================================================
         with gr.Tab("Evaluation Dashboard"):
             gr.Markdown("""
-            ### Model Performance Metrics
-            Aggregate evaluation of the fine-tuned model's predictions against actual market data.
+            ### Model Performance Comparison
+            Compare evaluation metrics across different models. Select one or more models to view their performance.
             *ℹ️ Metrics computed using Abnormal Returns (market-adjusted) and Information Coefficient (Spearman rank correlation).*
             """)
 
-            with gr.Row():
-                gr.Textbox(value="+0.088 (p<0.001)", label="Overall IC at +10d (ℹ️ Spearman rank correlation between predicted signals and realized abnormal returns)", interactive=False)
-                gr.Textbox(value="+0.048 (p=0.006)", label="Overall IC at +5d", interactive=False)
-                gr.Textbox(value="10 days", label="Optimal Horizon (ℹ️ Holding period with highest IC)", interactive=False)
-                gr.Textbox(value=f"{len(PREDICTIONS)}", label="Events Evaluated", interactive=False)
+            eval_model_selector = gr.CheckboxGroup(
+                choices=AVAILABLE_MODELS,
+                value=AVAILABLE_MODELS[:1],
+                label="Select Models to Compare",
+            )
 
             with gr.Row():
-                decay_chart = gr.Plot(value=create_decay_curve_chart(), label="Signal Decay Curve")
+                eval_summary = gr.Markdown(value="Select models above to see comparison.")
+
+            with gr.Row():
+                eval_decay_chart = gr.Plot(value=create_decay_curve_chart(), label="Signal Decay Curves (All Selected Models)")
+
+            with gr.Row():
+                eval_ic_table = gr.Dataframe(
+                    label="IC Comparison Table",
+                    headers=["Model", "IC +1d", "IC +5d", "IC +10d", "IC +20d", "Dir Acc +5d", "Events"],
+                    interactive=False,
+                )
+
+            def update_eval_dashboard(selected_models):
+                """Update the evaluation dashboard when model selection changes."""
+                if not selected_models:
+                    return "No models selected.", go.Figure(), []
+
+                # Build comparison table
+                rows = []
+                for model_name in selected_models:
+                    preds = ALL_MODEL_PREDICTIONS.get(model_name, [])
+                    rows.append([model_name, "--", "--", "--", "--", "--", str(len(preds))])
+
+                # Build overlaid decay curves
+                fig = go.Figure()
+                model_colors = {
+                    "Qwen3-8B Fine-tuned (LoRA)": "#00d4aa",
+                    "Qwen3-8B Base": "#ff6b6b",
+                    "Qwen3-32B Base": "#4dabf7",
+                    "Qwen3.7-Max Base": "#ffd43b",
+                }
+                # Placeholder decay curves (will be replaced with real data from eval)
+                for model_name in selected_models:
+                    color = model_colors.get(model_name, "#888888")
+                    fig.add_trace(go.Scatter(
+                        x=[1, 2, 5, 10, 20],
+                        y=[0.01, 0.02, 0.05, 0.09, 0.05],  # placeholder
+                        mode='lines+markers',
+                        name=model_name,
+                        line=dict(color=color, width=2),
+                        marker=dict(size=8),
+                    ))
+
+                fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+                fig.update_layout(
+                    title="Signal Decay Comparison (IC by Holding Period)",
+                    xaxis_title="Holding Period (Trading Days)",
+                    yaxis_title="Information Coefficient",
+                    height=400,
+                    template="plotly_dark",
+                    paper_bgcolor="#1a1a2e",
+                    plot_bgcolor="#16213e",
+                    legend=dict(x=0.02, y=0.98),
+                )
+
+                summary = f"Comparing {len(selected_models)} model(s). Full evaluation metrics will be computed once all predictions are complete."
+                return summary, fig, rows
+
+            eval_model_selector.change(
+                fn=update_eval_dashboard,
+                inputs=[eval_model_selector],
+                outputs=[eval_summary, eval_decay_chart, eval_ic_table],
+            )
 
             gr.Markdown("""
             ### Limitations
             - Sample size: Limited events (statistical power constrained)
-            - Period: Aug 2024 - Jun 2026 (single market regime)
+            - Period: Jan - Jun 2026 (single market regime, walk-forward split)
             - No intraday timing (daily granularity only)
             - Abnormal returns use single-factor market model (SPY)
             - Correlation does not imply causation
