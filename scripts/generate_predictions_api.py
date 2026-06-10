@@ -25,6 +25,7 @@ MODEL_MAP = {
     "qwen3-32b": "qwen3-32b",
     "qwen3-max": "qwen3-max",
     "qwen3.7-max": "qwen3.7-max-2026-05-20",
+    "qwen3-30b-thinking": "qwen3-30b-a3b-thinking-2507",
 }
 
 SYSTEM_PROMPT = """You are a quantitative NLP signal generator for the quantum computing sector. For every piece of news or research, you must produce a signal vector that scores ALL companies in the quantum computing universe simultaneously.
@@ -103,6 +104,12 @@ def run_inference(client, model_name, text, source):
     instruction = SOURCE_INSTRUCTIONS.get(source, SOURCE_INSTRUCTIONS["news"])
     user_message = f"{instruction}\n\nAnalyze the following content and generate a cross-sectional signal vector:\n\n{cleaned}"
 
+    # Thinking models require enable_thinking=True; others should use False for speed
+    is_thinking_model = "thinking" in model_name.lower()
+    extra = {"enable_thinking": True} if is_thinking_model else {"enable_thinking": False}
+    # Thinking models need more tokens for reasoning + output
+    max_tok = 2048 if is_thinking_model else 1024
+
     start = time.time()
     try:
         response = client.chat.completions.create(
@@ -112,8 +119,8 @@ def run_inference(client, model_name, text, source):
                 {"role": "user", "content": user_message},
             ],
             temperature=0.3,
-            max_tokens=1024,
-            extra_body={"enable_thinking": False},
+            max_tokens=max_tok,
+            extra_body=extra,
         )
 
         raw_output = response.choices[0].message.content
