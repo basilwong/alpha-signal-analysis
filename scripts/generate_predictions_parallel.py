@@ -116,10 +116,10 @@ def clean_article_text(text: str) -> str:
 @app.cls(
     image=predict_image,
     gpu="A100",
-    timeout=3600,  # 1 hour per container
+    timeout=7200,  # 2 hours per container
     volumes={"/root/.cache/huggingface": hf_cache_vol},
     secrets=[modal.Secret.from_name("huggingface-secret")],
-    max_containers=4,  # Max 4 containers running simultaneously
+    max_containers=8,  # Max 8 containers running simultaneously
 )
 class Predictor:
     @modal.enter()
