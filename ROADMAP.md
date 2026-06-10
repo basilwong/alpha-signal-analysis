@@ -149,3 +149,50 @@ Complete predictions (all 3 models)
 6. Model inference takes ~60s per article (not suitable for real-time trading without optimization)
 7. Correlation does not imply causation
 8. No transaction cost modeling
+
+## Stretch Goals: Fine-Tuning Methods and Model Experiments
+
+### Goal 1: Compare Fine-Tuning Methods
+
+Test whether different fine-tuning approaches produce better IC than our current QLoRA setup.
+
+| Method | Description | Hypothesis | Effort | Resource |
+|--------|-------------|-----------|--------|----------|
+| **DoRA** | Weight-Decomposed Low-Rank Adaptation (ICML 2024) | May outperform LoRA on structured output tasks by decomposing magnitude and direction | 2 hours | Modal A100 (~$3) |
+| **GRPO** | Group Relative Policy Optimization (DeepSeek) | Reinforcement learning with price-based reward could teach the model to optimize for IC directly | 4 hours | Modal A100 (~$10) |
+| **Full LoRA rank 128** | Double the LoRA rank from 64 to 128 | More trainable parameters = better representation capacity | 2 hours | Modal A100 (~$3) |
+| **Curriculum ordering** | Sort training data from simple to complex articles | Progressive difficulty may improve final model quality | 1 hour | Modal A100 (~$2) |
+| **Longer training (8 epochs)** | Double the training epochs | May improve JSON compliance and signal quality | 2 hours | Modal A100 (~$3) |
+
+**Evaluation for each:** Run the same 421-article evaluation pipeline and compare IC at +5d. The current baseline is IC = +0.078.
+
+### Goal 2: Fine-Tune Different Base Models
+
+Test whether a different base model produces better results when fine-tuned with the same data.
+
+| Base Model | Size | Approach | Hypothesis | Effort | Resource |
+|-----------|------|----------|-----------|--------|----------|
+| **Qwen3-32B** | 32B | QLoRA (rank 64) | Larger model = higher capacity, may produce better signals | 4 hours | Modal H100 (~$15) |
+| **Qwen3-30B-A3B** | 30B (MoE, 3B active) | QLoRA | MoE architecture may be more efficient for structured tasks | 3 hours | Modal A100 (~$5) |
+| **Llama-3.1-8B** | 8B | QLoRA (rank 64) | Different architecture, benchmarks show strong fine-tuning gains | 2 hours | Modal A100 (~$3) |
+| **Phi-4-mini** | 3.8B | QLoRA (rank 64) | Smallest model, tests if even 4B can produce meaningful signals | 2 hours | Modal A100 (~$2) |
+
+**For each fine-tuned model:**
+1. Train with the same 386-example dataset
+2. Run predictions on the 421 evaluation articles
+3. Compute IC and compare against current best (Qwen3-8B fine-tuned, IC +0.078 at +5d)
+4. Add to the frontend model selector for interactive comparison
+
+### Goal 3: Ensemble Methods
+
+| Approach | Description | Hypothesis |
+|----------|-------------|-----------|
+| Simple average | Average signal vectors across multiple models | Reduces noise, may improve IC |
+| Weighted by IC | Weight each model's signal by its historical IC | Allocates more weight to better-performing models |
+| Stacking | Train a meta-model on the signal vectors of all base models | May capture complementary strengths |
+
+### Prioritization
+
+For the Build Small hackathon (June 15): Focus on DoRA as the single most impactful experiment (one-line change, potential IC improvement).
+
+For the Qwen Cloud hackathon (July 9): Run the full suite of experiments and present the comparison in the demo.
