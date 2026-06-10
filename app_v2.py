@@ -58,6 +58,7 @@ TECH_CLUSTERS = {
 # Model definitions
 MODEL_FILES = {
     "Qwen3-8B Fine-tuned (LoRA)": [
+        EVAL_DIR / "predictions_finetuned_all.jsonl",
         EVAL_DIR / "predictions_batch_000.jsonl",
         EVAL_DIR / "predictions_batch_001.jsonl",
         EVAL_DIR / "predictions_batch_002.jsonl",
@@ -67,11 +68,10 @@ MODEL_FILES = {
         EVAL_DIR / "predictions_batch_006.jsonl",
         EVAL_DIR / "predictions_batch_007.jsonl",
         EVAL_DIR / "predictions_batch_008.jsonl",
-        EVAL_DIR / "predictions_v2_final.jsonl",  # fallback
     ],
     "Qwen3-8B Base": [EVAL_DIR / "predictions_qwen3_8b_base.jsonl"],
-    "Qwen3-32B Base": [EVAL_DIR / "predictions_qwen3_32b_base.jsonl"],
     "Qwen3.7-Max Base": [EVAL_DIR / "predictions_qwen37_max_base.jsonl"],
+    "Qwen3-30B Thinking": [EVAL_DIR / "predictions_qwen3_30b_thinking.jsonl"],
 }
 
 
@@ -726,40 +726,69 @@ with gr.Blocks(
                     interactive=False,
                 )
 
+            # Load evaluation results
+            EVAL_RESULTS = {}
+            eval_results_path = EVAL_DIR / "results_multi_model.json"
+            if eval_results_path.exists():
+                with open(eval_results_path) as f:
+                    EVAL_RESULTS = json.loads(f.read())
+
+            MODEL_COLORS = {
+                "Qwen3-8B Fine-tuned (LoRA)": "#00d4aa",
+                "Qwen3-8B Base": "#ff6b6b",
+                "Qwen3-32B Base": "#4dabf7",
+                "Qwen3.7-Max Base": "#ffd43b",
+                "Qwen3-30B Thinking": "#a78bfa",
+            }
+
             def update_eval_dashboard(selected_models):
                 """Update the evaluation dashboard when model selection changes."""
                 if not selected_models:
                     return "No models selected.", go.Figure(), []
 
-                # Build comparison table
+                # Build comparison table from real results
                 rows = []
                 for model_name in selected_models:
-                    preds = ALL_MODEL_PREDICTIONS.get(model_name, [])
-                    rows.append([model_name, "--", "--", "--", "--", "--", str(len(preds))])
+                    results = EVAL_RESULTS.get(model_name, {})
+                    if "error" in results or not results:
+                        preds = ALL_MODEL_PREDICTIONS.get(model_name, [])
+                        rows.append([model_name, "--", "--", "--", "--", "--", str(len(preds))])
+                        continue
+                    decay = {d["horizon"]: d for d in results.get("decay_curve", [])}
+                    ic1 = f"{decay.get(1, {}).get('ic', 0):+.4f}" if 1 in decay else "--"
+                    ic5 = f"{decay.get(5, {}).get('ic', 0):+.4f}" if 5 in decay else "--"
+                    ic10 = f"{decay.get(10, {}).get('ic', 0):+.4f}" if 10 in decay else "--"
+                    ic20 = f"{decay.get(20, {}).get('ic', 0):+.4f}" if 20 in decay else "--"
+                    acc = results.get("direction_accuracy_5d", {}).get("accuracy", 0)
+                    acc_str = f"{acc*100:.1f}%" if acc else "--"
+                    n = str(results.get("n_predictions", 0))
+                    rows.append([model_name, ic1, ic5, ic10, ic20, acc_str, n])
 
-                # Build overlaid decay curves
+                # Build overlaid decay curves from real data
                 fig = go.Figure()
-                model_colors = {
-                    "Qwen3-8B Fine-tuned (LoRA)": "#00d4aa",
-                    "Qwen3-8B Base": "#ff6b6b",
-                    "Qwen3-32B Base": "#4dabf7",
-                    "Qwen3.7-Max Base": "#ffd43b",
-                }
-                # Placeholder decay curves (will be replaced with real data from eval)
                 for model_name in selected_models:
-                    color = model_colors.get(model_name, "#888888")
-                    fig.add_trace(go.Scatter(
-                        x=[1, 2, 5, 10, 20],
-                        y=[0.01, 0.02, 0.05, 0.09, 0.05],  # placeholder
-                        mode='lines+markers',
-                        name=model_name,
-                        line=dict(color=color, width=2),
-                        marker=dict(size=8),
-                    ))
+                    color = MODEL_COLORS.get(model_name, "#888888")
+                    results = EVAL_RESULTS.get(model_name, {})
+                    decay_data = results.get("decay_curve", [])
+                    if decay_data:
+                        horizons = [d["horizon"] for d in decay_data]
+                        ics = [d["ic"] for d in decay_data]
+                        p_values = [d.get("p_value", 1) for d in decay_data]
+                        # Mark significant points
+                        marker_colors = [color if p < 0.1 else "#555555" for p in p_values]
+                        fig.add_trace(go.Scatter(
+                            x=horizons, y=ics,
+                            mode='lines+markers',
+                            name=model_name,
+                            line=dict(color=color, width=2),
+                            marker=dict(size=10, color=marker_colors, line=dict(width=1, color='white')),
+                            hovertext=[f"{model_name}<br>IC={ic:.4f}, p={p:.4f}" for ic, p in zip(ics, p_values)],
+                            hoverinfo='text',
+                        ))
 
                 fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
                 fig.update_layout(
-                    title="Signal Decay Comparison (IC by Holding Period)",
+                    title="Signal Decay Comparison (IC by Holding Period) | Bright markers = p<0.10",
                     xaxis_title="Holding Period (Trading Days)",
                     yaxis_title="Information Coefficient",
                     height=400,
@@ -769,7 +798,9 @@ with gr.Blocks(
                     legend=dict(x=0.02, y=0.98),
                 )
 
-                summary = f"Comparing {len(selected_models)} model(s). Full evaluation metrics will be computed once all predictions are complete."
+                # Summary text
+                best_model = max(selected_models, key=lambda m: EVAL_RESULTS.get(m, {}).get("decay_curve", [{}])[2].get("ic", 0) if len(EVAL_RESULTS.get(m, {}).get("decay_curve", [])) > 2 else 0)
+                summary = f"Comparing {len(selected_models)} model(s). Best IC at +5d: **{best_model}**"
                 return summary, fig, rows
 
             eval_model_selector.change(
