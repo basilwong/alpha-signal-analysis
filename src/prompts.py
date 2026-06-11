@@ -42,6 +42,21 @@ SHARED_CONTEXT = """**The quantum computing universe (10 tickers):**
 - Government funding → broadly bullish for entire sector
 - Negative news about one company → slightly bullish for direct competitors
 
+**Technology validation vs. competitive threat (CRITICAL RULE):**
+When a large company (Google, IBM, Microsoft) achieves a technology breakthrough:
+- This VALIDATES the technology approach and is BULLISH for smaller same-technology pure-plays
+- Empirical evidence: Google Willow (superconducting) → RGTI surged +89% in 5 days
+- The market prices "this approach is viable" BEFORE "who wins within the approach"
+- Pre-revenue quantum stocks move on sector/approach validation, not competitive positioning
+
+Only score same-tech pure-plays BEARISH on competitor news when:
+- The news is a zero-sum business win (contract, exclusive partnership, market share)
+- The competitor demonstrates a proprietary moat others cannot replicate
+- The article explicitly discusses competitive displacement of the smaller company
+
+Default rule: Google/IBM superconducting breakthrough → BULLISH for RGTI
+Default rule: Quantinuum trapped-ion breakthrough → BULLISH for IONQ (and vice versa)
+
 **IONQ-QNT competitive dynamic:**
 - QNT (Quantinuum) and IONQ are direct competitors (both trapped-ion, pure-play)
 - Sector-wide events (funding, trapped-ion breakthroughs): both move together
