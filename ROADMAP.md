@@ -1,198 +1,192 @@
-# Quantum Alpha Intelligence Platform: Roadmap to Final Product
+# Quantum Alpha Intelligence Platform: Roadmap
 
 ## Project Overview
 
-Quantum Alpha Intelligence is an NLP-driven alpha signal generator for the quantum computing sector. It uses language models to analyze news, research papers, and press releases, producing cross-sectional trading signals across all public quantum computing companies simultaneously. The platform compares multiple models (fine-tuned small vs. large base models) to demonstrate that domain-specific fine-tuning on a small model can match or exceed larger general-purpose models.
+Quantum Alpha Intelligence is an NLP-driven alpha signal generator for the quantum computing sector. It uses fine-tuned small language models to analyze news, research papers, and press releases, producing cross-sectional trading signals across 9 public quantum computing companies simultaneously. The platform compares multiple models and fine-tuning approaches to demonstrate that domain-specific fine-tuning on a small model can match or exceed larger general-purpose models.
 
 **Hackathon Submissions:**
-1. **Build Small** (Hugging Face/Gradio) - Deadline: June 15, 2026
-2. **Qwen Cloud Global AI Hackathon** (Memory Agent track) - Deadline: July 9, 2026
+1. **Build Small** (Hugging Face/Gradio) — Deadline: June 15, 2026
+2. **Qwen Cloud Global AI Hackathon** (Memory Agent track) — Deadline: July 9, 2026
+
+---
 
 ## Current Status (June 10, 2026)
 
-### What's Done
+### Completed
 
-| Component | Status | Details |
-|-----------|--------|---------|
-| Data collection | Done | 611 articles (Aug 2024 - Jun 2026), split into train (190) and eval (421) |
-| Temporal split fix | Done | Train on 2024-2025, eval on 2026 (proper walk-forward) |
-| Outcome contamination cleanup | Done | 186 training articles had price statements removed |
-| Training data (V3) | Done | 386 combined examples (V2 + V3) |
-| Model fine-tuning (V3) | Done | Qwen3-8B, QLoRA rank 64, loss 1.095, pushed to HF Hub |
-| Market data | Done | 608 trading days for 10 tickers (Yahoo Finance) |
-| V2 Frontend | Done | 3-tab Gradio app deployed to HF Space |
-| Live inference | Done | @spaces.GPU integrated for real-time analysis |
+| Component | Details |
+|-----------|---------|
+| Data collection | 611 articles (Aug 2024 - Jun 2026), split into train (190) and eval (421) |
+| Walk-forward split | Train on 2024-2025, eval on 2026 (proper temporal ordering) |
+| Training data V1 | 386 examples from qwen3-max teacher (used for initial fine-tuning) |
+| Model fine-tuning V1 | Qwen3-8B, QLoRA rank 64, loss 1.095, pushed to HF Hub |
+| Batch predictions (fine-tuned) | 414/421 success (98.3%) via Modal A100 batches |
+| API predictions (base 8B) | 421/421 success via Qwen Cloud free tier |
+| API predictions (Max) | 421/421 success via Qwen Cloud free tier |
+| API predictions (30B thinking) | In progress via Qwen Cloud |
+| Multi-model evaluation | IC comparison across 3 models complete |
+| Market data | 608 trading days for 10 tickers (Yahoo Finance) |
+| V2 Frontend | 3-tab Gradio app with model selector, deployed to HF Space |
+| Evaluation pipeline | Custom abnormal returns + IC computation |
 
-### What's Running Now
+### Key Results (V1 Evaluation)
 
-| Task | Method | Progress | ETA |
-|------|--------|----------|-----|
-| Qwen3-8B fine-tuned predictions | Modal A100 (batches of 50) | Batch 0/9 in progress | ~7 hours total (across multiple runs) |
-| Qwen3-8B base predictions | Qwen Cloud API (free) | ~24/421 | ~50 min |
-| Qwen3-32B base predictions | Qwen Cloud API (free) | Starting | ~2 hours |
+| Model | IC +5d | IC +10d | Dir Acc +5d |
+|-------|--------|---------|-------------|
+| **Qwen3-8B Fine-tuned** | **+0.078*** | -0.013 | **55.4%** |
+| Qwen3-8B Base | +0.015 | -0.031 | 53.7% |
+| Qwen3.7-Max Base | +0.028 | +0.034 | 52.1% |
 
-## Remaining Tasks to Final Product
+The fine-tuned 8B model outperforms both the base 8B and the much larger Max model at the +5d horizon. This validates the "Build Small" thesis.
 
-### Step 1: Complete All Model Predictions
+---
 
-All 4 models need predictions on the same 421 evaluation articles:
+## Next Phase: High-Quality Training Data via Manus
+
+### The Strategy Shift
+
+Based on the fine-tuning research report, our current 386 training examples are at the minimum threshold. The literature recommends 800-1,000 examples for robust domain-specific fine-tuning. More importantly, **quality matters more than quantity**: rich reasoning traces from a strong teacher produce significantly better student models than shallow outputs from a weaker teacher.
+
+We are switching from the Qwen Cloud API (qwen3-max) to **Manus as the teacher model**. Manus provides:
+- Web browsing for deep research on each article
+- Multi-step reasoning with tool use
+- Access to frontier models (Claude, GPT-5.5)
+- Structured output with guaranteed schema compliance
+- Highest possible quality per training example
+
+### Dataset Composition (~1,000 examples)
+
+| Category | Count | Purpose |
+|----------|-------|---------|
+| Real articles (with web research) | 190 | Core domain knowledge |
+| Multi-turn follow-ups | 170 | Teaches reasoning about own outputs |
+| Synthetic articles | 200 | Covers scenarios not in real data |
+| Paraphrased articles | 190 | Content > style invariance |
+| Negative examples | 150 | Prevents hallucinated signals |
+| Edge cases | 100 | Teaches measured uncertainty |
+| **Total training** | **~1,000** | |
+| Evaluation predictions | 421 | Walk-forward IC measurement |
+
+### Execution
+
+The Manus teacher pipeline runs concurrently (10-50 tasks simultaneously) using the Manus API with `agent_profile: "max"`. Estimated runtime: 3-12 hours depending on concurrency level.
+
+Prompt file: `/home/ubuntu/manus_teacher_pipeline_prompt.md`
+
+---
+
+## Prize-Targeted Stretch Goals
+
+Based on analysis of the Build Small hackathon tracks and awards:
+
+### High Priority (Highest prize-to-effort ratio)
+
+| Goal | Targets | Prize Potential | Effort |
+|------|---------|----------------|--------|
+| Fine-tune MiniCPM-2B (OpenBMB) | OpenBMB Award + Tiny Titan | $4,000 | 3 hours |
+| Run GPT-5.5 on eval set (Batch API) | OpenAI Track | $5,000 | 1 hour |
+| Migrate to `gr.Server` | Off-Brand award + badge | $1,500 | 6 hours |
+| Demo video + Field Notes blog | Best Demo + Field Notes badge | $2,000 | 3 hours |
+
+### Medium Priority
+
+| Goal | Targets | Prize Potential | Effort |
+|------|---------|----------------|--------|
+| Publish agent traces on Hub | Sharing is Caring badge | Bonus points | 30 min |
+| Stack 4+ badges | Bonus Quest Champion | $2,000 | Cumulative |
+| Modal usage documentation | Modal Awards | $10,000 credits | 1 hour |
+
+### Fine-Tuning Experiments (Post Build Small, for Qwen Cloud hackathon)
+
+| Method | Hypothesis | Effort |
+|--------|-----------|--------|
+| DoRA | May outperform LoRA on structured output | 2 hours |
+| GRPO (RL with price reward) | Directly optimizes for IC | 4 hours |
+| Higher LoRA rank (128) | More capacity | 2 hours |
+| Curriculum ordering | Simple → complex improves quality | 1 hour |
+| Qwen3-32B fine-tuning | Larger model, higher IC ceiling | 4 hours |
+
+### Model Comparison (for evaluation dashboard)
 
 | Model | Source | Cost | Status |
 |-------|--------|------|--------|
-| Qwen3-8B fine-tuned (LoRA) | Modal GPU | ~$15 | In progress (batch-based, volume commit per batch) |
-| Qwen3-8B base (no fine-tuning) | Qwen Cloud API | $0 (1M free tokens) | Running |
-| Qwen3-32B base | Qwen Cloud API | $0 (1M free tokens) | Running |
-| Qwen3.7-Max | Qwen Cloud API | Exhausted (18K tokens left) | Skip or run on subset |
+| Qwen3-8B Fine-tuned (LoRA) | Modal | ~$15 | Complete |
+| Qwen3-8B Base | Qwen Cloud | $0 | Complete |
+| Qwen3.7-Max Base | Qwen Cloud | $0 | Complete |
+| Qwen3-30B Thinking | Qwen Cloud | $0 | In progress |
+| GPT-5.5 | OpenAI Batch API | ~$11 | Planned |
+| MiniCPM-2B Fine-tuned | Modal | ~$2 | Planned |
+| Manus Teacher | Manus API | Credits | Planned |
 
-**Output files:**
-- `data/eval/predictions_qwen3_8b_finetuned.jsonl`
-- `data/eval/predictions_qwen3_8b_base.jsonl`
-- `data/eval/predictions_qwen3_32b_base.jsonl`
+---
 
-### Step 2: Run Evaluation on All Models
+## Execution Order (Remaining Work)
 
-Run `eval/run_evaluation.py` on each model's predictions to compute:
-- IC at horizons +1, +2, +5, +10, +20 days
-- Signal decay curve
-- Direction accuracy
-- IC by ticker, source type, event type
-- Bootstrap confidence intervals
+### Immediate (Before June 15 deadline)
 
-Then generate comparison metrics:
-- Side-by-side IC table
-- Overlaid decay curves
-- Per-ticker comparison
-- Statistical tests for difference between models
+1. **Manus teacher pipeline** — Generate ~1,000 high-quality training examples (running in separate session)
+2. **GPT-5.5 Batch API** — Run 611 articles for OpenAI track comparison + potential teacher data (~$11)
+3. **Retrain Qwen3-8B** on Manus teacher data (Modal, ~$3)
+4. **Fine-tune MiniCPM-2B** on same data (Modal, ~$2) → OpenBMB + Tiny Titan prizes
+5. **Re-run evaluation** on all models with new fine-tuned weights
+6. **Update frontend** with new evaluation results and additional models
+7. **Deploy final app** to HF Space
+8. **Record demo video** (2 min) + write Field Notes blog + social post
+9. **Submit** to Build Small hackathon
 
-**Output:** `data/eval/results_comparison.json`
+### Post June 15 (Qwen Cloud hackathon, deadline July 9)
 
-### Step 3: Update Frontend with Multi-Model Support
+10. Run fine-tuning experiments (DoRA, GRPO, 32B, curriculum)
+11. Add persistent memory layer (Qwen3.7-Max + vector DB on Alibaba Cloud)
+12. Deploy backend on Alibaba Cloud ECS
+13. Architecture diagram + public repo + demo video
+14. Submit to Qwen Cloud hackathon
 
-**Tab 1 (Signal Explorer) updates:**
-- Add model selector dropdown (Qwen3-8B fine-tuned, Qwen3-8B base, Qwen3-32B base)
-- When user selects a model, load that model's predictions for the event
-- Show side-by-side signal vectors when comparing models
-- Live analysis uses the fine-tuned model via ZeroGPU
+---
 
-**Tab 2 (Evaluation Dashboard) updates:**
-- Model comparison table (IC for each model at each horizon)
-- Overlaid decay curves (all models on one chart, color-coded)
-- Model selector to view individual model metrics
-- Highlight where fine-tuned 8B beats larger models
-
-**Tab 3 (Sector Map):** No changes needed.
-
-### Step 4: Deploy Final App to HF Space
-
-- Push updated `app_v2.py` with multi-model support
-- Push all prediction files (3 models x 421 articles)
-- Push evaluation results
-- Verify ZeroGPU works for live analysis
-- Test all 3 tabs end-to-end
-
-### Step 5: Submission Materials
-
-| Item | Description | Deadline |
-|------|-------------|----------|
-| Demo video (2 min) | Screen recording showing: event browsing, model comparison, live analysis, evaluation metrics | June 15 |
-| Social media post | Tweet/LinkedIn post about the project (required for submission) | June 15 |
-| Field Notes blog post | Technical write-up of fine-tuning approach, evaluation methodology, and results (for Well-Tuned badge) | June 15 |
-| Final submission | Submit Space URL + video + post to Build Small hackathon | June 15 |
-
-## Resource Budget (Updated June 10)
+## Resource Budget
 
 | Resource | Budget | Used | Remaining | Allocated For |
 |----------|--------|------|-----------|---------------|
-| Modal credits | $280 | ~$25 | ~$255 | Fine-tuned model batch predictions (~$15 more) |
-| Qwen Cloud (qwen3-max) | 1M tokens | ~982K | ~18K | Exhausted |
-| Qwen Cloud (qwen3-8b) | 1M tokens | ~30K | ~970K | Base model predictions (421 articles) |
-| Qwen Cloud (qwen3-32b) | 1M tokens | ~0 | ~1M | Base model predictions (421 articles) |
-| HF ZeroGPU | $20 credits | ~$1 | ~$19 | Live inference on deployed Space |
+| Modal credits | $280 | ~$30 | ~$250 | Fine-tuning (retrain + MiniCPM + experiments) |
+| Qwen Cloud (qwen3-8b) | 1M tokens | ~421K | ~579K | Done |
+| Qwen Cloud (qwen3.7-max) | 1M tokens | ~364K | ~636K | 30B thinking run |
+| Qwen Cloud (qwen3-32b) | 1M tokens | Broken | N/A | Bug filed with Alibaba |
+| OpenAI credits | $20 | $0 | $20 | GPT-5.5 Batch API (~$11) |
+| Manus credits | Unlimited | ~1 task | Unlimited | Teacher pipeline (~1,400 tasks) |
+| HF ZeroGPU | $20 | ~$1 | ~$19 | Live inference on Space |
 
-## Critical Path
-
-```
-Complete predictions (all 3 models)
-    → Run evaluation on each
-        → Generate comparison metrics
-            → Update frontend with multi-model support
-                → Deploy to HF Space
-                    → Record demo video + write blog post
-                        → Submit (June 15)
-```
-
-**Estimated time remaining:** 2-3 days of work (predictions are the bottleneck, everything else is fast once data is ready).
+---
 
 ## Decision Log
 
 | Date | Decision | Reasoning |
 |------|----------|-----------|
 | Jun 5 | Base model: Qwen3-8B | Best zero-shot baseline in benchmarks |
-| Jun 5 | Fine-tuning: QLoRA rank 64 | Balance between quality and VRAM usage |
-| Jun 6 | Teacher model: qwen3-max | Free, strongest model available |
-| Jun 7 | Output schema: cross-sectional signal vector | Required for Alphalens, realistic for quant integration |
-| Jun 8 | Evaluation: custom abnormal returns + IC | Alphalens for IC; custom OLS for CAR (avoids GPL) |
-| Jun 8 | Input cleaning: strip HTML/URLs | Fixes JSON parse failure rate |
-| Jun 9 | Fix temporal split | External review identified inverted walk-forward |
-| Jun 9 | Combined training data (386 examples) | 2x data improves loss from 1.36 to 1.095 |
-| Jun 10 | Multi-model comparison | Demonstrates fine-tuning value; uses free API for base models |
-| Jun 10 | Batch-based Modal runs with volume commit per batch | Prevents losing progress on timeout |
-| Jun 10 | Use Qwen Cloud API for base model inference | Free (1M tokens/model), saves Modal credits for training |
+| Jun 5 | Fine-tuning: QLoRA rank 64 | Balance between quality and VRAM |
+| Jun 6 | Teacher model: qwen3-max | Free, strongest available at the time |
+| Jun 7 | Cross-sectional signal vector schema | Required for Alphalens, realistic for quant |
+| Jun 8 | Custom abnormal returns + IC evaluation | Alphalens for IC; custom OLS for CAR |
+| Jun 9 | Fix temporal split (walk-forward) | External review identified inverted ordering |
+| Jun 10 | Multi-model comparison | Demonstrates fine-tuning value |
+| Jun 10 | Batch-based Modal runs | Prevents losing progress on timeout |
+| Jun 10 | qwen3-32b broken, use 30b-thinking instead | Bug filed, model returns empty responses |
+| Jun 10 | **Switch teacher to Manus API** | Highest quality (web research + reasoning + frontier models) |
+| Jun 10 | **Scale to ~1,000 training examples** | Research report recommends 800-1,000 for robust fine-tuning |
+| Jun 10 | **Data augmentation via Manus** | Synthetic, paraphrased, negative, edge cases, multi-turn |
+| Jun 10 | **Concurrent Manus tasks** | 10-50x speedup over sequential processing |
+| Jun 10 | **Target OpenBMB + Tiny Titan** | Fine-tune MiniCPM-2B for $4,000 in prizes |
+| Jun 10 | **Target OpenAI Track** | GPT-5.5 Batch API for $5,000 prize comparison |
+
+---
 
 ## Known Limitations (To Document in Field Notes)
 
-1. Temporal split was initially inverted (fixed, but first eval results used wrong split)
-2. Evaluation window is Jan-Jun 2026 only (single market regime)
-3. Daily granularity (no intraday timing)
-4. Single-factor market model (SPY only, no sector factor)
-5. 386 training examples is small (may cause JSON compliance issues)
-6. Model inference takes ~60s per article (not suitable for real-time trading without optimization)
-7. Correlation does not imply causation
-8. No transaction cost modeling
-
-## Stretch Goals: Fine-Tuning Methods and Model Experiments
-
-### Goal 1: Compare Fine-Tuning Methods
-
-Test whether different fine-tuning approaches produce better IC than our current QLoRA setup.
-
-| Method | Description | Hypothesis | Effort | Resource |
-|--------|-------------|-----------|--------|----------|
-| **DoRA** | Weight-Decomposed Low-Rank Adaptation (ICML 2024) | May outperform LoRA on structured output tasks by decomposing magnitude and direction | 2 hours | Modal A100 (~$3) |
-| **GRPO** | Group Relative Policy Optimization (DeepSeek) | Reinforcement learning with price-based reward could teach the model to optimize for IC directly | 4 hours | Modal A100 (~$10) |
-| **Full LoRA rank 128** | Double the LoRA rank from 64 to 128 | More trainable parameters = better representation capacity | 2 hours | Modal A100 (~$3) |
-| **Curriculum ordering** | Sort training data from simple to complex articles | Progressive difficulty may improve final model quality | 1 hour | Modal A100 (~$2) |
-| **Longer training (8 epochs)** | Double the training epochs | May improve JSON compliance and signal quality | 2 hours | Modal A100 (~$3) |
-
-**Evaluation for each:** Run the same 421-article evaluation pipeline and compare IC at +5d. The current baseline is IC = +0.078.
-
-### Goal 2: Fine-Tune Different Base Models
-
-Test whether a different base model produces better results when fine-tuned with the same data.
-
-| Base Model | Size | Approach | Hypothesis | Effort | Resource |
-|-----------|------|----------|-----------|--------|----------|
-| **Qwen3-32B** | 32B | QLoRA (rank 64) | Larger model = higher capacity, may produce better signals | 4 hours | Modal H100 (~$15) |
-| **Qwen3-30B-A3B** | 30B (MoE, 3B active) | QLoRA | MoE architecture may be more efficient for structured tasks | 3 hours | Modal A100 (~$5) |
-| **Llama-3.1-8B** | 8B | QLoRA (rank 64) | Different architecture, benchmarks show strong fine-tuning gains | 2 hours | Modal A100 (~$3) |
-| **Phi-4-mini** | 3.8B | QLoRA (rank 64) | Smallest model, tests if even 4B can produce meaningful signals | 2 hours | Modal A100 (~$2) |
-
-**For each fine-tuned model:**
-1. Train with the same 386-example dataset
-2. Run predictions on the 421 evaluation articles
-3. Compute IC and compare against current best (Qwen3-8B fine-tuned, IC +0.078 at +5d)
-4. Add to the frontend model selector for interactive comparison
-
-### Goal 3: Ensemble Methods
-
-| Approach | Description | Hypothesis |
-|----------|-------------|-----------|
-| Simple average | Average signal vectors across multiple models | Reduces noise, may improve IC |
-| Weighted by IC | Weight each model's signal by its historical IC | Allocates more weight to better-performing models |
-| Stacking | Train a meta-model on the signal vectors of all base models | May capture complementary strengths |
-
-### Prioritization
-
-For the Build Small hackathon (June 15): Focus on DoRA as the single most impactful experiment (one-line change, potential IC improvement).
-
-For the Qwen Cloud hackathon (July 9): Run the full suite of experiments and present the comparison in the demo.
+1. Evaluation window is Jan-Jun 2026 only (single market regime)
+2. Daily granularity (no intraday timing)
+3. Single-factor market model (SPY only, no sector factor)
+4. Correlation does not imply causation
+5. No transaction cost modeling
+6. Small sample size limits statistical power for subset analyses
+7. Model inference takes ~60s per article on GPU (not real-time without optimization)
+8. qwen3-32b API is broken (filed bug report with Alibaba)
