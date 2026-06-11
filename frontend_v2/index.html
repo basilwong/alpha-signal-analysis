@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Alpha Intelligence</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">⚛</div>
+            <h1>Quantum Alpha Intelligence</h1>
+            <span class="badge">Build Small Hackathon</span>
+        </div>
+        <div class="header-right">
+            <span class="status-dot"></span>
+            <span class="status-text">System Online</span>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="live">Live Analysis</button>
+        <button class="tab-btn" data-tab="historical">Historical Predictions</button>
+        <button class="tab-btn" data-tab="evaluation">Evaluation Dashboard</button>
+        <button class="tab-btn" data-tab="sector">Sector Map</button>
+    </nav>
+
+    <!-- Tab Content -->
+    <main class="content">
+        <!-- Tab 1: Live Analysis -->
+        <section id="tab-live" class="tab-panel active">
+            <div class="panel-header">
+                <h2>Live Signal Analysis</h2>
+                <p class="panel-desc">Paste an article and get real-time signal predictions from fine-tuned models running on GPU.</p>
+            </div>
+
+            <div class="live-controls">
+                <div class="control-row">
+                    <div class="control-group flex-grow">
+                        <label>Model</label>
+                        <select id="live-model">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Source Type</label>
+                        <select id="live-source">
+                            <option value="news">News</option>
+                            <option value="arxiv">arXiv Paper</option>
+                            <option value="sec_filing">SEC Filing</option>
+                            <option value="press_release">Press Release</option>
+                            <option value="social_media">Social Media</option>
+                            <option value="earnings_call">Earnings Call</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Thinking</label>
+                        <label class="toggle">
+                            <input type="checkbox" id="live-thinking">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <textarea id="live-input" placeholder="Paste article text here..."></textarea>
+                <button id="live-analyze-btn" class="btn-primary">
+                    <span class="btn-icon">⚡</span> Analyze
+                </button>
+            </div>
+
+            <div id="live-results" class="results-panel hidden">
+                <div class="results-header">
+                    <span class="latency-badge" id="live-latency">--ms</span>
+                </div>
+                <div id="live-signal-chart" class="chart-container"></div>
+                <div class="signal-meta">
+                    <div class="meta-card">
+                        <label>Event Type</label>
+                        <span id="live-event-type">--</span>
+                    </div>
+                    <div class="meta-card">
+                        <label>Time Horizon</label>
+                        <span id="live-time-horizon">--</span>
+                    </div>
+                    <div class="meta-card">
+                        <label>Signal Decay</label>
+                        <span id="live-signal-decay">--</span>
+                    </div>
+                    <div class="meta-card">
+                        <label>Novelty</label>
+                        <span id="live-novelty">--</span>
+                    </div>
+                </div>
+                <div class="expandable">
+                    <button class="expand-btn" data-target="live-translation">Technical Translation ▾</button>
+                    <div id="live-translation" class="expand-content"></div>
+                </div>
+                <div class="expandable">
+                    <button class="expand-btn" data-target="live-thinking-output">Thinking Trace ▾</button>
+                    <div id="live-thinking-output" class="expand-content code"></div>
+                </div>
+                <div class="expandable">
+                    <button class="expand-btn" data-target="live-json">Raw JSON ▾</button>
+                    <div id="live-json" class="expand-content code"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 2: Historical Predictions -->
+        <section id="tab-historical" class="tab-panel">
+            <div class="panel-header">
+                <h2>Historical Predictions</h2>
+                <p class="panel-desc">Browse evaluation articles and compare predictions across all models side-by-side.</p>
+            </div>
+
+            <div class="historical-controls">
+                <div class="control-row">
+                    <div class="control-group flex-grow">
+                        <label>Select Event</label>
+                        <select id="hist-event-select">
+                            <option value="">Loading events...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hist-results" class="results-panel">
+                <div id="hist-article-info" class="article-info"></div>
+                <h3>Signal Comparison (All Models)</h3>
+                <div id="hist-comparison-chart" class="chart-container"></div>
+                <h3>Actual Price Movement (20 days post-event)</h3>
+                <div id="hist-price-chart" class="chart-container"></div>
+                <div id="hist-model-details" class="model-details-grid"></div>
+            </div>
+        </section>
+
+        <!-- Tab 3: Evaluation Dashboard -->
+        <section id="tab-evaluation" class="tab-panel">
+            <div class="panel-header">
+                <h2>Evaluation Dashboard</h2>
+                <p class="panel-desc">Compare model performance using Information Coefficient, signal decay, and direction accuracy.</p>
+            </div>
+
+            <div class="eval-controls">
+                <label>Select Models to Compare:</label>
+                <div id="eval-model-checkboxes" class="checkbox-group"></div>
+            </div>
+
+            <div class="eval-metrics-summary" id="eval-summary"></div>
+
+            <div class="eval-charts">
+                <div class="chart-section">
+                    <h3>Signal Decay Curve <span class="info-btn" title="Information Coefficient (Spearman rank correlation) between predicted signals and realized abnormal returns at different holding periods. Higher = better predictive power.">ⓘ</span></h3>
+                    <div id="eval-decay-chart" class="chart-container"></div>
+                </div>
+                <div class="chart-section">
+                    <h3>IC Comparison Table <span class="info-btn" title="IC values at different horizons. Statistically significant values (p<0.05) are highlighted.">ⓘ</span></h3>
+                    <div id="eval-table" class="table-container"></div>
+                </div>
+            </div>
+
+            <div class="limitations">
+                <h4>Limitations</h4>
+                <ul>
+                    <li>Evaluation period: Jan-Jun 2026 (single market regime)</li>
+                    <li>Daily granularity (no intraday timing)</li>
+                    <li>Single-factor market model (SPY benchmark)</li>
+                    <li>Correlation does not imply causation</li>
+                    <li>Small sample size limits statistical power for subset analyses</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Tab 4: Sector Map -->
+        <section id="tab-sector" class="tab-panel">
+            <div class="panel-header">
+                <h2>Quantum Computing Sector Map</h2>
+                <p class="panel-desc">Understanding the competitive structure and how signals propagate across the sector.</p>
+            </div>
+
+            <div class="sector-content">
+                <div class="chart-section">
+                    <h3>Signal Weight by Company</h3>
+                    <div id="sector-weight-chart" class="chart-container"></div>
+                </div>
+
+                <div class="sector-clusters" id="sector-clusters"></div>
+
+                <div class="sector-dynamics">
+                    <h3>Signal Propagation Rules</h3>
+                    <div id="sector-dynamics-table"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <span>Quantum Alpha Intelligence | Build Small Hackathon 2026</span>
+        <span>Model: Qwen3-8B Fine-tuned (LoRA) | ≤32B Parameters</span>
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
