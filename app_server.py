@@ -383,16 +383,25 @@ async def serve_index():
 
 
 # ============================================================
-# GRADIO SERVER MOUNT
+# LAUNCH
 # ============================================================
 
-# Create a minimal Gradio app for the ZeroGPU decorator
+# Create a Gradio Blocks app that mounts our FastAPI routes
 with gr.Blocks() as demo:
-    gr.Markdown("API Backend — Use the custom frontend at /")
+    gr.Markdown("Quantum Alpha Intelligence API — Visit the [Dashboard](/) for the full interface.")
 
-# Mount as Gradio Server
+# Mount our FastAPI app onto the Gradio app
+# Gradio handles port binding; our custom routes are accessible at /api/*
 app = gr.mount_gradio_app(app, demo, path="/gradio")
 
-if __name__ == "__main__":
+# On HF Spaces, Gradio SDK auto-detects and launches the demo.
+# For local dev, we launch explicitly.
+import os
+if os.environ.get("SPACE_ID"):
+    # On HF Spaces: don't call launch(), the SDK handles it
+    # But we need to expose the app for the SDK to find
+    pass
+else:
+    # Local development
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=7860)
