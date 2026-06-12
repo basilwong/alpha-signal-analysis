@@ -396,5 +396,10 @@ app = gr.mount_gradio_app(app, demo, path="/gradio")
 
 # Launch the app. Gradio's launch() starts uvicorn internally,
 # which serves both the Gradio UI (at /gradio) and our FastAPI routes (at /api/*, /)
-# ssr_mode=False disables the Node.js SSR proxy (not available on all Spaces)
-demo.launch(server_name="0.0.0.0", server_port=7860, ssr_mode=False)
+# Don't specify server_port on HF Spaces (the runtime manages port binding)
+# ssr_mode=False disables the Node.js SSR proxy
+import os
+if os.environ.get("SPACE_ID"):
+    demo.launch(ssr_mode=False)
+else:
+    demo.launch(server_name="0.0.0.0", server_port=7860, ssr_mode=False)
