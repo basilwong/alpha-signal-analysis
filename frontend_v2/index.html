@@ -125,11 +125,17 @@
                         </select>
                     </div>
                 </div>
+                <div class="control-row">
+                    <div class="control-group flex-grow">
+                        <label>Filter Models</label>
+                        <div id="hist-model-checkboxes" class="checkbox-group"></div>
+                    </div>
+                </div>
             </div>
 
             <div id="hist-results" class="results-panel">
                 <div id="hist-article-info" class="article-info"></div>
-                <h3>Signal Comparison (All Models)</h3>
+                <h3>Signal Comparison (<span id="hist-model-count">All</span> Models)</h3>
                 <div id="hist-comparison-chart" class="chart-container"></div>
                 <h3>Actual Price Movement (20 days post-event)</h3>
                 <div id="hist-price-chart" class="chart-container"></div>

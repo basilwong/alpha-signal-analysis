@@ -158,8 +158,38 @@ document.getElementById('live-analyze-btn').addEventListener('click', async () =
 // ============================================================
 
 let allEvents = [];
+let histComparisonData = null;  // Cache the current event's comparison data
+let histSelectedModels = new Set();  // Track which models are checked
 
 async function initHistoricalTab() {
+    // Load available models to build filter checkboxes
+    const modelsResp = await fetch(`${API_BASE}/api/models`);
+    const modelsData = await modelsResp.json();
+    const allModels = modelsData.models.map(m => m.name);
+
+    // Build model filter checkboxes
+    const container = document.getElementById('hist-model-checkboxes');
+    container.innerHTML = '';
+    allModels.forEach(modelName => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = modelName;
+        checkbox.checked = true;  // All checked by default
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+                histSelectedModels.add(modelName);
+            } else {
+                histSelectedModels.delete(modelName);
+            }
+            renderHistoricalCharts();
+        });
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(` ${modelName}`));
+        container.appendChild(label);
+        histSelectedModels.add(modelName);
+    });
+
     // Load events from the fine-tuned model
     let resp = await fetch(`${API_BASE}/api/events?model=Qwen3-8B Fine-tuned (LoRA)`);
     let data = await resp.json();
@@ -186,7 +216,7 @@ document.getElementById('hist-event-select').addEventListener('change', (e) => {
 async function loadHistoricalEvent(articleIdx) {
     // Get comparison across all models
     const resp = await fetch(`${API_BASE}/api/prediction_comparison?article_idx=${articleIdx}`);
-    const data = await resp.json();
+    histComparisonData = await resp.json();
 
     // Find article info
     const event = allEvents.find(e => e.article_idx === articleIdx);
@@ -195,10 +225,26 @@ async function loadHistoricalEvent(articleIdx) {
         infoDiv.innerHTML = `<div class="title">${event.title}</div><div class="meta">${event.date} | ${event.source}</div>`;
     }
 
-    // Build comparison chart (grouped bar)
-    const models = Object.keys(data.models);
+    renderHistoricalCharts();
+}
+
+function renderHistoricalCharts() {
+    if (!histComparisonData) return;
+
+    const data = histComparisonData;
+    // Filter models based on selected checkboxes
+    const allModels = Object.keys(data.models);
+    const models = allModels.filter(m => histSelectedModels.has(m));
+
+    // Update model count display
+    const countSpan = document.getElementById('hist-model-count');
+    if (countSpan) {
+        countSpan.textContent = models.length === allModels.length ? 'All' : models.length;
+    }
+
     const tickers = ['IONQ', 'RGTI', 'QBTS', 'QUBT', 'IBM', 'GOOGL', 'MSFT', 'HON', 'NVDA'];
 
+    // Build comparison chart (grouped bar)
     const traces = models.map(modelName => {
         const signal = data.models[modelName]?.signal?.signal_vector || {};
         return {
@@ -223,47 +269,50 @@ async function loadHistoricalEvent(articleIdx) {
         height: 350,
     }, { responsive: true });
 
-    // Price chart (get from first model's prediction)
+    // Price chart (get from first available model's prediction)
     if (models.length > 0) {
         const firstModel = models[0];
-        const predResp = await fetch(`${API_BASE}/api/prediction?model=${encodeURIComponent(firstModel)}&idx=0`);
-        // Find the correct idx for this model
-        const eventsResp = await fetch(`${API_BASE}/api/events?model=${encodeURIComponent(firstModel)}`);
-        const eventsData = await eventsResp.json();
-        const matchIdx = eventsData.events.findIndex(e => e.article_idx === articleIdx);
-        if (matchIdx >= 0) {
-            const predData = await (await fetch(`${API_BASE}/api/prediction?model=${encodeURIComponent(firstModel)}&idx=${matchIdx}`)).json();
-            const priceData = predData.price_data || {};
-            const priceTraces = Object.entries(priceData).slice(0, 5).map(([ticker, pd]) => {
-                if (!pd.values || pd.values.length === 0) return null;
-                const basePrice = pd.values[0];
-                const returns = pd.values.map(v => ((v - basePrice) / basePrice) * 100);
-                return {
-                    name: ticker,
-                    type: 'scatter',
-                    mode: 'lines',
-                    x: pd.dates,
-                    y: returns,
-                    line: { width: 2 },
-                };
-            }).filter(Boolean);
+        const articleIdx = data.article_idx;
+        const eventsResp = fetch(`${API_BASE}/api/events?model=${encodeURIComponent(firstModel)}`);
+        eventsResp.then(r => r.json()).then(eventsData => {
+            const matchIdx = eventsData.events.findIndex(e => e.article_idx === articleIdx);
+            if (matchIdx >= 0) {
+                fetch(`${API_BASE}/api/prediction?model=${encodeURIComponent(firstModel)}&idx=${matchIdx}`)
+                    .then(r => r.json())
+                    .then(predData => {
+                        const priceData = predData.price_data || {};
+                        const priceTraces = Object.entries(priceData).slice(0, 5).map(([ticker, pd]) => {
+                            if (!pd.values || pd.values.length === 0) return null;
+                            const basePrice = pd.values[0];
+                            const returns = pd.values.map(v => ((v - basePrice) / basePrice) * 100);
+                            return {
+                                name: ticker,
+                                type: 'scatter',
+                                mode: 'lines',
+                                x: pd.dates,
+                                y: returns,
+                                line: { width: 2 },
+                            };
+                        }).filter(Boolean);
 
-            if (priceTraces.length > 0) {
-                Plotly.newPlot('hist-price-chart', priceTraces, {
-                    title: { text: 'Cumulative Return (%) After Event', font: { color: '#e2e8f0', size: 14 } },
-                    xaxis: { color: '#94a3b8', gridcolor: '#1e2a3a' },
-                    yaxis: { title: 'Return (%)', color: '#94a3b8', gridcolor: '#1e2a3a', zerolinecolor: '#3b82f6' },
-                    plot_bgcolor: '#0f1629',
-                    paper_bgcolor: '#1a2035',
-                    legend: { font: { color: '#e2e8f0' } },
-                    margin: { l: 50, r: 20, t: 40, b: 40 },
-                    height: 300,
-                }, { responsive: true });
+                        if (priceTraces.length > 0) {
+                            Plotly.newPlot('hist-price-chart', priceTraces, {
+                                title: { text: 'Cumulative Return (%) After Event', font: { color: '#e2e8f0', size: 14 } },
+                                xaxis: { color: '#94a3b8', gridcolor: '#1e2a3a' },
+                                yaxis: { title: 'Return (%)', color: '#94a3b8', gridcolor: '#1e2a3a', zerolinecolor: '#3b82f6' },
+                                plot_bgcolor: '#0f1629',
+                                paper_bgcolor: '#1a2035',
+                                legend: { font: { color: '#e2e8f0' } },
+                                margin: { l: 50, r: 20, t: 40, b: 40 },
+                                height: 300,
+                            }, { responsive: true });
+                        }
+                    });
             }
-        }
+        });
     }
 
-    // Model details
+    // Model details (only for selected models)
     const detailsDiv = document.getElementById('hist-model-details');
     detailsDiv.innerHTML = models.map(modelName => {
         const signal = data.models[modelName]?.signal || {};
