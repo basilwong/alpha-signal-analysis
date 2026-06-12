@@ -188,7 +188,23 @@ async def get_prediction(model: str, idx: int):
     # Get price data for the event date
     event_date = pred.get("date", "")
     price_data = {}
+    benchmark_data = {}  # SPY as market benchmark
     if event_date and MARKET_DATA:
+        # Get SPY benchmark data
+        if "SPY" in MARKET_DATA:
+            spy_dates = MARKET_DATA["SPY"]["dates"]
+            spy_values = MARKET_DATA["SPY"]["values"]
+            try:
+                spy_start = next(i for i, d in enumerate(spy_dates) if d >= event_date)
+                spy_end = min(spy_start + 21, len(spy_dates))
+                benchmark_data["SPY"] = {
+                    "dates": spy_dates[spy_start:spy_end],
+                    "values": spy_values[spy_start:spy_end],
+                }
+            except StopIteration:
+                pass
+
+        # Get quantum ticker data
         for ticker in QUANTUM_TICKERS:
             if ticker in MARKET_DATA:
                 dates = MARKET_DATA[ticker]["dates"]
@@ -215,6 +231,7 @@ async def get_prediction(model: str, idx: int):
             "time_seconds": pred.get("time_seconds") or pred.get("time_ms", 0) / 1000,
         },
         "price_data": price_data,
+        "benchmark_data": benchmark_data,
     })
 
 
