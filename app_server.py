@@ -29,32 +29,38 @@ EVAL_DIR = DATA_DIR / "eval"
 MARKET_DIR = DATA_DIR / "market"
 FRONTEND_DIR = BASE_DIR / "frontend_v2"
 
-# Quantum universe
-QUANTUM_TICKERS = ["IONQ", "RGTI", "QBTS", "QUBT", "IBM", "GOOGL", "MSFT", "HON", "NVDA"]
+# Quantum universe (V4: 10 tickers, added QNT)
+QUANTUM_TICKERS = ["IONQ", "RGTI", "QBTS", "QUBT", "QNT", "IBM", "GOOGL", "MSFT", "HON", "NVDA"]
+# Note: In V4 schema, MSFT/GOOGL/NVDA are always 0.0 (too diversified to move on quantum news)
 
-# Model prediction files
+# Model prediction files (historical comparison)
 MODEL_FILES = {
-    "Qwen3-8B Fine-tuned (LoRA)": EVAL_DIR / "predictions_finetuned_all.jsonl",
+    "Qwen3-8B Fine-tuned V4 (Manus)": EVAL_DIR / "predictions_finetuned_v4.jsonl",
+    "Qwen3-8B Fine-tuned V1 (qwen3-max)": EVAL_DIR / "predictions_finetuned_all.jsonl",
     "Qwen3-8B Base": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
     "Qwen3.7-Max Base": EVAL_DIR / "predictions_qwen37_max_base.jsonl",
     "Qwen3-30B Thinking": EVAL_DIR / "predictions_qwen3_30b_thinking.jsonl",
+    "Manus Teacher (direct)": EVAL_DIR / "predictions_manus_teacher.jsonl",
+    "MiniCPM-2B Fine-tuned": EVAL_DIR / "predictions_minicpm_2b.jsonl",
 }
 
 # Models available for live inference (deployed on HF with ZeroGPU)
 LIVE_MODELS = {
-    "Qwen3-8B Fine-tuned (LoRA)": "basilwong/quantum-alpha-qwen3-8b",
+    "Qwen3-8B Fine-tuned V4": "basilwong/quantum-alpha-qwen3-8b",
 }
 
 
 def load_predictions(path):
-    """Load predictions from a JSONL file."""
+    """Load predictions from a JSONL file. Handles both V1 (status field) and V4 (success field) formats."""
     predictions = []
     if path.exists():
         with open(path) as f:
             for line in f:
                 if line.strip():
                     p = json.loads(line)
-                    if p.get("status") == "success":
+                    # V1 format uses "status": "success"
+                    # V4/Manus format uses "success": True
+                    if p.get("status") == "success" or p.get("success") == True:
                         predictions.append(p)
     return sorted(predictions, key=lambda x: x.get("date", ""))
 
@@ -81,6 +87,7 @@ def load_eval_results():
 def load_market_data():
     """Load market data as JSON-serializable dict."""
     import pandas as pd
+    import numpy as np
     prices = {}
     for ticker in QUANTUM_TICKERS + ["SPY"]:
         path = MARKET_DIR / f"{ticker}.parquet"
@@ -88,9 +95,13 @@ def load_market_data():
             df = pd.read_parquet(path)
             close_col = "Adj Close" if "Adj Close" in df.columns else "Close"
             series = df[close_col].dropna()
+            # Handle both Series and DataFrame (multi-level columns)
+            if hasattr(series, 'iloc') and len(series.shape) > 1:
+                series = series.iloc[:, 0]
+            values = series.values.flatten() if hasattr(series.values, 'flatten') else series.values
             prices[ticker] = {
                 "dates": [d.strftime("%Y-%m-%d") for d in series.index],
-                "values": [round(float(v), 2) for v in series.values],
+                "values": [round(float(v), 2) for v in values],
             }
     return prices
 
@@ -102,21 +113,22 @@ EVAL_RESULTS = load_eval_results()
 MARKET_DATA = load_market_data()
 print(f"Models loaded: {', '.join(f'{k} ({len(v)})' for k, v in ALL_PREDICTIONS.items())}")
 
-# Sector data
+# Sector data (V4: 10 tickers with QNT)
 SECTOR_DATA = {
     "tickers": {
         "IONQ": {"name": "IonQ", "tech": "Trapped Ion", "signal_weight": 1.0, "cluster": "Trapped Ion"},
         "RGTI": {"name": "Rigetti", "tech": "Superconducting", "signal_weight": 1.0, "cluster": "Superconducting"},
         "QBTS": {"name": "D-Wave", "tech": "Annealing", "signal_weight": 1.0, "cluster": "Annealing"},
         "QUBT": {"name": "QCi", "tech": "Neutral Atom", "signal_weight": 1.0, "cluster": "Neutral Atom"},
+        "QNT": {"name": "Quantinuum", "tech": "Trapped Ion", "signal_weight": 1.0, "cluster": "Trapped Ion"},
         "IBM": {"name": "IBM", "tech": "Superconducting", "signal_weight": 0.15, "cluster": "Superconducting"},
-        "GOOGL": {"name": "Google", "tech": "Superconducting", "signal_weight": 0.05, "cluster": "Superconducting"},
-        "MSFT": {"name": "Microsoft", "tech": "Topological", "signal_weight": 0.05, "cluster": "Topological"},
+        "GOOGL": {"name": "Google", "tech": "Superconducting", "signal_weight": 0.0, "cluster": "Superconducting"},
+        "MSFT": {"name": "Microsoft", "tech": "Topological", "signal_weight": 0.0, "cluster": "Topological"},
         "HON": {"name": "Honeywell", "tech": "Trapped Ion", "signal_weight": 0.30, "cluster": "Trapped Ion"},
-        "NVDA": {"name": "NVIDIA", "tech": "Adjacent", "signal_weight": 0.10, "cluster": "Adjacent"},
+        "NVDA": {"name": "NVIDIA", "tech": "Adjacent", "signal_weight": 0.0, "cluster": "Adjacent"},
     },
     "clusters": {
-        "Trapped Ion": ["IONQ", "HON"],
+        "Trapped Ion": ["IONQ", "QNT", "HON"],
         "Superconducting": ["RGTI", "IBM", "GOOGL"],
         "Annealing": ["QBTS"],
         "Topological": ["MSFT"],

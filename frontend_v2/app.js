@@ -31,12 +31,14 @@ document.querySelectorAll('.expand-btn').forEach(btn => {
 // ============================================================
 
 const MODEL_COLORS = {
-    'Qwen3-8B Fine-tuned (LoRA)': '#10b981',
+    'Qwen3-8B Fine-tuned V4 (Manus)': '#10b981',
+    'Qwen3-8B Fine-tuned V1 (qwen3-max)': '#22c55e',
     'Qwen3-8B Base': '#ef4444',
     'Qwen3.7-Max Base': '#f59e0b',
     'Qwen3-30B Thinking': '#8b5cf6',
+    'Manus Teacher (direct)': '#06b6d4',
+    'MiniCPM-2B Fine-tuned': '#f472b6',
     'GPT-5.5': '#3b82f6',
-    'Manus Teacher': '#06b6d4',
 };
 
 function getModelColor(name) {
@@ -132,8 +134,10 @@ document.getElementById('live-analyze-btn').addEventListener('click', async () =
         // Meta
         document.getElementById('live-event-type').textContent = signal.event_type || '--';
         document.getElementById('live-time-horizon').textContent = signal.time_horizon || '--';
-        document.getElementById('live-signal-decay').textContent = signal.signal_decay || '--';
         document.getElementById('live-novelty').textContent = signal.information_novelty || '--';
+        // Count active tickers (non-zero scores)
+        const activeTickers = Object.entries(sv).filter(([t, d]) => Math.abs(d?.score || 0) > 0.01).length;
+        document.getElementById('live-active-tickers').textContent = `${activeTickers}/10`;
 
         // Translation
         document.getElementById('live-translation').textContent = signal.technical_translation || 'N/A';
@@ -159,9 +163,15 @@ document.getElementById('live-analyze-btn').addEventListener('click', async () =
 let allEvents = [];
 
 async function initHistoricalTab() {
-    // Load events from the first available model
-    const resp = await fetch(`${API_BASE}/api/events?model=Qwen3-8B Fine-tuned (LoRA)`);
-    const data = await resp.json();
+    // Load events from the best available model (V4 first, fallback to V1)
+    let resp = await fetch(`${API_BASE}/api/events?model=Qwen3-8B Fine-tuned V4 (Manus)`);
+    let data = await resp.json();
+    if (!data.events || data.events.length === 0) {
+        resp = await fetch(`${API_BASE}/api/events?model=Qwen3-8B Fine-tuned V1 (qwen3-max)`);
+        data = await resp.json();
+    }
+    // Fallback handled below
+    const resp_unused = resp;  // keep linter happy
     allEvents = data.events || [];
 
     const select = document.getElementById('hist-event-select');
