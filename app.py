@@ -29,15 +29,16 @@ QUANTUM_TICKERS = ["IONQ", "RGTI", "QBTS", "QUBT", "QNT", "IBM", "GOOGL", "MSFT"
 
 # Model prediction files (historical comparison)
 MODEL_FILES = {
-    "Qwen3-8B Fine-tuned V1 (qwen3-max)": EVAL_DIR / "predictions_finetuned_all.jsonl",
+    "Qwen3-8B Fine-tuned (LoRA)": EVAL_DIR / "predictions_finetuned_all.jsonl",
     "Qwen3-8B Base": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
     "Qwen3.7-Max Base": EVAL_DIR / "predictions_qwen37_max_base.jsonl",
+    "Qwen3-30B Thinking": EVAL_DIR / "predictions_qwen3_30b_thinking.jsonl",
     "Manus Teacher (direct)": EVAL_DIR / "predictions_manus_teacher.jsonl",
 }
 
-# Models available for live inference
+# Models available for live inference (only fine-tuned models)
 LIVE_MODELS = {
-    "Qwen3-8B Fine-tuned V4": "build-small-hackathon/quantum-alpha-qwen3-8b",
+    "Qwen3-8B Fine-tuned (LoRA)": "build-small-hackathon/quantum-alpha-qwen3-8b",
 }
 
 MODEL_ID = "build-small-hackathon/quantum-alpha-qwen3-8b"
@@ -159,7 +160,7 @@ async def get_models():
 
 
 @app.get("/api/events")
-async def get_events(model: str = "Qwen3-8B Fine-tuned V1 (qwen3-max)"):
+async def get_events(model: str = "Qwen3-8B Fine-tuned (LoRA)"):
     """List all events for a given model."""
     preds = ALL_PREDICTIONS.get(model, [])
     events = []
@@ -358,7 +359,7 @@ async def analyze(request: Request):
     body = await request.json()
     text = body.get("text", "")
     source = body.get("source", "news")
-    model_name = body.get("model", "Qwen3-8B Fine-tuned V4")
+    model_name = body.get("model", "Qwen3-8B Fine-tuned (LoRA)")
     enable_thinking = body.get("enable_thinking", False)
 
     if not text:

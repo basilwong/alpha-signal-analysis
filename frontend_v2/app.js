@@ -31,14 +31,11 @@ document.querySelectorAll('.expand-btn').forEach(btn => {
 // ============================================================
 
 const MODEL_COLORS = {
-    'Qwen3-8B Fine-tuned V4 (Manus)': '#10b981',
-    'Qwen3-8B Fine-tuned V1 (qwen3-max)': '#22c55e',
+    'Qwen3-8B Fine-tuned (LoRA)': '#10b981',
     'Qwen3-8B Base': '#ef4444',
     'Qwen3.7-Max Base': '#f59e0b',
     'Qwen3-30B Thinking': '#8b5cf6',
     'Manus Teacher (direct)': '#06b6d4',
-    'MiniCPM-2B Fine-tuned': '#f472b6',
-    'GPT-5.5': '#3b82f6',
 };
 
 function getModelColor(name) {
@@ -163,15 +160,9 @@ document.getElementById('live-analyze-btn').addEventListener('click', async () =
 let allEvents = [];
 
 async function initHistoricalTab() {
-    // Load events from the best available model (V4 first, fallback to V1)
-    let resp = await fetch(`${API_BASE}/api/events?model=Qwen3-8B Fine-tuned V4 (Manus)`);
+    // Load events from the fine-tuned model
+    let resp = await fetch(`${API_BASE}/api/events?model=Qwen3-8B Fine-tuned (LoRA)`);
     let data = await resp.json();
-    if (!data.events || data.events.length === 0) {
-        resp = await fetch(`${API_BASE}/api/events?model=Qwen3-8B Fine-tuned V1 (qwen3-max)`);
-        data = await resp.json();
-    }
-    // Fallback handled below
-    const resp_unused = resp;  // keep linter happy
     allEvents = data.events || [];
 
     const select = document.getElementById('hist-event-select');
