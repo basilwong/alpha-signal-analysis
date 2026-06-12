@@ -394,14 +394,6 @@ with gr.Blocks() as demo:
 # Gradio handles port binding; our custom routes are accessible at /api/*
 app = gr.mount_gradio_app(app, demo, path="/gradio")
 
-# On HF Spaces, Gradio SDK auto-detects and launches the demo.
-# For local dev, we launch explicitly.
-import os
-if os.environ.get("SPACE_ID"):
-    # On HF Spaces: don't call launch(), the SDK handles it
-    # But we need to expose the app for the SDK to find
-    pass
-else:
-    # Local development
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+# Launch the app. Gradio's launch() starts uvicorn internally,
+# which serves both the Gradio UI (at /gradio) and our FastAPI routes (at /api/*, /)
+demo.launch(server_name="0.0.0.0", server_port=7860)
