@@ -4,14 +4,14 @@
 
 This report documents the evolution of training data for a quantum computing cross-sectional alpha signal model across five major versions. Each version addressed specific deficiencies identified through empirical evaluation, adversarial analysis, and domain expertise drawn from quantitative finance literature and LLM fine-tuning research.
 
-The journey spans from a naive 187-example dataset with no quality controls (V3) to a 881-example dataset with reasoning traces, empirically validated scoring rules, and a 46% improvement in Information Coefficient (V5). The key insight throughout: **data quality improvements compound**. Each version's fixes enabled the next version's improvements to be measured cleanly.
+The journey spans from a naive 187-example dataset with no quality controls (V3) to a 1,121-example dataset with reasoning traces, directional balance, robustness training, and a 46% improvement in Information Coefficient. The key insight throughout: **data quality improvements compound**. Each version's fixes enabled the next version's improvements to be measured cleanly.
 
 | Version | Examples | IC (5d) | Direction Acc | Key Innovation |
 |---------|----------|---------|---------------|----------------|
 | V3 | 187 | 0.055 | 53.0% | First fine-tuning attempt |
 | V4 | 881 | 0.063 | 53.0% | Scale + structural quality fixes |
 | V4 + prompt | 881 | 0.093 | 55.2% | Empirically-grounded scoring rules |
-| V5 | 881 | TBD | TBD | Reasoning traces for thinking models |
+| V5 | 1,121 | TBD | TBD | Reasoning traces + directional balance + robustness |
 
 ---
 
@@ -170,13 +170,55 @@ We are fine-tuning reasoning models (OpenReasoning-Nemotron-7B, Qwen3) that nati
 | Scoring philosophy as "expected stock movement" | Jansen (2020, Ch. 4): signals must predict returns, not describe sentiment |
 | Post-processing score enforcement | Practical engineering: prompt compliance is ~85%, mechanical enforcement gets to 100% |
 
-### Current Progress
+### V5 Generation Results
 
-- 99/881 generated (100% success rate since timeout fix)
+- **881/881 base examples generated** (100% success rate after retry)
 - All examples pass 12-point validation
 - Thinking blocks average 187 words (target: 100-300 tokens)
 - Zero validation issues on scores, ranges, or inactive tickers
-- Estimated completion: ~8 more hours
+- Total generation time: ~4.5 hours (10 concurrent tasks)
+
+### V5.1: Directional Balance (Bearish Examples)
+
+The initial V5 base was 91.4% bullish at the per-ticker level. This trains a "hype machine" that always predicts positive. To fix this, we generated 172 explicitly bearish examples across two batches:
+
+| Category | Examples | Purpose |
+|----------|----------|----------|
+| Earnings misses / guidance cuts | ~30 | Company-specific negative fundamentals |
+| Technical setbacks | ~22 | Hardware failures, missed milestones |
+| Competitive displacement | ~20 | Larger companies winning, classical breakthroughs |
+| Capital markets / dilution | ~16 | Secondary offerings, insider selling, going-concern |
+| Executive departures | ~12 | Key talent leaving, governance issues |
+| Negative analyst coverage | ~12 | Short reports, downgrades, bubble narratives |
+| Sector selloffs | ~10 | Macro-driven, quantum winter, funding failures |
+| Regulatory / legal | ~10 | SEC investigations, patent lawsuits, export controls |
+| Priced-in / overextended | ~25 | Stocks up 40-60%, trivial news → bearish/zero |
+
+**Result:** At the example level, 31.1% of all examples now contain at least one bearish score (target: 30-40%). The model learns that negative scores are valid, common, and often correct.
+
+**Inspiration:** The "priced-in" category was inspired by the observation that the model had no training on mean-reversion dynamics. Jansen (2020, Ch. 4) notes that "signals must account for what is already reflected in prices." If a stock is up 50% in a week, bullish news is already priced in and the risk is to the downside.
+
+### V5.2: Robustness Training (Drawdown, Sideways, Conflicting)
+
+A critical gap analysis revealed the model was fragile in drawdowns. It had never seen examples where stocks were already deeply negative. Three categories were added:
+
+**Drawdown behavior (28 examples):**
+- Continuation: stocks down 20-35%, more bad news arrives → stay bearish
+- Recovery: stocks down 30-50%, genuinely good news arrives → cautiously bullish
+- Noise: stocks down 15-25%, irrelevant news → zero scores (don't react)
+- Macro: broad market crash, quantum stocks caught in liquidation → zero (not quantum-specific)
+
+**Sideways/choppy market (20 examples):**
+- Stocks going nowhere for months, incremental news → zero or near-zero
+- Teaches the model that "no opinion" is the correct output most of the time in quiet markets
+
+**Conflicting signals (20 examples):**
+- "Great earnings BUT dilutive offering"
+- "Won a contract BUT CTO resigned"
+- "Technology validated BUT commercially unviable at current cost"
+- Teaches moderate, balanced scores rather than always going to extremes
+
+**Inspiration:** The drawdown scenarios address a known failure mode in quantitative models described in Jansen (2020, Ch. 8): models trained primarily on bull-market data fail catastrophically during regime changes. By explicitly training on drawdown behavior, we reduce the probability of the model producing dangerously wrong signals during market stress.
 
 ---
 
@@ -186,7 +228,7 @@ We are fine-tuning reasoning models (OpenReasoning-Nemotron-7B, Qwen3) that nati
 
 | Dimension | V3 | V4 | V5 |
 |-----------|----|----|-----|
-| Examples | 187 | 881 | 881 |
+| Examples | 187 | 881 | 1,121 |
 | Tickers | 9 (all active) | 10 (7 active + 3 inactive) | 10 (7 active + 3 inactive) |
 | Reasoning | None | chain_of_thought field | `<think>` block (drives scores) |
 | Market context | None | Full table (5d, 30d, 52w, liquidity, regime) | Full table |
@@ -197,12 +239,15 @@ We are fine-tuning reasoning models (OpenReasoning-Nemotron-7B, Qwen3) that nati
 | signal_decay | Yes | Removed | Removed |
 | QNT ticker | No | Yes | Yes |
 | Tech-validation rule | No | Yes (RGTI +89% evidence) | Yes |
+| Directional balance | Unknown | 58% bull / 42% bear | 31% of examples have bearish content |
+| Drawdown training | No | No | Yes (28 examples) |
+| Conflicting signals | No | No | Yes (20 examples) |
 
 ### Signal Quality Evolution
 
 | Metric | V3 | V4 (data only) | V4 (+ prompt) | V5 (expected) |
 |--------|-----|----------------|---------------|---------------|
-| IC (5d) | 0.055 | 0.063 | 0.093 | TBD |
+| IC (5d) | 0.055 | 0.063 | 0.093 | TBD (post fine-tune) |
 | p-value | 0.03 | 0.014 | 0.0003 | TBD |
 | Direction Acc | 53% | 53% | 55.2% | TBD |
 | RGTI IC | 0.127 | 0.127 | 0.203 | TBD |
@@ -270,6 +315,18 @@ A concern was raised: the teacher browses the web to research articles, but the 
 ### 5. Thinking Traces Must Drive Scores, Not Decorate Them
 
 V4's `chain_of_thought` field was often a post-hoc rationalization (or worse, "REDACTED"). V5 forces the model to think FIRST, then score. This ensures consistency between reasoning and output, and teaches the student model that reasoning is a prerequisite for scoring, not an afterthought.
+
+### 6. Directional Balance Requires Intentional Construction
+
+Left to its own devices, the teacher model produces 91% bullish labels on quantum computing news. This is natural: most quantum articles are about progress and breakthroughs. But a model trained on 91% bullish data becomes a hype machine that cannot predict downside. The fix required intentionally constructing bearish scenarios (earnings misses, technical setbacks, competitive displacement) and feeding them to the teacher. **You cannot rely on the natural distribution of news to produce balanced training data for a trading signal model.**
+
+### 7. Models Are Fragile in Regimes They Haven't Seen
+
+The most dangerous gap in the V5 base data was the absence of drawdown scenarios. The model had never seen market context showing stocks down 20-50%. Without this training, the model would likely produce random or inappropriately bullish signals during a real drawdown. The fix was straightforward: generate 28 examples with deeply negative market context paired with various news types (bad news, good news, noise, macro). **Always ask: what market regime has the model never seen? That's where it will fail.**
+
+### 8. Conflicting Signals Teach Moderation
+
+Real-world news is rarely purely bullish or bearish. "Great earnings but dilutive offering" requires the model to weigh competing factors and produce moderate scores. Without explicit training on mixed signals, the model learns to always go to extremes. The 20 conflicting-signal examples teach that moderate scores (0.3-0.8) are often more appropriate than maximum conviction (1.5-2.0).
 
 ---
 
