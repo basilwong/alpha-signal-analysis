@@ -31,12 +31,13 @@ document.querySelectorAll('.expand-btn').forEach(btn => {
 // ============================================================
 
 const MODEL_COLORS = {
-    'Qwen3-8B Fine-tuned (LoRA)': '#10b981',
-    'Qwen3-8B Base': '#ef4444',
-    'Qwen3.7-Max Base': '#f59e0b',
-    'Qwen3-30B Thinking': '#8b5cf6',
-    'GPT-5.5': '#3b82f6',
+    'V7d GRPO (best)': '#10b981',
+    'V7b Rejection Sampling': '#22c55e',
+    'V7c DPO': '#8b5cf6',
+    'V4 Baseline (LoRA)': '#f59e0b',
     'Manus Teacher': '#06b6d4',
+    'Qwen3-8B Base': '#ef4444',
+    'Qwen3.7-Max Base': '#f97316',
 };
 
 function getModelColor(name) {
@@ -160,7 +161,7 @@ let allEvents = [];
 
 async function initHistoricalTab() {
     // Load events from the first available model
-    const resp = await fetch(`${API_BASE}/api/events?model=Qwen3-8B Fine-tuned (LoRA)`);
+    const resp = await fetch(`${API_BASE}/api/events?model=V7d GRPO (best)`);
     const data = await resp.json();
     allEvents = data.events || [];
 

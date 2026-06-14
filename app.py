@@ -1,265 +1,414 @@
 """
-Quantum Alpha Intelligence Platform
-NLP-driven alpha signal generator for quantitative trading systems.
-Designed for integration into automated trading pipelines.
+Quantum Alpha Intelligence Platform — Gradio Server Mode
+
+Uses gradio.Server (inherits from FastAPI) to serve both custom API endpoints
+and the custom frontend. This avoids port binding conflicts on HF Spaces because
+gradio.Server handles port management internally, just like gr.Blocks.launch().
+
+For ZeroGPU support, we use @app.api() which integrates with the Gradio queue
+and supports the @spaces.GPU decorator pattern.
 """
 
-import os
 import json
 import time
-import torch
-import spaces
-import gradio as gr
-from transformers import AutoModelForCausalLM, AutoTokenizer
+import os
+from pathlib import Path
+from gradio import Server
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
 
-# Model configuration
-MODEL_ID = "build-small-hackathon/quantum-alpha-qwen3-8b"
+# Paths
+BASE_DIR = Path(__file__).parent
+DATA_DIR = BASE_DIR / "data"
+EVAL_DIR = DATA_DIR / "eval"
+MARKET_DIR = DATA_DIR / "market"
+FRONTEND_DIR = BASE_DIR / "frontend_v2"
 
-# Quant-focused system prompt with improved output schema
-SYSTEM_PROMPT = """You are a quantitative NLP signal generator for the quantum computing sector. Your job is to extract actionable trading signals from text that can be consumed by an automated execution system.
+# Quantum universe
+QUANTUM_TICKERS = ["IONQ", "RGTI", "QBTS", "QUBT", "QNT", "IBM", "GOOGL", "MSFT", "HON", "NVDA"]
 
-You must output a valid JSON object with the following fields:
-
-{
-    "sentiment": "strongly_bearish" | "bearish" | "neutral" | "bullish" | "strongly_bullish",
-    "expected_move_magnitude": "negligible" | "moderate" | "significant" | "major",
-    "expected_move_pct_range": [lower_bound, upper_bound],
-    "time_horizon": "intraday" | "2-5 days" | "1-2 weeks" | "1+ month",
-    "signal_decay": "fast" | "medium" | "slow",
-    "information_novelty": "high" | "medium" | "low",
-    "event_type": one of ["physical_qubit_milestone", "logical_qubit_breakthrough", "error_correction_advance", "quantum_volume_increase", "government_funding", "commercial_partnership", "revenue_earnings", "executive_change", "patent_grant", "academic_publication", "product_launch", "competitive_development", "regulatory_filing", "analyst_rating_change"],
-    "primary_ticker": "IONQ" | "RGTI" | "QBTS" | "QUBT" | "IBM" | "GOOGL" | "MSFT" | "HON" | "NVDA",
-    "cross_asset_signals": [
-        {"ticker": "XXXX", "direction": "bullish" | "bearish", "magnitude": "negligible" | "moderate" | "significant", "reason": "brief explanation"}
-    ],
-    "technical_translation": "2-3 sentences explaining the commercial significance for a portfolio manager who does not have a physics background.",
-    "key_facts": ["fact1", "fact2", "fact3"],
-    "signal_rationale": "Why this specific magnitude and time horizon? What historical precedent or sector dynamics justify this estimate?"
+# Model prediction files (historical comparison)
+MODEL_FILES = {
+    "V7d GRPO (best)": EVAL_DIR / "predictions_v7d_grpo_clean.jsonl",
+    "V7b Rejection Sampling": EVAL_DIR / "predictions_v7b_clean.jsonl",
+    "V7c DPO": EVAL_DIR / "predictions_v7c_clean.jsonl",
+    "V4 Baseline (LoRA)": EVAL_DIR / "predictions_finetuned_all.jsonl",
+    "Manus Teacher": EVAL_DIR / "predictions_manus_teacher_v2.jsonl",
+    "Qwen3-8B Base": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
+    "Qwen3.7-Max Base": EVAL_DIR / "predictions_qwen37_max_base.jsonl",
 }
 
-Guidelines:
-- expected_move_pct_range: Estimate the likely stock price move as [low%, high%]. Use negative values for bearish. Example: [3.0, 8.0] or [-12.0, -5.0].
-- signal_decay: "fast" = priced in same session, "medium" = 2-3 days, "slow" = gradual diffusion over 1-2 weeks (typical for highly technical announcements that analysts need time to interpret).
-- information_novelty: "high" = first to report or pre-publication leak, "medium" = same-day coverage, "low" = widely reported for 24h+.
-- cross_asset_signals: Identify second-order effects on competitors or adjacent companies. A breakthrough by one company is often bearish for direct competitors.
-- Logical qubit milestones and error correction advances are typically "significant" to "major" with "slow" decay because most market participants don't understand the technical implications.
-- Revenue misses are typically "fast" decay (priced in immediately).
-- Government funding is "moderate" magnitude with "medium" decay across the entire sector.
+# Models available for live inference (only fine-tuned models)
+LIVE_MODELS = {
+    "V7d GRPO (best)": "basilwong/quantum-alpha-openreasoning-7b-grpo",
+}
 
-Output ONLY the JSON object. No additional text."""
-
-# Load model and tokenizer at startup
-print(f"Loading tokenizer for {MODEL_ID}...")
-tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
-print("Tokenizer loaded.")
-
-print(f"Loading model {MODEL_ID}...")
-model = AutoModelForCausalLM.from_pretrained(
-    MODEL_ID,
-    torch_dtype=torch.bfloat16,
-    device_map="auto",
-    trust_remote_code=True,
-)
-model.eval()
-print("Model loaded successfully!")
+MODEL_ID = "basilwong/quantum-alpha-openreasoning-7b-grpo"
 
 
-@spaces.GPU
-def run_inference(text: str, source: str = "news", enable_thinking: bool = False) -> tuple:
-    """Run model inference. Returns (raw_output, thinking_text, latency_ms)."""
-    start_time = time.time()
+def load_predictions(path):
+    """Load predictions from a JSONL file."""
+    predictions = []
+    if path.exists():
+        with open(path) as f:
+            for line in f:
+                if line.strip():
+                    p = json.loads(line)
+                    if p.get("status") == "success" or p.get("success") == True:
+                        predictions.append(p)
+    return sorted(predictions, key=lambda x: x.get("date", ""))
 
-    # Source-specific analysis instructions
-    source_instructions = {
-        "news": "This is a financial news article. Focus on: (1) whether this is already widely reported and priced in, (2) the likely speed of market reaction, (3) whether the headline overstates the actual development. News signals typically have fast decay unless the content is highly technical.",
-        "arxiv": "This is an academic research paper abstract. Most papers are incremental and have negligible trading signal. Focus on: (1) whether this represents a genuine breakthrough vs. incremental progress, (2) whether it has near-term commercial implications or is purely theoretical, (3) which companies could commercialize this research. Academic signals typically have slow decay because analysts take days/weeks to digest technical content.",
-        "sec_filing": "This is a regulatory filing (SEC). Extract factual financial data: revenue figures, guidance changes, material contracts, insider transactions. These are high-reliability signals. Decay is typically fast because filings are priced in immediately upon publication.",
-        "press_release": "This is a company press release. Be skeptical. Companies routinely overstate significance. Focus on: (1) concrete numbers and verifiable claims vs. vague language, (2) whether claims have peer-reviewed validation, (3) what is NOT being said. Discount superlatives and marketing language. Look for the actual technical substance beneath the spin.",
-        "social_media": "This is a social media post. High noise, low reliability. Focus on: (1) is the author an insider or credible domain expert, (2) does this reveal information not yet in formal channels, (3) could this be a leak or early signal before an official announcement. Assign low confidence unless the source is clearly authoritative.",
-        "earnings_call": "This is from an earnings call transcript. Focus on: (1) forward guidance changes (more important than backward-looking results), (2) management tone and language shifts compared to prior quarters, (3) specific customer/contract mentions, (4) changes in R&D spending or timeline commitments. Revenue misses with maintained guidance are less bearish than guidance cuts.",
-    }
 
-    instruction = source_instructions.get(source, source_instructions["news"])
-    user_message = f"{instruction}\n\nAnalyze the following content and generate a quantitative trading signal:\n\n{text}"
+def load_all_models():
+    """Load predictions for all models."""
+    all_preds = {}
+    for name, path in MODEL_FILES.items():
+        preds = load_predictions(path)
+        if preds:
+            all_preds[name] = preds
+    return all_preds
+
+
+def load_eval_results():
+    """Load evaluation metrics."""
+    path = EVAL_DIR / "results_multi_model.json"
+    if path.exists():
+        with open(path) as f:
+            return json.loads(f.read())
+    return {}
+
+
+def load_market_data():
+    """Load market data as JSON-serializable dict."""
+    import pandas as pd
+    import numpy as np
+    prices = {}
+    for ticker in QUANTUM_TICKERS + ["SPY"]:
+        path = MARKET_DIR / f"{ticker}.parquet"
+        if path.exists():
+            df = pd.read_parquet(path)
+            close_col = "Adj Close" if "Adj Close" in df.columns else "Close"
+            series = df[close_col].dropna()
+            if hasattr(series, 'iloc') and len(series.shape) > 1:
+                series = series.iloc[:, 0]
+            values = series.values.flatten() if hasattr(series.values, 'flatten') else series.values
+            prices[ticker] = {
+                "dates": [d.strftime("%Y-%m-%d") for d in series.index],
+                "values": [round(float(v), 2) for v in values],
+            }
+    return prices
+
+
+# Load data at startup
+print("Loading data...")
+ALL_PREDICTIONS = load_all_models()
+EVAL_RESULTS = load_eval_results()
+MARKET_DATA = load_market_data()
+print(f"Models loaded: {', '.join(f'{k} ({len(v)})' for k, v in ALL_PREDICTIONS.items())}")
+
+# Sector data
+SECTOR_DATA = {
+    "tickers": {
+        "IONQ": {"name": "IonQ", "tech": "Trapped Ion", "signal_weight": 1.0, "cluster": "Trapped Ion"},
+        "RGTI": {"name": "Rigetti", "tech": "Superconducting", "signal_weight": 1.0, "cluster": "Superconducting"},
+        "QBTS": {"name": "D-Wave", "tech": "Annealing", "signal_weight": 1.0, "cluster": "Annealing"},
+        "QUBT": {"name": "QCi", "tech": "Neutral Atom", "signal_weight": 1.0, "cluster": "Neutral Atom"},
+        "QNT": {"name": "Quantinuum", "tech": "Trapped Ion", "signal_weight": 1.0, "cluster": "Trapped Ion"},
+        "IBM": {"name": "IBM", "tech": "Superconducting", "signal_weight": 0.15, "cluster": "Superconducting"},
+        "GOOGL": {"name": "Google", "tech": "Superconducting", "signal_weight": 0.0, "cluster": "Superconducting"},
+        "MSFT": {"name": "Microsoft", "tech": "Topological", "signal_weight": 0.0, "cluster": "Topological"},
+        "HON": {"name": "Honeywell", "tech": "Trapped Ion", "signal_weight": 0.30, "cluster": "Trapped Ion"},
+        "NVDA": {"name": "NVIDIA", "tech": "Adjacent", "signal_weight": 0.0, "cluster": "Adjacent"},
+    },
+    "clusters": {
+        "Trapped Ion": ["IONQ", "QNT", "HON"],
+        "Superconducting": ["RGTI", "IBM", "GOOGL"],
+        "Annealing": ["QBTS"],
+        "Topological": ["MSFT"],
+        "Neutral Atom": ["QUBT"],
+        "Adjacent": ["NVDA"],
+    },
+    "dynamics": [
+        {"trigger": "Trapped-ion breakthrough", "bullish": ["IONQ", "HON"], "bearish": ["RGTI", "IBM", "GOOGL"]},
+        {"trigger": "Superconducting breakthrough", "bullish": ["RGTI", "IBM", "GOOGL"], "bearish": ["IONQ", "HON"]},
+        {"trigger": "Error correction advance", "bullish": ["IONQ", "RGTI", "HON", "IBM", "GOOGL", "MSFT"], "bearish": []},
+        {"trigger": "Government funding", "bullish": ["IONQ", "RGTI", "QBTS", "QUBT", "IBM", "HON"], "bearish": []},
+    ],
+}
+
+
+# ============================================================
+# GRADIO SERVER APP
+# ============================================================
+
+app = Server(title="Quantum Alpha Intelligence API")
+
+
+# ============================================================
+# API ENDPOINTS
+# ============================================================
+
+@app.get("/api/models")
+async def get_models():
+    """List all available models with prediction counts."""
+    models = []
+    for name, preds in ALL_PREDICTIONS.items():
+        models.append({
+            "name": name,
+            "predictions": len(preds),
+            "live_inference": name in LIVE_MODELS,
+        })
+    return JSONResponse({"models": models})
+
+
+@app.get("/api/events")
+async def get_events(model: str = "V7d GRPO (best)"):
+    """List all events for a given model."""
+    preds = ALL_PREDICTIONS.get(model, [])
+    events = []
+    for i, p in enumerate(preds):
+        events.append({
+            "idx": i,
+            "article_idx": p.get("article_idx"),
+            "date": p.get("date", ""),
+            "title": p.get("title", "Untitled"),
+            "source": p.get("source", "news"),
+        })
+    return JSONResponse({"model": model, "events": events})
+
+
+@app.get("/api/prediction")
+async def get_prediction(model: str, idx: int):
+    """Get a specific prediction by model and index."""
+    preds = ALL_PREDICTIONS.get(model, [])
+    if idx < 0 or idx >= len(preds):
+        return JSONResponse({"error": "Index out of range"}, status_code=404)
+
+    pred = preds[idx]
+    signal = pred.get("signal", {})
+
+    # Get price data for the event date
+    event_date = pred.get("date", "")
+    price_data = {}
+    benchmark_data = {}  # SPY as market benchmark
+    if event_date and MARKET_DATA:
+        # Get SPY benchmark data
+        if "SPY" in MARKET_DATA:
+            spy_dates = MARKET_DATA["SPY"]["dates"]
+            spy_values = MARKET_DATA["SPY"]["values"]
+            try:
+                spy_start = next(i for i, d in enumerate(spy_dates) if d >= event_date)
+                spy_end = min(spy_start + 21, len(spy_dates))
+                benchmark_data["SPY"] = {
+                    "dates": spy_dates[spy_start:spy_end],
+                    "values": spy_values[spy_start:spy_end],
+                }
+            except StopIteration:
+                pass
+
+        # Get quantum ticker data
+        for ticker in QUANTUM_TICKERS:
+            if ticker in MARKET_DATA:
+                dates = MARKET_DATA[ticker]["dates"]
+                values = MARKET_DATA[ticker]["values"]
+                try:
+                    start_idx = next(i for i, d in enumerate(dates) if d >= event_date)
+                    end_idx = min(start_idx + 21, len(dates))
+                    price_data[ticker] = {
+                        "dates": dates[start_idx:end_idx],
+                        "values": values[start_idx:end_idx],
+                    }
+                except StopIteration:
+                    pass
+
+    return JSONResponse({
+        "model": model,
+        "idx": idx,
+        "prediction": {
+            "article_idx": pred.get("article_idx"),
+            "date": pred.get("date"),
+            "title": pred.get("title"),
+            "source": pred.get("source"),
+            "signal": signal,
+            "time_seconds": pred.get("time_seconds") or pred.get("time_ms", 0) / 1000,
+        },
+        "price_data": price_data,
+        "benchmark_data": benchmark_data,
+    })
+
+
+@app.get("/api/prediction_comparison")
+async def get_prediction_comparison(article_idx: int):
+    """Get predictions from ALL models for a specific article (by article_idx)."""
+    results = {}
+    for model_name, preds in ALL_PREDICTIONS.items():
+        for p in preds:
+            if p.get("article_idx") == article_idx:
+                results[model_name] = {
+                    "signal": p.get("signal", {}),
+                    "time_seconds": p.get("time_seconds") or p.get("time_ms", 0) / 1000,
+                }
+                break
+    return JSONResponse({"article_idx": article_idx, "models": results})
+
+
+@app.get("/api/eval_metrics")
+async def get_eval_metrics():
+    """Get evaluation metrics for all models."""
+    return JSONResponse(EVAL_RESULTS)
+
+
+@app.get("/api/sector_data")
+async def get_sector_data():
+    """Get sector map data."""
+    return JSONResponse(SECTOR_DATA)
+
+
+@app.get("/api/market_data")
+async def get_market_data(ticker: str, start: str = "", end: str = ""):
+    """Get market data for a specific ticker."""
+    if ticker not in MARKET_DATA:
+        return JSONResponse({"error": f"Ticker {ticker} not found"}, status_code=404)
+    data = MARKET_DATA[ticker]
+    if start:
+        dates = data["dates"]
+        values = data["values"]
+        filtered = [(d, v) for d, v in zip(dates, values) if d >= start and (not end or d <= end)]
+        if filtered:
+            dates, values = zip(*filtered)
+            return JSONResponse({"ticker": ticker, "dates": list(dates), "values": list(values)})
+    return JSONResponse({"ticker": ticker, **data})
+
+
+# ============================================================
+# LIVE INFERENCE (via Gradio API for ZeroGPU support)
+# ============================================================
+
+SYSTEM_PROMPT = """You are a quantitative NLP signal generator for the quantum computing sector. For every piece of news or research, produce a signal vector scoring ALL 9 tickers simultaneously.
+
+Tickers: IONQ, RGTI, QBTS, QUBT, IBM, GOOGL, MSFT, HON, NVDA
+Score range: -2.0 to +2.0 (scaled by signal weight for diversified companies)
+Output ONLY valid JSON matching the signal vector schema."""
+
+
+def _do_inference(text: str, source: str, model_name: str, enable_thinking: bool) -> str:
+    """Run inference using the fine-tuned model. Called within GPU context."""
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    model_id = LIVE_MODELS.get(model_name, MODEL_ID)
+
+    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id, torch_dtype=torch.bfloat16, device_map="auto", trust_remote_code=True
+    )
+    model.eval()
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": user_message},
+        {"role": "user", "content": f"Analyze: {text}"},
     ]
 
-    # Apply chat template with thinking toggle
     inputs = tokenizer.apply_chat_template(
-        messages,
-        return_tensors="pt",
-        add_generation_prompt=True,
-        return_dict=True,
-        enable_thinking=enable_thinking,
+        messages, return_tensors="pt", add_generation_prompt=True,
+        return_dict=True, enable_thinking=enable_thinking
     ).to(model.device)
 
+    start = time.time()
     with torch.no_grad():
         outputs = model.generate(
-            **inputs,
-            max_new_tokens=2048 if enable_thinking else 1024,
-            temperature=0.3,
-            do_sample=True,
+            **inputs, max_new_tokens=1024, temperature=0.3, do_sample=True,
             pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
         )
 
-    generated_ids = outputs[0][inputs["input_ids"].shape[-1]:]
-    raw_output = tokenizer.decode(generated_ids, skip_special_tokens=True)
+    generated = outputs[0][inputs["input_ids"].shape[-1]:]
+    raw = tokenizer.decode(generated, skip_special_tokens=True)
+    latency = time.time() - start
 
-    latency_ms = int((time.time() - start_time) * 1000)
-
-    # Separate thinking from output
-    thinking_text = ""
-    signal_text = raw_output
-
-    if "<think>" in raw_output:
-        parts = raw_output.split("</think>")
+    # Parse
+    thinking = ""
+    content = raw
+    if "<think>" in raw:
+        parts = raw.split("</think>")
         if len(parts) > 1:
-            thinking_text = parts[0].replace("<think>", "").strip()
-            signal_text = parts[-1].strip()
+            thinking = parts[0].replace("<think>", "").strip()
+            content = parts[-1].strip()
 
-    return signal_text, thinking_text, latency_ms
-
-
-def analyze_article(text: str, source: str, enable_thinking: bool) -> tuple:
-    """
-    Analyze a quantum computing article and return structured signals.
-    Returns (json_output, sentiment, magnitude, time_horizon, tickers, translation, thinking, api_response)
-    """
-    if not text or not text.strip():
-        return "Please enter text to analyze.", "", "", "", "", "", ""
-
-    signal_text, thinking_text, latency_ms = run_inference(text, source, enable_thinking)
-
-    # Parse JSON from output
     try:
-        start = signal_text.find("{")
-        end = signal_text.rfind("}") + 1
-        if start != -1 and end > start:
-            signal = json.loads(signal_text[start:end])
-        else:
-            signal = json.loads(signal_text)
+        s = content.find("{")
+        e = content.rfind("}") + 1
+        signal = json.loads(content[s:e]) if s != -1 else json.loads(content)
+    except Exception:
+        signal = {"error": "Failed to parse JSON", "raw": content[:500]}
 
-        # Extract display fields
-        formatted_json = json.dumps(signal, indent=2)
-        sentiment = signal.get("sentiment", "unknown")
-        magnitude = signal.get("expected_move_magnitude", "unknown")
-        pct_range = signal.get("expected_move_pct_range", [0, 0])
-        pct_str = f"{pct_range[0]:+.1f}% to {pct_range[1]:+.1f}%" if isinstance(pct_range, list) and len(pct_range) == 2 else str(pct_range)
-        time_horizon = signal.get("time_horizon", "unknown")
-        decay = signal.get("signal_decay", "unknown")
-        novelty = signal.get("information_novelty", "unknown")
-
-        primary = signal.get("primary_ticker", "")
-        cross = signal.get("cross_asset_signals", [])
-        cross_str = ", ".join([f"{c['ticker']} ({c['direction']})" for c in cross]) if cross else "None"
-        tickers_display = f"{primary} (primary) | Cross-asset: {cross_str}"
-
-        translation = signal.get("technical_translation", "")
-
-        # Build the API response mock
-        api_response = json.dumps({
-            "status": "success",
-            "latency_ms": latency_ms,
-            "model": MODEL_ID,
-            "thinking_enabled": enable_thinking,
-            "signal": signal,
-            "metadata": {
-                "source_type": source,
-                "input_length_chars": len(text),
-                "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            }
-        }, indent=2)
-
-        # Build summary line with latency
-        summary = f"{sentiment.upper()} | {magnitude} ({pct_str}) | Horizon: {time_horizon} | Decay: {decay} | Novelty: {novelty} | Latency: {latency_ms}ms"
-
-        return formatted_json, summary, tickers_display, translation, thinking_text, api_response, f"{latency_ms}ms"
-
-    except (json.JSONDecodeError, Exception) as e:
-        error_api = json.dumps({
-            "status": "error",
-            "latency_ms": latency_ms,
-            "error": str(e),
-            "raw_output": signal_text[:500],
-        }, indent=2)
-        return f"Parse error: {e}\n\nRaw:\n{signal_text}", "ERROR", "", "", thinking_text, error_api, f"{latency_ms}ms"
+    return json.dumps({
+        "signal": signal,
+        "thinking": thinking,
+        "latency_ms": int(latency * 1000),
+        "model": model_name,
+    })
 
 
-# Build the Gradio interface
-with gr.Blocks(
-    title="Quantum Alpha Intelligence",
-    theme=gr.themes.Base(
-        primary_hue="emerald",
-        neutral_hue="slate",
-    ),
-) as app:
+# Wrap with spaces.GPU for ZeroGPU support
+try:
+    import spaces
 
-    gr.Markdown(
-        """
-        # Quantum Alpha Intelligence
-        ### Quantitative NLP Signal Generator for the Quantum Computing Sector
+    @spaces.GPU
+    def gpu_inference(text: str, source: str, model_name: str, enable_thinking: bool) -> str:
+        return _do_inference(text, source, model_name, enable_thinking)
+except ImportError:
+    def gpu_inference(text: str, source: str, model_name: str, enable_thinking: bool) -> str:
+        return _do_inference(text, source, model_name, enable_thinking)
 
-        Generates structured trading signals from unstructured text. Designed for integration
-        into automated quantitative trading pipelines. Powered by a fine-tuned Qwen3-8B model.
-        """
-    )
 
-    with gr.Row():
-        with gr.Column(scale=3):
-            input_text = gr.Textbox(
-                label="Input Text (Article / Press Release / Abstract)",
-                placeholder="Paste quantum computing news, press release, arXiv abstract, or earnings excerpt...",
-                lines=8,
-            )
-            with gr.Row():
-                source_type = gr.Dropdown(
-                    choices=["news", "arxiv", "sec_filing", "press_release", "social_media", "earnings_call"],
-                    value="news",
-                    label="Source Type",
-                    scale=2,
-                )
-                thinking_toggle = gr.Checkbox(
-                    label="Enable Thinking (slower, shows reasoning)",
-                    value=False,
-                    scale=2,
-                )
-            analyze_btn = gr.Button("Generate Signal", variant="primary", size="lg")
+# Register the inference function as a Gradio API endpoint for ZeroGPU queue support
+@app.api(name="analyze")
+def analyze_via_gradio(text: str, source: str, model_name: str, enable_thinking: bool) -> str:
+    """Run live inference via Gradio API (supports ZeroGPU)."""
+    return gpu_inference(text, source, model_name, enable_thinking)
 
-        with gr.Column(scale=2):
-            with gr.Row():
-                signal_summary = gr.Textbox(label="Signal Summary", interactive=False, scale=4)
-                latency_output = gr.Textbox(label="Latency", interactive=False, scale=1)
-            tickers_output = gr.Textbox(label="Affected Tickers & Cross-Asset Signals", interactive=False)
-            translation_output = gr.Textbox(label="Technical Translation (For Portfolio Managers)", lines=3, interactive=False)
 
-    with gr.Row():
-        with gr.Column():
-            json_output = gr.Code(label="Structured Signal (JSON)", language="json", lines=18)
-        with gr.Column():
-            thinking_output = gr.Textbox(label="Model Reasoning (when thinking enabled)", lines=18, interactive=False)
+# Also expose as a standard FastAPI POST endpoint for the frontend
+from fastapi import Request
 
-    with gr.Accordion("API Response (for system integration)", open=False):
-        api_output = gr.Code(label="Mock API Response", language="json", lines=20)
 
-    # Examples
-    gr.Examples(
-        examples=[
-            ["IonQ announced today that its latest trapped-ion quantum processor has achieved 35 algorithmic qubits, representing a significant improvement in the number of high-fidelity qubits available for running quantum algorithms. The company stated that this milestone brings them closer to achieving quantum advantage for commercially relevant problems in optimization and machine learning. IonQ's stock rose 8% in pre-market trading following the announcement.", "news", False],
-            ["Rigetti Computing reported Q1 2026 revenue of $4.2 million, missing analyst expectations of $5.1 million. The company cited delays in its 84-qubit Ankaa-3 system deployment as the primary factor. CEO Subodh Kulkarni noted that while hardware development is on track, customer adoption has been slower than anticipated.", "news", False],
-            ["Title: Demonstration of fault-tolerant quantum computation with 48 logical qubits\n\nAbstract: We demonstrate fault-tolerant quantum computation using 48 logical qubits encoded in a surface code architecture. Our system achieves a logical error rate of 10^-6 per round of error correction, representing a 100x improvement over the physical error rate. This result establishes a clear path toward scalable, fault-tolerant quantum computing.", "arxiv", True],
-        ],
-        inputs=[input_text, source_type, thinking_toggle],
-        label="Example Inputs",
-    )
+@app.post("/api/analyze")
+async def analyze(request: Request):
+    """Run live inference on a new article."""
+    body = await request.json()
+    text = body.get("text", "")
+    source = body.get("source", "news")
+    model_name = body.get("model", "V7d GRPO (best)")
+    enable_thinking = body.get("enable_thinking", False)
 
-    analyze_btn.click(
-        fn=analyze_article,
-        inputs=[input_text, source_type, thinking_toggle],
-        outputs=[json_output, signal_summary, tickers_output, translation_output, thinking_output, api_output, latency_output],
-    )
+    if not text:
+        return JSONResponse({"error": "No text provided"}, status_code=400)
+
+    result = gpu_inference(text, source, model_name, enable_thinking)
+    return JSONResponse(json.loads(result))
+
+
+# ============================================================
+# SERVE FRONTEND
+# ============================================================
+
+@app.get("/")
+async def serve_index():
+    """Serve the custom frontend."""
+    index_path = FRONTEND_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    return JSONResponse({"error": "Frontend not found. Place index.html in frontend_v2/"})
+
+
+# Mount static files (CSS, JS)
+if FRONTEND_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+
+
+# ============================================================
+# LAUNCH
+# ============================================================
 
 if __name__ == "__main__":
-    app.launch(server_name="0.0.0.0", server_port=7860, show_error=True)
+    app.launch(server_name="0.0.0.0", server_port=7860, ssr_mode=False)
