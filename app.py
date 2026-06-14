@@ -41,6 +41,7 @@ MODEL_FILES = {
 # Models available for live inference (only fine-tuned models)
 LIVE_MODELS = {
     "V7d GRPO (best)": "basilwong/quantum-alpha-openreasoning-7b-grpo",
+    "V4 Baseline (LoRA)": "build-small-hackathon/quantum-alpha-qwen3-8b",
 }
 
 MODEL_ID = "basilwong/quantum-alpha-openreasoning-7b-grpo"

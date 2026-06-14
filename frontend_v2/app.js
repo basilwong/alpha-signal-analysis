@@ -346,9 +346,9 @@ function updateEvalCharts() {
         yaxis: { title: 'Information Coefficient', color: '#94a3b8', gridcolor: '#1e2a3a' },
         plot_bgcolor: '#0f1629',
         paper_bgcolor: '#1a2035',
-        legend: { font: { color: '#e2e8f0' }, x: 0.02, y: 0.98 },
-        margin: { l: 60, r: 20, t: 50, b: 50 },
-        height: 400,
+        legend: { font: { color: '#e2e8f0', size: 11 }, orientation: 'h', x: 0, y: -0.25, xanchor: 'left', yanchor: 'top' },
+        margin: { l: 60, r: 20, t: 50, b: 100 },
+        height: 450,
     }, { responsive: true });
 
     // Table
