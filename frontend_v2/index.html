@@ -40,10 +40,9 @@
 
             <div class="product-overview">
                 <div class="overview-card">
-                    <h3>What is Quantum Alpha Intelligence?</h3>
-                    <p>This platform demonstrates <strong>end-to-end fine-tuning of a small language model (7B parameters) to generate quantitative trading signals</strong> for the quantum computing sector. Given any news article, press release, or research paper, the model outputs a structured signal vector scoring 9 quantum-related tickers on a scale from -2.0 (strongly bearish) to +2.0 (strongly bullish).</p>
-                    <p>The core question: <strong>can a fine-tuned LLM produce signals with measurable predictive power over future stock returns?</strong> This dashboard tracks our answer across 7 model iterations, from an untrained base model through supervised fine-tuning (LoRA), rejection sampling, DPO, and finally GRPO (Group Relative Policy Optimization). The best model (V7d GRPO) achieves an Information Coefficient of +0.157 at the 5-day horizon with p = 0.006, meaning its signal rankings meaningfully predict which quantum stocks will outperform the market over the following week.</p>
-                    <p>Use this tool to compare model iterations, debug live inference outputs, and inspect historical predictions against realized market outcomes.</p>
+                    <h3>Quantum Alpha Intelligence</h3>
+                    <p>The product is <strong>alpha signal</strong>. A fine-tuned 7B parameter language model that ingests quantum computing news, press releases, and research papers, then outputs structured trading signals scoring 9 sector tickers from -2.0 (strongly bearish) to +2.0 (strongly bullish). The signal is designed to be consumed by quantitative trading systems and portfolio construction engines. Funds like <a href="https://finance.yahoo.com/markets/stocks/articles/citadel-set-pay-trading-ideas-094103745.html" target="_blank" style="color: var(--accent-blue);">Citadel are actively looking to purchase alternative signal sources</a> exactly like this.</p>
+                    <p>This dashboard is the <strong>development and evaluation tool</strong> for iterating on that signal. It tracks predictive power across 7 model iterations (base model through LoRA, rejection sampling, DPO, and GRPO), measures Information Coefficient against realized market returns, and provides live debugging for model outputs. The best model (V7d GRPO) achieves IC = +0.157 at the 5-day horizon with p = 0.006, meaning its rankings meaningfully predict which quantum stocks will outperform the market over the following week.</p>
                 </div>
             </div>
 
