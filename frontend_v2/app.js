@@ -3,6 +3,19 @@
 const API_BASE = '';  // Same origin
 
 // ============================================================
+// WELCOME OVERLAY
+// ============================================================
+
+document.getElementById('welcome-enter-btn').addEventListener('click', () => {
+    const overlay = document.getElementById('welcome-overlay');
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+    }, 300);
+});
+
+// ============================================================
 // TAB NAVIGATION
 // ============================================================
 

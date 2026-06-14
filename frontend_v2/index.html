@@ -8,6 +8,45 @@
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body>
+    <!-- Welcome Overlay -->
+    <div id="welcome-overlay" class="welcome-overlay">
+        <div class="welcome-modal">
+            <div class="welcome-logo">⚛</div>
+            <h1 class="welcome-title">Quantum Alpha Intelligence</h1>
+            <p class="welcome-tagline">NLP-Driven Alpha Signal for Quantitative Trading</p>
+
+            <div class="welcome-body">
+                <p class="welcome-lead">A fine-tuned 7B parameter language model that converts unstructured text into actionable trading signals for the quantum computing sector.</p>
+
+                <div class="welcome-stats">
+                    <div class="welcome-stat">
+                        <span class="stat-value">+0.157</span>
+                        <span class="stat-label">IC @ 5 Days</span>
+                    </div>
+                    <div class="welcome-stat">
+                        <span class="stat-value">p = 0.006</span>
+                        <span class="stat-label">Statistical Significance</span>
+                    </div>
+                    <div class="welcome-stat">
+                        <span class="stat-value">9 Tickers</span>
+                        <span class="stat-label">Signal Coverage</span>
+                    </div>
+                    <div class="welcome-stat">
+                        <span class="stat-value">7 Iterations</span>
+                        <span class="stat-label">Model Versions Tested</span>
+                    </div>
+                </div>
+
+                <p class="welcome-description">The model ingests news articles, press releases, SEC filings, and research papers, then outputs a structured signal vector scoring each ticker from -2.0 (strongly bearish) to +2.0 (strongly bullish). Designed for consumption by quantitative trading systems and portfolio construction engines.</p>
+
+                <p class="welcome-context">Hedge funds like <a href="https://finance.yahoo.com/markets/stocks/articles/citadel-set-pay-trading-ideas-094103745.html" target="_blank">Citadel are actively seeking to purchase alternative signal sources</a>. This platform demonstrates that a small, fine-tuned open-source model can produce statistically significant predictive signal using reinforcement learning (GRPO) trained directly on realized market returns.</p>
+            </div>
+
+            <button id="welcome-enter-btn" class="welcome-cta">Explore the Signal Evaluation Dashboard →</button>
+            <p class="welcome-footer">Build Small Hackathon 2026 | Model: OpenReasoning-7B GRPO</p>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="header-left">
