@@ -22,10 +22,13 @@ MARKET_TICKER = "SPY"
 
 # Models to evaluate
 MODELS = {
-    "V7d GRPO (clean)": EVAL_DIR / "predictions_v7d_grpo_clean.jsonl",
-    "V7b Rejection (clean)": EVAL_DIR / "predictions_v7b_clean.jsonl",
-    "V7c DPO (clean)": EVAL_DIR / "predictions_v7c_clean.jsonl",
-    "V4 Baseline": EVAL_DIR / "predictions_openreasoning7b_v4.jsonl",
+    "V7d GRPO (best)": EVAL_DIR / "predictions_v7d_grpo_clean.jsonl",
+    "V7b Rejection Sampling": EVAL_DIR / "predictions_v7b_clean.jsonl",
+    "V7c DPO": EVAL_DIR / "predictions_v7c_clean.jsonl",
+    "V4 Baseline (LoRA)": EVAL_DIR / "predictions_finetuned_all.jsonl",
+    "Manus Teacher": EVAL_DIR / "predictions_manus_teacher_v2.jsonl",
+    "Qwen3-8B Base": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
+    "Qwen3.7-Max Base": EVAL_DIR / "predictions_qwen37_max_base.jsonl",
 }
 
 
