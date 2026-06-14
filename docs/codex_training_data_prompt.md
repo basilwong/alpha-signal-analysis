@@ -1,4 +1,4 @@
-# Codex Prompt: Generate Quantum Alpha Training Data (V8)
+# Codex Prompt: Generate Quantum Alpha Training Data (V8) + Eval Predictions
 
 ## Repository Setup
 
@@ -10,15 +10,27 @@ cd quantum-alpha-intelligence
 # Switch to the working branch
 git checkout fix/label-quality
 
-# Key file locations:
-# Input articles (training): data/raw/articles_train.jsonl
-# Input articles (eval):     data/raw/articles_eval.jsonl
-# Market data (parquet):     data/market/IONQ.parquet, RGTI.parquet, etc.
-# Output training data:      data/training/quantum_alpha_train_v8.jsonl
-# Output eval predictions:   data/eval/predictions_codex_teacher.jsonl
-# Previous V4 data (reference): data/training/quantum_alpha_train_v4.jsonl
-# Config/prompts:            src/config.py, src/prompts.py, src/market_context.py
+# Install dependencies for market context computation
+pip install pandas pyarrow numpy
 ```
+
+### Key File Locations
+
+| File | Description |
+|------|-------------|
+| `data/raw/articles_train.jsonl` | 194 training articles (2024-08-02 to 2025-12-31). Sources: news, arxiv. Fields: `text`, `source`, `title`, `date`, `url`, `outcome_cleaned` |
+| `data/raw/articles_eval.jsonl` | 426 eval articles (2026-01-07 to 2026-06-09). Same fields. |
+| `data/market/*.parquet` | Daily OHLCV data for: IONQ, RGTI, QBTS, QUBT, QNT, IBM, HON, MSFT, GOOGL, NVDA, SPY, QTUM |
+| `src/market_context.py` | Helper module: `get_market_context(date)` computes the full market context table |
+| `src/config.py` | Ticker universe, liquidity tiers, score ranges |
+| `data/training/quantum_alpha_train_v4.jsonl` | Previous best training data (881 examples, reference for format) |
+
+### Output Files to Generate
+
+| File | Description |
+|------|-------------|
+| `data/training/quantum_alpha_train_v8.jsonl` | New training data (~194 examples with thinking traces) |
+| `data/eval/predictions_codex_teacher.jsonl` | Eval predictions (426 articles, Codex teacher baseline) |
 
 ---
 
@@ -38,40 +50,53 @@ You are generating training data for a fine-tuned reasoning model that produces 
 
 ---
 
-## Your Task
+## Task 1: Generate Training Data
 
-Generate training data where the assistant response includes a `<think>...</think>` block followed by JSON. The critical difference from previous attempts:
+Generate training data from the 194 articles in `data/raw/articles_train.jsonl`. Each article becomes one training example.
 
-**At least 40-50% of examples should have the thinking conclude with mostly zero scores.** The model must learn that "I thought about it carefully and decided there's no signal here" is the most common correct output.
+### Output Format (OpenAI messages format)
 
-### Output Format
+Each line of `quantum_alpha_train_v8.jsonl` is a JSON object:
+
+```json
+{"messages": [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}, {"role": "assistant", "content": "<think>\n...\n</think>\n{...}"}]}
+```
+
+The assistant response MUST include a `<think>...</think>` block followed immediately by JSON:
 
 ```
-assistant: <think>
+<think>
 [100-200 tokens of genuine reasoning]
 </think>
-{"signal_vector": {"IONQ": {"score": 0.0, "reasoning": "..."}, ...}, ...}
+{"signal_vector": {"IONQ": {"score": 0.0, "reasoning": "..."}, ...}, "event_type": "...", ...}
 ```
 
 ### The Three Types of Examples (Target Distribution)
 
-**Type A: Genuine Signal (30-35% of examples)**
+**Type A: Genuine Signal (30-35% of examples, ~60-70 articles)**
 - Article has clear, direct implications for specific quantum companies
 - Thinking identifies the technology, affected companies, and competitive dynamics
 - Produces non-zero scores with conviction (|score| > 0.5 for at least one ticker)
-- Examples: major contract wins, hardware breakthroughs, earnings surprises
+- Examples: major contract wins, hardware breakthroughs, earnings surprises, significant competitive moves
 
-**Type B: Considered Zero (40-50% of examples)**
+**Type B: Considered Zero (40-50% of examples, ~80-95 articles)**
 - Article is about quantum computing but doesn't warrant trading action
 - Thinking explicitly reasons through WHY there's no signal
 - Concludes with all or nearly all zeros
-- Examples: incremental papers, routine updates, old news, tangentially related content
+- Examples: incremental papers, routine updates, old news, tangentially related content, generic outlook pieces
 - THE THINKING MUST SHOW THE REASONING FOR ZERO: "This is incremental, already priced in, too speculative, or affects companies outside our universe"
 
-**Type C: Moderate Signal (20-25% of examples)**
+**Type C: Moderate Signal (20-25% of examples, ~40-50 articles)**
 - Article has some implications but conviction is low
 - Thinking shows uncertainty and produces small scores (|score| 0.1-0.5)
-- Examples: partnerships with unclear value, mixed earnings, ambiguous competitive moves
+- Examples: partnerships with unclear value, mixed news, ambiguous competitive moves
+
+### How to Classify Each Article
+
+Read the article and ask: "Would a portfolio manager at a quantum-focused fund actually trade on this within the next 5 days?"
+- If YES with high conviction → Type A
+- If NO → Type B
+- If MAYBE / PARTIALLY → Type C
 
 ---
 
@@ -82,12 +107,16 @@ assistant: <think>
 - RGTI: Rigetti Computing (superconducting, pure-play) — range [-2.0, +2.0]
 - QBTS: D-Wave Quantum (quantum annealing, pure-play) — range [-2.0, +2.0]
 - QUBT: Quantum Computing Inc. (neutral atom, pure-play) — range [-2.0, +2.0]
-- QNT: Quantinuum (trapped-ion, pure-play) — range [-2.0, +2.0]
+- QNT: Quantinuum (trapped-ion, pure-play, IPO'd June 2026) — range [-2.0, +2.0]
 - IBM: International Business Machines (superconducting, ~2% quantum revenue) — range [-0.15, +0.15]
-- HON: Honeywell (trapped-ion, ~1% quantum revenue) — range [-0.3, +0.3]
+- HON: Honeywell (trapped-ion, ~1% quantum revenue post-Quantinuum spinoff) — range [-0.3, +0.3]
 
-**Inactive (always 0.0):**
-- MSFT, GOOGL, NVDA — always 0.0 (but their news affects active tickers)
+**Inactive (always 0.0, but reason about their impact on active tickers):**
+- MSFT: Microsoft (topological approach) — always 0.0
+- GOOGL: Alphabet/Google (superconducting approach) — always 0.0
+- NVDA: NVIDIA (quantum hardware enabler) — always 0.0
+
+News ABOUT Google/Microsoft/NVIDIA is still relevant — it affects active tickers. For example, "Google achieves superconducting breakthrough" → GOOGL stays 0.0 but RGTI gets bullish (technology validation).
 
 ---
 
@@ -95,17 +124,24 @@ assistant: <think>
 
 1. **Selectivity is paramount.** Only assign non-zero scores when you have genuine conviction that this news will move the stock over 5 trading days. When in doubt, output 0.0.
 
-2. **Technology validation rule:** When Google/IBM/Microsoft achieves a superconducting breakthrough → BULLISH for RGTI (validates the approach). When Quantinuum achieves a trapped-ion breakthrough → BULLISH for IONQ. Market evidence: RGTI surged +89% when Google announced Willow.
+2. **Technology validation rule:** When Google/IBM/Microsoft achieves a superconducting breakthrough → BULLISH for RGTI (validates the approach). When Quantinuum achieves a trapped-ion breakthrough → BULLISH for IONQ. Market evidence: RGTI surged +89% when Google announced Willow (Dec 2024).
 
 3. **IONQ-QNT competitive dynamic:** Both are trapped-ion pure-plays. Sector-wide events → both move together. Company-specific wins → they diverge (zero-sum).
 
-4. **ArXiv papers:** Almost always 0.0. Only non-zero for company-authored hardware results with measured metrics.
+4. **ArXiv papers:** Almost always 0.0. Only non-zero for company-authored hardware results with measured metrics demonstrating a genuine milestone.
 
 5. **Market context awareness:** If stocks are already up 30%+ in the prior week, bullish news may be priced in. If stocks are down 20%+, consider whether bad news is already reflected.
 
+6. **Score magnitude guide:**
+   - |0.0|: No signal / no conviction
+   - |0.1-0.3|: Mild signal, low conviction
+   - |0.5-1.0|: Moderate signal, clear implications
+   - |1.0-1.5|: Strong signal, high conviction
+   - |1.5-2.0|: Maximum conviction, transformative event
+
 ---
 
-## System Prompt (Use This Exactly)
+## System Prompt (Use This Exactly for All Examples)
 
 ```
 You are a quantitative NLP signal generator for the quantum computing sector. You MUST think step-by-step before producing scores.
@@ -120,21 +156,48 @@ CRITICAL: Most news does NOT warrant a trading signal. Your default output shoul
 
 Ask yourself: "Would a portfolio manager actually trade on this?" If the answer is "probably not," output zeros.
 
-[Include full ticker universe, score ranges, and technology dynamics here]
+ACTIVE TICKERS (assign scores):
+- IONQ: IonQ (trapped-ion, pure-play) — range [-2.0, +2.0]
+- RGTI: Rigetti Computing (superconducting, pure-play) — range [-2.0, +2.0]
+- QBTS: D-Wave Quantum (quantum annealing, pure-play) — range [-2.0, +2.0]
+- QUBT: Quantum Computing Inc. (neutral atom, pure-play) — range [-2.0, +2.0]
+- QNT: Quantinuum (trapped-ion, pure-play) — range [-2.0, +2.0]
+- IBM: IBM (superconducting, ~2% quantum revenue) — range [-0.15, +0.15]
+- HON: Honeywell (trapped-ion, ~1% quantum revenue) — range [-0.3, +0.3]
+
+INACTIVE (always 0.0): MSFT, GOOGL, NVDA
+
+TECHNOLOGY DYNAMICS:
+- Trapped-ion breakthroughs → bullish IONQ/QNT/HON, may pressure RGTI/IBM
+- Superconducting breakthroughs → bullish RGTI/IBM, may pressure IONQ/QNT
+- Technology validation by big companies (Google SC breakthrough) → BULLISH for same-tech pure-plays (RGTI)
+- Company-specific wins are zero-sum between direct competitors (IONQ vs QNT)
+- Error correction advances → benefit all gate-based approaches
+- Government funding → broadly bullish for sector
+
+JSON STRUCTURE:
+{"signal_vector": {"IONQ": {"score": float, "reasoning": "..."}, "RGTI": {...}, "QBTS": {...}, "QUBT": {...}, "QNT": {...}, "IBM": {...}, "HON": {...}, "MSFT": {"score": 0.0, "reasoning": "Inactive."}, "GOOGL": {"score": 0.0, "reasoning": "Inactive."}, "NVDA": {"score": 0.0, "reasoning": "Inactive."}}, "event_type": "...", "time_horizon": "intraday|2-5 days|1-2 weeks|1+ month", "information_novelty": "high|medium|low", "technical_translation": "2-3 sentences for a portfolio manager.", "signal_rationale": "Why these scores?"}
 ```
 
 ---
 
 ## User Message Format
 
+For each article, construct the user message as follows:
+
 ```
 **Market Context (as of {date}):**
 | Ticker | 5d Ret | 30d Ret | 52w Position | Liquidity |
 |--------|--------|---------|--------------|-----------|
-| IONQ | +X.X% | +X.X% | Position | Tier |
-| ... | ... | ... | ... | ... |
+| IONQ | +X.X% | +X.X% | Near high/Mid-range/Near low | High |
+| RGTI | ... | ... | ... | High |
+| QBTS | ... | ... | ... | Medium |
+| QUBT | ... | ... | ... | Medium |
+| QNT | ... | ... | ... | High |
+| IBM | ... | ... | ... | Very High |
+| HON | ... | ... | ... | Very High |
 
-**Market regime:** Bull/Bear/Neutral / Volatility
+**Market regime:** Bull/Bear/Neutral / High/Normal/Low Volatility
 
 [ARTICLE]
 Title: {title}
@@ -144,9 +207,21 @@ Source: {source}
 {article_text}
 ```
 
+**Computing market context:** Use `src/market_context.py`:
+```python
+import sys
+sys.path.insert(0, '.')
+from src.market_context import get_market_context
+context = get_market_context("2025-03-15")  # returns formatted table or "" if no data
+```
+
+If `get_market_context()` returns empty string (no data for that date), omit the market context section.
+
 ---
 
-## Example: Type B (Considered Zero — Most Common)
+## Examples
+
+### Type B: Considered Zero (Most Common — 40-50% of examples)
 
 ```
 assistant: <think>
@@ -155,7 +230,7 @@ This article discusses a minor software update to IonQ's cloud platform that imp
 {"signal_vector": {"IONQ": {"score": 0.0, "reasoning": "Routine software update, no trading signal."}, "RGTI": {"score": 0.0, "reasoning": "Unrelated to Rigetti."}, "QBTS": {"score": 0.0, "reasoning": "Unrelated."}, "QUBT": {"score": 0.0, "reasoning": "Unrelated."}, "QNT": {"score": 0.0, "reasoning": "Unrelated."}, "IBM": {"score": 0.0, "reasoning": "Unrelated."}, "HON": {"score": 0.0, "reasoning": "Unrelated."}, "MSFT": {"score": 0.0, "reasoning": "Inactive."}, "GOOGL": {"score": 0.0, "reasoning": "Inactive."}, "NVDA": {"score": 0.0, "reasoning": "Inactive."}}, "event_type": "routine_update", "time_horizon": "intraday", "information_novelty": "low", "technical_translation": "Minor cloud platform improvement with no commercial significance.", "signal_rationale": "No trading signal. Incremental engineering work does not move stock prices."}
 ```
 
-## Example: Type A (Genuine Signal — Less Common)
+### Type A: Genuine Signal (Less Common — 30-35% of examples)
 
 ```
 assistant: <think>
@@ -168,49 +243,55 @@ Conviction: HIGH. This is a material, unexpected contract win with clear revenue
 {"signal_vector": {"IONQ": {"score": 1.8, "reasoning": "Largest contract in company history, 4x annual revenue, validates defense use case."}, "RGTI": {"score": 0.0, "reasoning": "Different technology and customer segment."}, "QBTS": {"score": 0.0, "reasoning": "Annealing approach not relevant to this contract type."}, "QUBT": {"score": 0.0, "reasoning": "Not competing in this space."}, "QNT": {"score": -0.5, "reasoning": "Direct competitor for trapped-ion defense contracts, likely lost this bid."}, "IBM": {"score": 0.1, "reasoning": "Validates enterprise quantum demand broadly."}, "HON": {"score": 0.15, "reasoning": "Trapped-ion validation, but limited direct exposure post-spinoff."}, "MSFT": {"score": 0.0, "reasoning": "Inactive."}, "GOOGL": {"score": 0.0, "reasoning": "Inactive."}, "NVDA": {"score": 0.0, "reasoning": "Inactive."}}, "event_type": "contract_win", "time_horizon": "2-5 days", "information_novelty": "high", "technical_translation": "IonQ secures transformative defense contract that provides multi-year revenue visibility and validates trapped-ion for government applications.", "signal_rationale": "Material contract win with high conviction. IONQ direct beneficiary, QNT loses competitive bid, sector broadly validated."}
 ```
 
----
+### Type C: Moderate Signal (20-25% of examples)
 
-## Implementation Instructions for Codex
-
-1. **Source articles from `data/raw/articles_train.jsonl`** — these are real articles with dates within the training period (before 2026-01-07).
-
-2. **For each article, generate the full training example** (system + user + assistant messages) with the thinking trace format.
-
-3. **Enforce the distribution:** Track how many Type A / B / C examples you've generated. Aim for 40-50% Type B (zeros), 30-35% Type A (genuine signal), 20-25% Type C (moderate).
-
-4. **Market context:** Compute from parquet files in `data/market/` using the article's date. Only use data UP TO the article date (no future leakage).
-
-5. **Validation after generation:**
-   - All 10 tickers present
-   - MSFT/GOOGL/NVDA = 0.0
-   - Score ranges respected
-   - Thinking block present and 100-200 tokens
-   - JSON parses correctly
-   - Total tokens < 4096
-
-6. **Save to `data/training/quantum_alpha_train_v8.jsonl`** in OpenAI messages format.
+```
+assistant: <think>
+This article reports that Rigetti has partnered with a European bank for a quantum optimization pilot. The partnership is exploratory — no committed revenue, no exclusivity, and the pilot may not lead to a production contract. It shows interest in Rigetti's platform but is not material enough for a strong signal. Mild positive for RGTI (+0.3) as it validates commercial interest, but low conviction.
+</think>
+{"signal_vector": {"IONQ": {"score": 0.0, "reasoning": "Not directly affected by this partnership."}, "RGTI": {"score": 0.3, "reasoning": "Exploratory partnership shows commercial interest but no committed revenue."}, "QBTS": {"score": 0.0, "reasoning": "Different technology approach."}, "QUBT": {"score": 0.0, "reasoning": "Not relevant."}, "QNT": {"score": 0.0, "reasoning": "Not competing for this type of engagement."}, "IBM": {"score": 0.0, "reasoning": "Not materially affected."}, "HON": {"score": 0.0, "reasoning": "Not relevant."}, "MSFT": {"score": 0.0, "reasoning": "Inactive."}, "GOOGL": {"score": 0.0, "reasoning": "Inactive."}, "NVDA": {"score": 0.0, "reasoning": "Inactive."}}, "event_type": "partnership_exploratory", "time_horizon": "1-2 weeks", "information_novelty": "medium", "technical_translation": "Rigetti secures an exploratory pilot with a European bank. Non-binding, no revenue commitment, but shows enterprise interest in superconducting quantum optimization.", "signal_rationale": "Low conviction positive for RGTI. Exploratory partnership validates interest but is not material enough for strong signal."}
+```
 
 ---
 
-## For Eval Predictions (Teacher Baseline)
+## Implementation Steps
 
-In addition to training data, generate predictions for ALL eval articles to benchmark Codex as a teacher model.
+1. **Load articles:** Read all 194 articles from `data/raw/articles_train.jsonl`
+
+2. **For each article:**
+   a. Compute market context using `src/market_context.py` (only data up to article date)
+   b. Construct the user message (market context + article)
+   c. Determine the appropriate type (A/B/C) based on article content
+   d. Generate the assistant response (thinking + JSON)
+   e. Assemble into messages format
+
+3. **Track distribution:** Keep a running count of Type A/B/C. Adjust as needed to hit targets.
+
+4. **Validate each example:** All 10 tickers present, inactive = 0.0, ranges respected, thinking present, JSON parses.
+
+5. **Save to `data/training/quantum_alpha_train_v8.jsonl`**
+
+---
+
+## Task 2: Generate Eval Predictions (Teacher Baseline)
+
+Generate predictions for ALL 426 eval articles to benchmark Codex as a teacher model.
 
 ### Input
 
 - File: `data/raw/articles_eval.jsonl`
 - 426 articles from 2026-01-07 to 2026-06-09
-- Each article has: `title`, `date`, `source`, `text`
+- Each article has: `text`, `source`, `title`, `date`, `url`, `outcome_cleaned`
 
 ### Output
 
 - File: `data/eval/predictions_codex_teacher.jsonl`
-- One line per article, same thinking + JSON format
+- One JSON object per line, one per article
 
 ### Output Format (per line)
 
 ```json
-{"article_idx": 0, "date": "2026-01-07", "title": "...", "source": "news", "status": "success", "thinking": "...", "signal": {"signal_vector": {...}, "event_type": "...", ...}}
+{"article_idx": 0, "date": "2026-01-07", "title": "...", "source": "news", "status": "success", "thinking": "...", "signal": {"signal_vector": {...}, "event_type": "...", "time_horizon": "...", "information_novelty": "...", "technical_translation": "...", "signal_rationale": "..."}}
 ```
 
 ### Anti-Cheating Rules (CRITICAL)
@@ -230,15 +311,15 @@ Apply the same selectivity standard as training. If an eval article doesn't warr
 - Direction accuracy on non-zero predictions
 - Number of non-zero predictions (selectivity)
 
-A model that outputs fewer, higher-conviction predictions will score better than one that scores everything.
+**A model that outputs fewer, higher-conviction predictions will score better than one that scores everything.**
 
 ### Processing All 426 Articles
 
-Process every article in `articles_eval.jsonl` sequentially. For each:
+Process every article in `articles_eval.jsonl` sequentially (index 0 to 425). For each:
 1. Read the article's date
 2. Compute market context from parquet files (up to that date only)
 3. Apply the same system prompt and thinking format
-4. Save the result
+4. Save the result with `article_idx` matching the line number (0-indexed)
 
 If an article fails for any reason, log it with `"status": "error"` and continue to the next one. Do not skip articles.
 
@@ -252,8 +333,7 @@ The Codex predictions will be compared against:
 To run the comparison after generating predictions:
 ```bash
 python scripts/compare_eval_ic.py
-# This script automatically picks up predictions_codex_teacher.jsonl
-# You may need to update the script to include the new file
+# You may need to update the script to include predictions_codex_teacher.jsonl
 ```
 
 ---
@@ -268,94 +348,85 @@ The V4 model worked because it was SELECTIVE. It only scored ~3,265 ticker-artic
 
 ## Pushing Results to GitHub
 
-After generation is complete:
+After BOTH tasks are complete:
 
 ```bash
 cd quantum-alpha-intelligence
 
 # Verify the output files exist and have expected line counts
-wc -l data/training/quantum_alpha_train_v8.jsonl
-wc -l data/eval/predictions_codex_teacher.jsonl
+wc -l data/training/quantum_alpha_train_v8.jsonl   # Should be ~194
+wc -l data/eval/predictions_codex_teacher.jsonl     # Should be 426
 
-# Stage, commit, and push
-git add data/training/quantum_alpha_train_v8.jsonl
-git add data/eval/predictions_codex_teacher.jsonl
-git commit -m "V8 training data: thinking traces with selectivity (Codex teacher)
-
-Generated by Codex agent. Key properties:
-- X examples total (report actual count)
-- ~40-50% Type B (thinking leads to zeros)
-- ~30-35% Type A (genuine signal)
-- ~20-25% Type C (moderate signal)
-- All with <think> reasoning traces
-- Eval predictions: 426 articles as Codex teacher baseline"
-
-git push origin fix/label-quality
-```
-
-### Validation Before Pushing
-
-Run this validation script before committing:
-
-```python
+# Run validation
+python -c "
 import json
 
-def validate_v8(filepath):
+def validate(filepath, name):
     with open(filepath) as f:
         records = [json.loads(l) for l in f if l.strip()]
-    
     errors = 0
-    type_a = 0  # genuine signal
-    type_b = 0  # considered zero
-    type_c = 0  # moderate
-    
+    type_a, type_b, type_c = 0, 0, 0
     for i, r in enumerate(records):
-        assistant = r['messages'][2]['content']
-        
-        # Check format
-        if '<think>' not in assistant or '</think>' not in assistant:
-            print(f'ERROR {i}: missing think tags')
+        # Handle both training format and eval format
+        if 'messages' in r:
+            assistant = r['messages'][2]['content']
+        elif 'thinking' in r and 'signal' in r:
+            assistant = '<think>' + r['thinking'] + '</think>' + json.dumps(r['signal'])
+        else:
             errors += 1
             continue
-        
-        # Extract JSON
+        if '<think>' not in assistant or '</think>' not in assistant:
+            errors += 1
+            continue
         think_end = assistant.find('</think>')
         json_str = assistant[think_end + len('</think>'):].strip()
         try:
             parsed = json.loads(json_str)
         except:
-            print(f'ERROR {i}: JSON parse failed')
             errors += 1
             continue
-        
-        # Check tickers
         sv = parsed.get('signal_vector', {})
         if len(sv) < 10:
-            print(f'ERROR {i}: only {len(sv)} tickers')
             errors += 1
-        
-        # Check inactive
         for t in ['MSFT', 'GOOGL', 'NVDA']:
             if sv.get(t, {}).get('score', 0) != 0.0:
-                print(f'ERROR {i}: {t} != 0.0')
                 errors += 1
-        
-        # Classify type
         active_scores = [abs(sv.get(t, {}).get('score', 0)) for t in ['IONQ','RGTI','QBTS','QUBT','QNT','IBM','HON']]
-        max_score = max(active_scores)
-        if max_score >= 0.5:
-            type_a += 1
-        elif max_score < 0.05:
-            type_b += 1
-        else:
-            type_c += 1
-    
+        max_score = max(active_scores) if active_scores else 0
+        if max_score >= 0.5: type_a += 1
+        elif max_score < 0.05: type_b += 1
+        else: type_c += 1
     total = len(records)
-    print(f'Total: {total} | Errors: {errors}')
-    print(f'Type A (signal): {type_a} ({type_a/total*100:.0f}%)')
-    print(f'Type B (zeros):  {type_b} ({type_b/total*100:.0f}%)')
-    print(f'Type C (moderate): {type_c} ({type_c/total*100:.0f}%)')
-    print(f'Target: A=30-35%, B=40-50%, C=20-25%')
+    print(f'{name}: {total} examples | Errors: {errors}')
+    print(f'  Type A (signal): {type_a} ({type_a/total*100:.0f}%)')
+    print(f'  Type B (zeros):  {type_b} ({type_b/total*100:.0f}%)')
+    print(f'  Type C (moderate): {type_c} ({type_c/total*100:.0f}%)')
+    print(f'  Target: A=30-35%, B=40-50%, C=20-25%')
+    print()
 
-validate_v8('data/training/quantum_alpha_train_v8.jsonl')
+validate('data/training/quantum_alpha_train_v8.jsonl', 'Training V8')
+validate('data/eval/predictions_codex_teacher.jsonl', 'Eval Predictions')
+"
+
+# Stage, commit, and push
+git add data/training/quantum_alpha_train_v8.jsonl
+git add data/eval/predictions_codex_teacher.jsonl
+git commit -m "V8 training data + Codex teacher eval predictions
+
+Training (quantum_alpha_train_v8.jsonl):
+- X examples from real articles (report actual count)
+- ~40-50% Type B (thinking leads to zeros)
+- ~30-35% Type A (genuine signal)
+- ~20-25% Type C (moderate signal)
+- All with <think> reasoning traces
+- Selectivity-first approach
+
+Eval (predictions_codex_teacher.jsonl):
+- 426 articles predicted
+- Anti-cheating: market context only uses data up to article date
+- Codex teacher baseline for IC comparison
+
+Generated by Codex agent."
+
+git push origin fix/label-quality
 ```
