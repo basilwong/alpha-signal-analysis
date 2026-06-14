@@ -1,5 +1,130 @@
 # Codex Follow-Up: Generate Synthetic Training Components
 
+## Execution Report
+
+Completed on branch `fix/label-quality` and pushed in commit `c58ee22`:
+
+```text
+c58ee22 V8 synthetic training components (550 examples)
+```
+
+### Final Outputs
+
+| File | Rows | Type A | Type B | Type C | Purpose |
+|------|------|--------|--------|--------|---------|
+| `data/training/v8_synthetic.jsonl` | 200 | 70 | 80 | 50 | Broader realistic quantum-news coverage |
+| `data/training/v8_negatives.jsonl` | 150 | 0 | 150 | 0 | Hard selectivity training, all-zero labels |
+| `data/training/v8_edge_cases.jsonl` | 100 | 0 | 60 | 40 | Ambiguous, stale, priced-in, and indirect cases |
+| `data/training/v8_paraphrased.jsonl` | 100 | 40 | 50 | 10 | Style invariance with preserved source scores |
+| **Total** | **550** | **110** | **340** | **100** | V8 synthetic add-on set |
+
+Combined with `quantum_alpha_train_v8.jsonl`, the V8 training set now has 740 examples:
+
+| Component | Rows | Type A | Type B | Type C | Active Non-Zero Pairs |
+|-----------|------|--------|--------|--------|------------------------|
+| `quantum_alpha_train_v8.jsonl` | 190 | 52 | 128 | 10 | 204 / 1330, 15.3% |
+| `v8_synthetic.jsonl` | 200 | 70 | 80 | 50 | 468 / 1400, 33.4% |
+| `v8_negatives.jsonl` | 150 | 0 | 150 | 0 | 0 / 1050, 0.0% |
+| `v8_edge_cases.jsonl` | 100 | 0 | 60 | 40 | 160 / 700, 22.9% |
+| `v8_paraphrased.jsonl` | 100 | 40 | 50 | 10 | 162 / 700, 23.1% |
+| **Combined** | **740** | **162** | **468** | **110** | **994 / 5180, 19.2%** |
+
+### Step-By-Step Breakdown
+
+1. Verified repository state.
+   - Confirmed branch `fix/label-quality` was clean and synced with `origin/fix/label-quality`.
+   - Confirmed the existing V8 real-article files from the prior run were present.
+   - Confirmed `quantum_alpha_train_v8.jsonl` had 190 examples and `predictions_codex_teacher.jsonl` had 426 eval rows.
+
+2. Reviewed the follow-up prompt and tightened the execution strategy.
+   - Kept the four requested output files and target counts.
+   - Added a manifest-first workflow so category, type distribution, ticker coverage, and style coverage were controlled before generation.
+   - Preserved the exact system prompt from the first row of `quantum_alpha_train_v8.jsonl`.
+   - Required GPT-5.5 with `xhigh` reasoning through fresh Codex worker sessions.
+   - Avoided OpenAI API usage entirely.
+
+3. Added quality constraints beyond the original prompt.
+   - Added hard negatives that mention mega-cap tickers or active universe names but are not quantum-specific, such as IBM consulting, Microsoft Azure AI, Google search advertising, and NVIDIA AI GPUs.
+   - Kept synthetic bearish scenarios concrete: confirmed misses, guidance cuts, formal investigations, actual dilution, or credible technical setbacks.
+   - Treated rumors, generic lawsuits, vague short reports, and unsupported competitor claims as zero or mild signals rather than strong bearish labels.
+   - Made QNT/Quantinuum IPO and lockup examples use 2026 dates instead of 2025 dates.
+   - Made paraphrases preserve the exact source ticker scores from V8, not just the same broad direction.
+
+4. Built a controlled manifest.
+   - Temporary helper scripts generated JSONL manifests under `logs/v8_components/manifests/`.
+   - The manifest was chunked into 11 independent 50-row chunks:
+   - `synthetic_00` through `synthetic_03`
+   - `negatives_00` through `negatives_02`
+   - `edge_cases_00` and `edge_cases_01`
+   - `paraphrased_00` and `paraphrased_01`
+   - `logs/` is ignored by git, so these intermediate files were not committed.
+
+5. Generated each chunk with fresh GPT-5.5/xhigh Codex workers.
+   - Each chunk used a fresh subagent session.
+   - Up to three workers were kept active concurrently.
+   - Each worker read only its assigned manifest and wrote only its assigned chunk output under `logs/v8_components/chunks/`.
+   - Workers were instructed not to edit final training files and not to revert other work.
+
+6. Assembled final files from worker chunks.
+   - A temporary assembler read every chunk, validated it against the manifest, and wrote the four final files.
+   - The assembler enforced row counts, ticker coverage, inactive ticker zeros, score ranges, target type, required signal fields, and thinking trace presence.
+   - For `v8_negatives.jsonl`, the assembler required every ticker score to be exactly `0.0`.
+   - For `v8_paraphrased.jsonl`, the assembler required every ticker score to exactly match the source V8 example at the selected `source_idx`.
+
+7. Ran the requested validation script.
+   - `v8_synthetic.jsonl`: 200 examples, 0 errors, A/B/C = 70/80/50.
+   - `v8_negatives.jsonl`: 150 examples, 0 errors, A/B/C = 0/150/0.
+   - `v8_edge_cases.jsonl`: 100 examples, 0 errors, A/B/C = 0/60/40.
+   - `v8_paraphrased.jsonl`: 100 examples, 0 errors, A/B/C = 40/50/10.
+
+8. Ran additional strict checks.
+   - Verified all four files use the exact V8 system prompt.
+   - Verified all 10 tickers are present in every assistant JSON.
+   - Verified `MSFT`, `GOOGL`, and `NVDA` are always exactly `0.0`.
+   - Verified active ticker ranges: pure-plays in `[-2.0, +2.0]`, IBM in `[-0.15, +0.15]`, HON in `[-0.3, +0.3]`.
+   - Verified `v8_negatives.jsonl` is 100% all-zero.
+   - Verified `git diff --check` passed.
+
+9. Cleaned up temporary generation files.
+   - Removed temporary helper scripts before committing.
+   - Did not commit manifests, worker chunk outputs, or logs.
+   - Only the four requested JSONL training files were staged.
+
+10. Committed and pushed.
+    - Commit: `c58ee22 V8 synthetic training components (550 examples)`.
+    - Pushed to `origin/fix/label-quality`.
+    - Final branch state: `fix/label-quality` synced with `origin/fix/label-quality`.
+
+### Verification Commands Run
+
+```bash
+wc -l data/training/v8_synthetic.jsonl \
+      data/training/v8_negatives.jsonl \
+      data/training/v8_edge_cases.jsonl \
+      data/training/v8_paraphrased.jsonl
+```
+
+Output:
+
+```text
+     200 data/training/v8_synthetic.jsonl
+     150 data/training/v8_negatives.jsonl
+     100 data/training/v8_edge_cases.jsonl
+     100 data/training/v8_paraphrased.jsonl
+     550 total
+```
+
+The validation script from this prompt was run with `/usr/bin/python3` and returned 0 errors for all four files. Additional strict validation also returned `strict_errors 0`.
+
+### Notes For Future Runs
+
+- The generated set is intentionally more selective than V4. V4 had a high active non-zero pair rate; the combined V8 set is 19.2%, preserving the V8 selectivity objective.
+- The negative examples are stricter than generic unrelated news only: several mention IBM, Honeywell, Microsoft, Google, or NVIDIA in non-quantum contexts to teach that ticker mention alone is not a quantum alpha signal.
+- Paraphrases are true style-invariance examples because scores are exactly copied from source V8 rows.
+- The temporary manifest-and-assembler workflow is worth reusing for future data expansions because it prevents valid JSON from drifting into poor label distribution.
+
+---
+
 ## Context
 
 Your previous run (commit `d702986`) successfully generated V8 training data from 190 real articles and 421 eval predictions. However, the best-performing model (V4, IC=0.075) was trained on **881 examples that were 79% synthetic**. The V8 data with only 190 real articles is missing the synthetic components that made V4 effective.
