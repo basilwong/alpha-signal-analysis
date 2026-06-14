@@ -1069,3 +1069,180 @@ textarea {
     border-radius: 4px;
     border: 1px solid rgba(239, 68, 68, 0.2);
 }
+
+/* ============================================================
+   MOBILE RESPONSIVE OVERRIDES
+   ============================================================ */
+
+@media (max-width: 768px) {
+    /* Header */
+    .header {
+        padding: 10px 12px;
+    }
+    .header-left {
+        gap: 8px;
+    }
+    .logo {
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+    }
+    .header h1 {
+        font-size: 14px;
+    }
+    .badge {
+        display: none;
+    }
+    .header-right .status-text {
+        display: none;
+    }
+
+    /* Tab navigation - scrollable */
+    .tab-nav {
+        padding: 0 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .tab-nav::-webkit-scrollbar {
+        display: none;
+    }
+    .tab-btn {
+        font-size: 12px;
+        padding: 10px 12px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Content */
+    .content {
+        padding: 16px 12px;
+    }
+    .panel-header h2 {
+        font-size: 18px;
+    }
+    .panel-desc {
+        font-size: 13px;
+    }
+
+    /* Product overview */
+    .overview-card {
+        padding: 16px;
+    }
+    .overview-card h3 {
+        font-size: 16px;
+    }
+    .overview-card p {
+        font-size: 13px;
+    }
+
+    /* Eval context cards */
+    .eval-context {
+        grid-template-columns: 1fr;
+    }
+
+    /* Eval controls - wrap checkboxes */
+    .checkbox-group {
+        flex-wrap: wrap;
+    }
+    .checkbox-group label {
+        font-size: 11px;
+    }
+
+    /* Charts */
+    .chart-container {
+        overflow-x: auto;
+    }
+
+    /* Tables */
+    .table-container {
+        overflow-x: auto;
+    }
+    table {
+        font-size: 11px;
+    }
+    table th, table td {
+        padding: 6px 8px;
+    }
+
+    /* Live feed */
+    .feed-card {
+        padding: 12px 14px;
+    }
+    .feed-card-meta {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .feed-signal-row {
+        grid-template-columns: 42px 1fr 48px;
+    }
+    .feed-ticker {
+        font-size: 10px;
+    }
+    .feed-score {
+        font-size: 10px;
+    }
+
+    /* Historical controls */
+    .historical-controls select {
+        font-size: 12px;
+    }
+
+    /* Sector clusters */
+    .sector-clusters {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* Footer */
+    .footer {
+        flex-direction: column;
+        gap: 4px;
+        padding: 12px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Extra small screens */
+    .welcome-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .welcome-title {
+        font-size: 22px;
+    }
+    .welcome-tagline {
+        font-size: 12px;
+        letter-spacing: 1px;
+    }
+    .welcome-cta {
+        padding: 14px 20px;
+        font-size: 14px;
+        width: 100%;
+    }
+    .welcome-modal {
+        padding: 28px 16px;
+    }
+
+    .tab-btn {
+        font-size: 11px;
+        padding: 8px 10px;
+    }
+
+    .content {
+        padding: 12px 8px;
+    }
+
+    .control-row {
+        gap: 10px;
+    }
+
+    .feed-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .eval-charts {
+        gap: 16px;
+    }
+}
