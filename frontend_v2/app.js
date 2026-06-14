@@ -12,7 +12,14 @@ document.getElementById('welcome-enter-btn').addEventListener('click', () => {
     overlay.style.transition = 'opacity 0.3s ease';
     setTimeout(() => {
         overlay.classList.add('hidden');
+        overlay.style.opacity = '';
     }, 300);
+});
+
+document.getElementById('show-welcome-btn').addEventListener('click', () => {
+    const overlay = document.getElementById('welcome-overlay');
+    overlay.classList.remove('hidden');
+    overlay.scrollTop = 0;
 });
 
 // ============================================================

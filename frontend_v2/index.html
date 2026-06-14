@@ -11,9 +11,12 @@
     <!-- Welcome Overlay -->
     <div id="welcome-overlay" class="welcome-overlay">
         <div class="welcome-modal">
-            <div class="welcome-logo">⚛</div>
-            <h1 class="welcome-title">Quantum Alpha Intelligence</h1>
-            <p class="welcome-tagline">NLP-Driven Alpha Signal for Quantitative Trading</p>
+            <div class="welcome-top">
+                <div class="welcome-logo">⚛</div>
+                <h1 class="welcome-title">Quantum Alpha Intelligence</h1>
+                <p class="welcome-tagline">NLP-Driven Alpha Signal for Quantitative Trading</p>
+                <button id="welcome-enter-btn" class="welcome-cta">Explore the Signal Evaluation Dashboard →</button>
+            </div>
 
             <div class="welcome-body">
                 <p class="welcome-lead">A fine-tuned 7B parameter language model that converts unstructured text into actionable trading signals for the quantum computing sector.</p>
@@ -42,7 +45,6 @@
                 <p class="welcome-context">Hedge funds like <a href="https://finance.yahoo.com/markets/stocks/articles/citadel-set-pay-trading-ideas-094103745.html" target="_blank">Citadel are actively seeking to purchase alternative signal sources</a>. This platform demonstrates that a small, fine-tuned open-source model can produce statistically significant predictive signal using reinforcement learning (GRPO) trained directly on realized market returns.</p>
             </div>
 
-            <button id="welcome-enter-btn" class="welcome-cta">Explore the Signal Evaluation Dashboard →</button>
             <p class="welcome-footer">Build Small Hackathon 2026 | Model: OpenReasoning-7B GRPO</p>
         </div>
     </div>
@@ -73,8 +75,13 @@
         <!-- Tab 1: Evaluation Dashboard -->
         <section id="tab-evaluation" class="tab-panel active">
             <div class="panel-header">
-                <h2>Evaluation Dashboard</h2>
-                <p class="panel-desc">Fine-tuning and debugging tool for LLMs generating alpha signals. Compare model iterations using Information Coefficient (IC) to measure predictive power against realized market returns.</p>
+                <div class="panel-header-row">
+                    <div>
+                        <h2>Evaluation Dashboard</h2>
+                        <p class="panel-desc">Fine-tuning and debugging tool for LLMs generating alpha signals. Compare model iterations using Information Coefficient (IC) to measure predictive power against realized market returns.</p>
+                    </div>
+                    <button id="show-welcome-btn" class="btn-info">About This Project</button>
+                </div>
             </div>
 
             <div class="product-overview">

@@ -685,10 +685,12 @@ textarea {
     background: rgba(5, 8, 15, 0.97);
     z-index: 10000;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     backdrop-filter: blur(8px);
     animation: fadeIn 0.3s ease;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .welcome-overlay.hidden {
@@ -705,6 +707,11 @@ textarea {
     width: 90%;
     text-align: center;
     padding: 48px 40px;
+    margin: 40px auto;
+}
+
+.welcome-top {
+    margin-bottom: 24px;
 }
 
 .welcome-logo {
@@ -1244,5 +1251,38 @@ textarea {
 
     .eval-charts {
         gap: 16px;
+    }
+}
+
+/* Panel header with button */
+.panel-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.btn-info {
+    background: transparent;
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: var(--radius);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+
+.btn-info:hover {
+    background: var(--accent-blue);
+    color: white;
+}
+
+@media (max-width: 480px) {
+    .panel-header-row {
+        flex-direction: column;
     }
 }
