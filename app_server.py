@@ -29,38 +29,32 @@ EVAL_DIR = DATA_DIR / "eval"
 MARKET_DIR = DATA_DIR / "market"
 FRONTEND_DIR = BASE_DIR / "frontend_v2"
 
-# Quantum universe (V4: 10 tickers, added QNT)
-QUANTUM_TICKERS = ["IONQ", "RGTI", "QBTS", "QUBT", "QNT", "IBM", "GOOGL", "MSFT", "HON", "NVDA"]
-# Note: In V4 schema, MSFT/GOOGL/NVDA are always 0.0 (too diversified to move on quantum news)
+# Quantum universe
+QUANTUM_TICKERS = ["IONQ", "RGTI", "QBTS", "QUBT", "IBM", "GOOGL", "MSFT", "HON", "NVDA"]
 
-# Model prediction files (historical comparison)
+# Model prediction files
 MODEL_FILES = {
-    "Qwen3-8B Fine-tuned V4 (Manus)": EVAL_DIR / "predictions_finetuned_v4.jsonl",
-    "Qwen3-8B Fine-tuned V1 (qwen3-max)": EVAL_DIR / "predictions_finetuned_all.jsonl",
+    "Qwen3-8B Fine-tuned (LoRA)": EVAL_DIR / "predictions_finetuned_all.jsonl",
     "Qwen3-8B Base": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
     "Qwen3.7-Max Base": EVAL_DIR / "predictions_qwen37_max_base.jsonl",
     "Qwen3-30B Thinking": EVAL_DIR / "predictions_qwen3_30b_thinking.jsonl",
-    "Manus Teacher (direct)": EVAL_DIR / "predictions_manus_teacher.jsonl",
-    "MiniCPM-2B Fine-tuned": EVAL_DIR / "predictions_minicpm_2b.jsonl",
 }
 
 # Models available for live inference (deployed on HF with ZeroGPU)
 LIVE_MODELS = {
-    "Qwen3-8B Fine-tuned V4": "basilwong/quantum-alpha-qwen3-8b",
+    "Qwen3-8B Fine-tuned (LoRA)": "basilwong/quantum-alpha-qwen3-8b",
 }
 
 
 def load_predictions(path):
-    """Load predictions from a JSONL file. Handles both V1 (status field) and V4 (success field) formats."""
+    """Load predictions from a JSONL file."""
     predictions = []
     if path.exists():
         with open(path) as f:
             for line in f:
                 if line.strip():
                     p = json.loads(line)
-                    # V1 format uses "status": "success"
-                    # V4/Manus format uses "success": True
-                    if p.get("status") == "success" or p.get("success") == True:
+                    if p.get("status") == "success":
                         predictions.append(p)
     return sorted(predictions, key=lambda x: x.get("date", ""))
 
@@ -87,7 +81,6 @@ def load_eval_results():
 def load_market_data():
     """Load market data as JSON-serializable dict."""
     import pandas as pd
-    import numpy as np
     prices = {}
     for ticker in QUANTUM_TICKERS + ["SPY"]:
         path = MARKET_DIR / f"{ticker}.parquet"
@@ -95,13 +88,9 @@ def load_market_data():
             df = pd.read_parquet(path)
             close_col = "Adj Close" if "Adj Close" in df.columns else "Close"
             series = df[close_col].dropna()
-            # Handle both Series and DataFrame (multi-level columns)
-            if hasattr(series, 'iloc') and len(series.shape) > 1:
-                series = series.iloc[:, 0]
-            values = series.values.flatten() if hasattr(series.values, 'flatten') else series.values
             prices[ticker] = {
                 "dates": [d.strftime("%Y-%m-%d") for d in series.index],
-                "values": [round(float(v), 2) for v in values],
+                "values": [round(float(v), 2) for v in series.values],
             }
     return prices
 
@@ -113,22 +102,21 @@ EVAL_RESULTS = load_eval_results()
 MARKET_DATA = load_market_data()
 print(f"Models loaded: {', '.join(f'{k} ({len(v)})' for k, v in ALL_PREDICTIONS.items())}")
 
-# Sector data (V4: 10 tickers with QNT)
+# Sector data
 SECTOR_DATA = {
     "tickers": {
         "IONQ": {"name": "IonQ", "tech": "Trapped Ion", "signal_weight": 1.0, "cluster": "Trapped Ion"},
         "RGTI": {"name": "Rigetti", "tech": "Superconducting", "signal_weight": 1.0, "cluster": "Superconducting"},
         "QBTS": {"name": "D-Wave", "tech": "Annealing", "signal_weight": 1.0, "cluster": "Annealing"},
         "QUBT": {"name": "QCi", "tech": "Neutral Atom", "signal_weight": 1.0, "cluster": "Neutral Atom"},
-        "QNT": {"name": "Quantinuum", "tech": "Trapped Ion", "signal_weight": 1.0, "cluster": "Trapped Ion"},
         "IBM": {"name": "IBM", "tech": "Superconducting", "signal_weight": 0.15, "cluster": "Superconducting"},
-        "GOOGL": {"name": "Google", "tech": "Superconducting", "signal_weight": 0.0, "cluster": "Superconducting"},
-        "MSFT": {"name": "Microsoft", "tech": "Topological", "signal_weight": 0.0, "cluster": "Topological"},
+        "GOOGL": {"name": "Google", "tech": "Superconducting", "signal_weight": 0.05, "cluster": "Superconducting"},
+        "MSFT": {"name": "Microsoft", "tech": "Topological", "signal_weight": 0.05, "cluster": "Topological"},
         "HON": {"name": "Honeywell", "tech": "Trapped Ion", "signal_weight": 0.30, "cluster": "Trapped Ion"},
-        "NVDA": {"name": "NVIDIA", "tech": "Adjacent", "signal_weight": 0.0, "cluster": "Adjacent"},
+        "NVDA": {"name": "NVIDIA", "tech": "Adjacent", "signal_weight": 0.10, "cluster": "Adjacent"},
     },
     "clusters": {
-        "Trapped Ion": ["IONQ", "QNT", "HON"],
+        "Trapped Ion": ["IONQ", "HON"],
         "Superconducting": ["RGTI", "IBM", "GOOGL"],
         "Annealing": ["QBTS"],
         "Topological": ["MSFT"],
@@ -383,23 +371,16 @@ async def serve_index():
 
 
 # ============================================================
-# LAUNCH
+# GRADIO SERVER MOUNT
 # ============================================================
 
-# Create a Gradio Blocks app that mounts our FastAPI routes
+# Create a minimal Gradio app for the ZeroGPU decorator
 with gr.Blocks() as demo:
-    gr.Markdown("Quantum Alpha Intelligence API — Visit the [Dashboard](/) for the full interface.")
+    gr.Markdown("API Backend — Use the custom frontend at /")
 
-# Mount our FastAPI app onto the Gradio app
-# Gradio handles port binding; our custom routes are accessible at /api/*
+# Mount as Gradio Server
 app = gr.mount_gradio_app(app, demo, path="/gradio")
 
-# Launch the app. Gradio's launch() starts uvicorn internally,
-# which serves both the Gradio UI (at /gradio) and our FastAPI routes (at /api/*, /)
-# Don't specify server_port on HF Spaces (the runtime manages port binding)
-# ssr_mode=False disables the Node.js SSR proxy
-import os
-if os.environ.get("SPACE_ID"):
-    demo.launch(ssr_mode=False)
-else:
-    demo.launch(server_name="0.0.0.0", server_port=7860, ssr_mode=False)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=7860)

@@ -63,16 +63,26 @@ Default rule: Quantinuum trapped-ion breakthrough → BULLISH for IONQ (and vice
 - Company-specific events (contracts, earnings, talent): they may diverge or move opposite
 - IONQ wins a contract → bullish IONQ, slightly bearish QNT (and vice versa)
 
-**Minimum conviction rule (Fix 14):**
-If you have no specific reason to believe this news will move a stock's price, assign 0.0.
-Do not guess directional scores when you lack conviction. "No opinion" (0.0) is a valid
-and often correct output.
-- For pure-play companies: only assign non-zero when the news has clear, direct implications
-- For adjacent companies (IBM, HON): only assign non-zero when the news specifically relates
-  to their quantum computing division
-- Most news does not meaningfully move stocks. Incremental developments, routine updates,
-  and tangentially related stories should receive 0.0
-- When in doubt, 0.0 is better than a small guess. A wrong +0.1 is worse than a correct 0.0
+**Minimum conviction rule (Fix 14, refined):**
+The conviction threshold depends on the source type:
+
+*For news articles about quantum computing companies or the quantum sector:*
+- At least one pure-play ticker should almost always receive a non-zero score
+- Quantum-specific news moves quantum stocks by definition — these are 100% quantum revenue companies
+- Only assign 0.0 to a pure-play if the news is genuinely irrelevant to that specific company
+- For adjacent companies (IBM, HON): assign non-zero when the news relates to their quantum division
+
+*For arXiv papers and academic content:*
+- Default to 0.0 unless there are clear, direct commercial implications
+- Most papers do NOT move stocks — "no opinion" (0.0) is usually correct for academic content
+- Only assign non-zero for genuine breakthroughs with near-term commercial relevance
+
+*For non-quantum content:*
+- All scores should be 0.0 — this news has no relevance to quantum stocks
+
+General principle: Do not guess small directional scores when you lack conviction.
+A wrong +0.1 is worse than a correct 0.0. But for news directly about quantum companies,
+you should almost always have an opinion on the pure-play tickers.
 
 **ArXiv paper scoring rules (Fix 2):**
 - Default maximum absolute score for any ticker: 0.5

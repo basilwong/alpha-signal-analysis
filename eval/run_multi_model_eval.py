@@ -22,9 +22,10 @@ MARKET_TICKER = "SPY"
 
 # Models to evaluate
 MODELS = {
-    "Qwen3-8B Fine-tuned (LoRA)": EVAL_DIR / "predictions_finetuned_all.jsonl",
-    "Qwen3-8B Base": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
-    "Qwen3.7-Max Base": EVAL_DIR / "predictions_qwen37_max_base.jsonl",
+    "V7d GRPO (clean)": EVAL_DIR / "predictions_v7d_grpo_clean.jsonl",
+    "V7b Rejection (clean)": EVAL_DIR / "predictions_v7b_clean.jsonl",
+    "V7c DPO (clean)": EVAL_DIR / "predictions_v7c_clean.jsonl",
+    "V4 Baseline": EVAL_DIR / "predictions_openreasoning7b_v4.jsonl",
 }
 
 
@@ -66,7 +67,8 @@ def compute_abnormal_returns(predictions, returns_df, horizons=[1, 2, 5, 10, 20]
         for ticker in QUANTUM_TICKERS:
             if ticker not in signal_vector or ticker not in returns_df.columns:
                 continue
-            predicted_score = signal_vector[ticker].get("score", 0)
+            val = signal_vector[ticker]
+            predicted_score = val.get("score", 0) if isinstance(val, dict) else val if isinstance(val, (int, float)) else 0
             if predicted_score == 0:
                 continue
 

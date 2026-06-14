@@ -86,12 +86,12 @@
                         <span id="live-time-horizon">--</span>
                     </div>
                     <div class="meta-card">
-                        <label>Novelty</label>
-                        <span id="live-novelty">--</span>
+                        <label>Signal Decay</label>
+                        <span id="live-signal-decay">--</span>
                     </div>
                     <div class="meta-card">
-                        <label>Active Tickers</label>
-                        <span id="live-active-tickers">--</span>
+                        <label>Novelty</label>
+                        <span id="live-novelty">--</span>
                     </div>
                 </div>
                 <div class="expandable">
@@ -125,24 +125,14 @@
                         </select>
                     </div>
                 </div>
-                <div class="control-row">
-                    <div class="control-group flex-grow">
-                        <label>Filter Models</label>
-                        <div id="hist-model-checkboxes" class="checkbox-group"></div>
-                    </div>
-                </div>
             </div>
 
             <div id="hist-results" class="results-panel">
                 <div id="hist-article-info" class="article-info"></div>
-                <h3>Signal Comparison (<span id="hist-model-count">All</span> Models)</h3>
+                <h3>Signal Comparison (All Models)</h3>
                 <div id="hist-comparison-chart" class="chart-container"></div>
-                <h3>Raw Price Movement (20 days post-event)</h3>
+                <h3>Actual Price Movement (20 days post-event)</h3>
                 <div id="hist-price-chart" class="chart-container"></div>
-                <h3>Abnormal Returns vs. Market (SPY) <span class="info-btn" title="Stock return minus SPY return over the same period. This is what the model's IC is evaluated against — positive abnormal return means the stock outperformed the broad market.">ⓘ</span></h3>
-                <div id="hist-abnormal-chart" class="chart-container"></div>
-                <h3>Abnormal Returns vs. Sector (Equal-Weight Quantum Basket) <span class="info-btn" title="Stock return minus the equal-weighted average return of all pure-play quantum tickers (IONQ, RGTI, QBTS, QUBT). Shows whether the signal correctly identified relative winners within the sector.">ⓘ</span></h3>
-                <div id="hist-sector-abnormal-chart" class="chart-container"></div>
                 <div id="hist-model-details" class="model-details-grid"></div>
             </div>
         </section>
