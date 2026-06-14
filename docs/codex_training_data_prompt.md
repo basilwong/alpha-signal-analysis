@@ -194,9 +194,67 @@ Conviction: HIGH. This is a material, unexpected contract win with clear revenue
 
 ## For Eval Predictions (Teacher Baseline)
 
-Also generate predictions for `data/raw/articles_eval.jsonl` (426 articles from 2026-01-07 to 2026-06-09) using the same format. Save to `data/eval/predictions_codex_teacher.jsonl`.
+In addition to training data, generate predictions for ALL eval articles to benchmark Codex as a teacher model.
 
-**Anti-cheating:** Market context must only use data up to the article's publication date. Do NOT look up what happened to stocks after the article date.
+### Input
+
+- File: `data/raw/articles_eval.jsonl`
+- 426 articles from 2026-01-07 to 2026-06-09
+- Each article has: `title`, `date`, `source`, `text`
+
+### Output
+
+- File: `data/eval/predictions_codex_teacher.jsonl`
+- One line per article, same thinking + JSON format
+
+### Output Format (per line)
+
+```json
+{"article_idx": 0, "date": "2026-01-07", "title": "...", "source": "news", "status": "success", "thinking": "...", "signal": {"signal_vector": {...}, "event_type": "...", ...}}
+```
+
+### Anti-Cheating Rules (CRITICAL)
+
+1. **Market context must only use data UP TO the article's publication date.** Compute 5d/30d returns from the parquet files ending at or before the article date. Never include future price data.
+
+2. **Do NOT look up what happened to stocks after the article date.** You are predicting, not backtesting. Treat each article as if today is the article's publication date.
+
+3. **Do NOT reference any events that occurred after the article date.** If the article is from January 2026, you cannot reference anything from February 2026 or later.
+
+4. **Do NOT use web browsing to check current stock prices.** Base your analysis solely on the article text, your pre-existing knowledge, and the historical market context provided.
+
+### Selectivity Applies to Eval Too
+
+Apply the same selectivity standard as training. If an eval article doesn't warrant a trading signal, output zeros with reasoning. The benchmark comparison will measure:
+- IC (Information Coefficient) at 1, 2, 5, 10, 20 day horizons
+- Direction accuracy on non-zero predictions
+- Number of non-zero predictions (selectivity)
+
+A model that outputs fewer, higher-conviction predictions will score better than one that scores everything.
+
+### Processing All 426 Articles
+
+Process every article in `articles_eval.jsonl` sequentially. For each:
+1. Read the article's date
+2. Compute market context from parquet files (up to that date only)
+3. Apply the same system prompt and thinking format
+4. Save the result
+
+If an article fails for any reason, log it with `"status": "error"` and continue to the next one. Do not skip articles.
+
+### Comparison Baseline
+
+The Codex predictions will be compared against:
+- **Manus teacher v1** (old prompt): IC = 0.063 at 5d
+- **Manus teacher v2** (refined prompt): IC = 0.093 at 5d
+- **V4 fine-tuned model**: IC = 0.075 at 5d
+
+To run the comparison after generating predictions:
+```bash
+python scripts/compare_eval_ic.py
+# This script automatically picks up predictions_codex_teacher.jsonl
+# You may need to update the script to include the new file
+```
 
 ---
 
