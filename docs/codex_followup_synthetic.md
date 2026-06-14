@@ -1,14 +1,57 @@
-# Codex Follow-Up: Generate Synthetic Training Components
+# Codex V8 Training Data Generation Report
 
 ## Execution Report
 
-Completed on branch `fix/label-quality` and pushed in commit `c58ee22`:
+Core generation work on branch `fix/label-quality` was completed across these pushed commits:
 
 ```text
+6474b04 V8 training data + Codex teacher eval predictions
 c58ee22 V8 synthetic training components (550 examples)
+3b4a7e0 Document V8 synthetic component generation workflow
 ```
 
-### Final Outputs
+This report covers both phases:
+
+1. The GPT-5.5/xhigh real-article training pass and eval teacher predictions.
+2. The GPT-5.5/xhigh synthetic component expansion.
+
+### Final Output Files
+
+| File | Rows | Status | Purpose |
+|------|------|--------|---------|
+| `data/training/quantum_alpha_train_v8.jsonl` | 190 | Complete | Real-article V8 training set with thinking traces |
+| `data/eval/predictions_codex_teacher.jsonl` | 426 | Complete | Codex teacher eval baseline predictions |
+| `data/training/v8_synthetic.jsonl` | 200 | Complete | Synthetic quantum computing scenarios |
+| `data/training/v8_negatives.jsonl` | 150 | Complete | Non-quantum hard negatives, all-zero labels |
+| `data/training/v8_edge_cases.jsonl` | 100 | Complete | Ambiguous, stale, priced-in, and indirect cases |
+| `data/training/v8_paraphrased.jsonl` | 100 | Complete | Style-varied rewrites with preserved source scores |
+
+### Phase 1: Real Articles And Eval Predictions
+
+The first phase generated the core V8 real-article training file and Codex teacher eval predictions.
+
+| File | Rows | Type A | Type B | Type C | Notes |
+|------|------|--------|--------|--------|-------|
+| `quantum_alpha_train_v8.jsonl` | 190 | 52 | 128 | 10 | All rows are successful OpenAI messages examples |
+| `predictions_codex_teacher.jsonl` | 426 | 73 | 330 | 18 | 421 successful predictions plus 5 source-unavailable error rows |
+
+Eval details:
+
+| Metric | Value |
+|--------|-------|
+| Successful eval predictions | 421 |
+| Source-unavailable placeholder rows | 5, indices `421`-`425` |
+| Codex 5d IC from local one-off check | `+0.1892` |
+| Manus v2 5d IC from same local check | `+0.0928` |
+| Codex 5d direction accuracy | `79.2%`, `n=178` |
+
+Training selectivity from Phase 1:
+
+| Component | Rows | Type A | Type B | Type C | Active Non-Zero Pairs |
+|-----------|------|--------|--------|--------|------------------------|
+| `quantum_alpha_train_v8.jsonl` | 190 | 52 | 128 | 10 | 204 / 1330, 15.3% |
+
+### Phase 2: Synthetic Components
 
 | File | Rows | Type A | Type B | Type C | Purpose |
 |------|------|--------|--------|--------|---------|
@@ -18,7 +61,9 @@ c58ee22 V8 synthetic training components (550 examples)
 | `data/training/v8_paraphrased.jsonl` | 100 | 40 | 50 | 10 | Style invariance with preserved source scores |
 | **Total** | **550** | **110** | **340** | **100** | V8 synthetic add-on set |
 
-Combined with `quantum_alpha_train_v8.jsonl`, the V8 training set now has 740 examples:
+### Combined V8 Training Set
+
+Combined across Phase 1 and Phase 2, the V8 training set now has 740 examples:
 
 | Component | Rows | Type A | Type B | Type C | Active Non-Zero Pairs |
 |-----------|------|--------|--------|--------|------------------------|
@@ -31,26 +76,70 @@ Combined with `quantum_alpha_train_v8.jsonl`, the V8 training set now has 740 ex
 
 ### Step-By-Step Breakdown
 
-1. Verified repository state.
-   - Confirmed branch `fix/label-quality` was clean and synced with `origin/fix/label-quality`.
-   - Confirmed the existing V8 real-article files from the prior run were present.
-   - Confirmed `quantum_alpha_train_v8.jsonl` had 190 examples and `predictions_codex_teacher.jsonl` had 426 eval rows.
+1. Clarified execution requirements.
+   - Used Codex itself as the teacher model, not the OpenAI API.
+   - Used `gpt-5.5` with `xhigh` reasoning.
+   - Used fresh Codex sessions for article-level and chunk-level generation.
+   - Ran multiple Codex sessions concurrently where the harness allowed.
+   - Did not inspect or alter provider configuration after the user asked not to.
 
-2. Reviewed the follow-up prompt and tightened the execution strategy.
-   - Kept the four requested output files and target counts.
+2. Verified repository and branch state.
+   - Confirmed branch `fix/label-quality` was clean and synced with `origin/fix/label-quality`.
+   - Checked remote branches; `origin` had `main` and `fix/label-quality`.
+   - Confirmed `data/raw` only contained `.gitkeep` in this checkout, so generation used the available in-repo fallback records.
+   - Confirmed the fallback training source had 190 real-article records.
+   - Confirmed the fallback eval source had 421 available eval articles.
+
+3. Generated Phase 1 worker prompts and temporary helper state.
+   - Created temporary local helper scripts and worker instructions to package each article into a self-contained prompt.
+   - Computed or included market context only up to each article date.
+   - Wrote temporary prompts and intermediate worker outputs under `logs/`, which is gitignored.
+   - Ensured temporary helper scripts were removed before committing.
+
+4. Ran the real-article GPT-5.5/xhigh training pass.
+   - Processed every available training article with a fresh Codex worker session.
+   - Generated OpenAI messages format records with the exact V8 system prompt.
+   - Included `<think>...</think>` traces followed by JSON signal objects.
+   - Produced `data/training/quantum_alpha_train_v8.jsonl` with 190 rows.
+   - Final distribution was 52 Type A, 128 Type B, and 10 Type C.
+
+5. Ran the eval GPT-5.5/xhigh teacher pass.
+   - Processed all 421 available eval article records sequentially by index using fresh Codex workers.
+   - Kept up to three workers active concurrently where possible.
+   - Assembled `data/eval/predictions_codex_teacher.jsonl` with 426 rows.
+   - Rows `0`-`420` are successful predictions.
+   - Rows `421`-`425` are explicit `status: error` source-unavailable placeholders to preserve requested eval shape and article index continuity.
+
+6. Validated Phase 1 outputs.
+   - Verified `quantum_alpha_train_v8.jsonl` had 190 rows.
+   - Verified `predictions_codex_teacher.jsonl` had 426 rows.
+   - Verified 421 eval rows had `status: success`.
+   - Verified eval error rows were exactly `[421, 422, 423, 424, 425]`.
+   - Verified all successful rows had parseable JSON, all 10 tickers, inactive ticker zeros, and score ranges respected.
+   - Ran a local one-off IC comparison because `scipy` was not installed for the repository script.
+   - Local 5d IC check showed Codex at `+0.1892` versus Manus v2 at `+0.0928`.
+
+7. Committed and pushed Phase 1.
+   - Initial push was rejected because the remote branch had advanced.
+   - Fetched and inspected the divergence.
+   - Rebasing onto `origin/fix/label-quality` completed cleanly.
+   - Pushed the rebased commit `6474b04`.
+
+8. Reviewed the synthetic follow-up prompt and tightened the execution strategy.
+   - Kept the four requested synthetic output files and target counts.
    - Added a manifest-first workflow so category, type distribution, ticker coverage, and style coverage were controlled before generation.
    - Preserved the exact system prompt from the first row of `quantum_alpha_train_v8.jsonl`.
    - Required GPT-5.5 with `xhigh` reasoning through fresh Codex worker sessions.
    - Avoided OpenAI API usage entirely.
 
-3. Added quality constraints beyond the original prompt.
+9. Added Phase 2 quality constraints beyond the original prompt.
    - Added hard negatives that mention mega-cap tickers or active universe names but are not quantum-specific, such as IBM consulting, Microsoft Azure AI, Google search advertising, and NVIDIA AI GPUs.
    - Kept synthetic bearish scenarios concrete: confirmed misses, guidance cuts, formal investigations, actual dilution, or credible technical setbacks.
    - Treated rumors, generic lawsuits, vague short reports, and unsupported competitor claims as zero or mild signals rather than strong bearish labels.
    - Made QNT/Quantinuum IPO and lockup examples use 2026 dates instead of 2025 dates.
    - Made paraphrases preserve the exact source ticker scores from V8, not just the same broad direction.
 
-4. Built a controlled manifest.
+10. Built a controlled Phase 2 manifest.
    - Temporary helper scripts generated JSONL manifests under `logs/v8_components/manifests/`.
    - The manifest was chunked into 11 independent 50-row chunks:
    - `synthetic_00` through `synthetic_03`
@@ -59,25 +148,25 @@ Combined with `quantum_alpha_train_v8.jsonl`, the V8 training set now has 740 ex
    - `paraphrased_00` and `paraphrased_01`
    - `logs/` is ignored by git, so these intermediate files were not committed.
 
-5. Generated each chunk with fresh GPT-5.5/xhigh Codex workers.
+11. Generated each Phase 2 chunk with fresh GPT-5.5/xhigh Codex workers.
    - Each chunk used a fresh subagent session.
    - Up to three workers were kept active concurrently.
    - Each worker read only its assigned manifest and wrote only its assigned chunk output under `logs/v8_components/chunks/`.
    - Workers were instructed not to edit final training files and not to revert other work.
 
-6. Assembled final files from worker chunks.
+12. Assembled Phase 2 final files from worker chunks.
    - A temporary assembler read every chunk, validated it against the manifest, and wrote the four final files.
    - The assembler enforced row counts, ticker coverage, inactive ticker zeros, score ranges, target type, required signal fields, and thinking trace presence.
    - For `v8_negatives.jsonl`, the assembler required every ticker score to be exactly `0.0`.
    - For `v8_paraphrased.jsonl`, the assembler required every ticker score to exactly match the source V8 example at the selected `source_idx`.
 
-7. Ran the requested validation script.
+13. Ran the requested Phase 2 validation script.
    - `v8_synthetic.jsonl`: 200 examples, 0 errors, A/B/C = 70/80/50.
    - `v8_negatives.jsonl`: 150 examples, 0 errors, A/B/C = 0/150/0.
    - `v8_edge_cases.jsonl`: 100 examples, 0 errors, A/B/C = 0/60/40.
    - `v8_paraphrased.jsonl`: 100 examples, 0 errors, A/B/C = 40/50/10.
 
-8. Ran additional strict checks.
+14. Ran additional strict checks.
    - Verified all four files use the exact V8 system prompt.
    - Verified all 10 tickers are present in every assistant JSON.
    - Verified `MSFT`, `GOOGL`, and `NVDA` are always exactly `0.0`.
@@ -85,17 +174,39 @@ Combined with `quantum_alpha_train_v8.jsonl`, the V8 training set now has 740 ex
    - Verified `v8_negatives.jsonl` is 100% all-zero.
    - Verified `git diff --check` passed.
 
-9. Cleaned up temporary generation files.
+15. Cleaned up temporary generation files.
    - Removed temporary helper scripts before committing.
    - Did not commit manifests, worker chunk outputs, or logs.
-   - Only the four requested JSONL training files were staged.
+   - Only requested JSONL output files and later documentation updates were committed.
 
-10. Committed and pushed.
+16. Committed and pushed Phase 2.
     - Commit: `c58ee22 V8 synthetic training components (550 examples)`.
     - Pushed to `origin/fix/label-quality`.
-    - Final branch state: `fix/label-quality` synced with `origin/fix/label-quality`.
+    - Verified final line counts and validation output after push.
+
+17. Documented the workflow.
+    - Added this execution report to `docs/codex_followup_synthetic.md`.
+    - First documentation commit was `3b4a7e0`.
+    - This updated report expands that documentation to cover both Phase 1 and Phase 2.
 
 ### Verification Commands Run
+
+Phase 1 line counts:
+
+```bash
+wc -l data/training/quantum_alpha_train_v8.jsonl \
+      data/eval/predictions_codex_teacher.jsonl
+```
+
+Output:
+
+```text
+     190 data/training/quantum_alpha_train_v8.jsonl
+     426 data/eval/predictions_codex_teacher.jsonl
+     616 total
+```
+
+Phase 2 line counts:
 
 ```bash
 wc -l data/training/v8_synthetic.jsonl \
@@ -114,11 +225,36 @@ Output:
      550 total
 ```
 
-The validation script from this prompt was run with `/usr/bin/python3` and returned 0 errors for all four files. Additional strict validation also returned `strict_errors 0`.
+Combined output file line counts:
+
+```bash
+wc -l data/training/quantum_alpha_train_v8.jsonl \
+      data/eval/predictions_codex_teacher.jsonl \
+      data/training/v8_synthetic.jsonl \
+      data/training/v8_negatives.jsonl \
+      data/training/v8_edge_cases.jsonl \
+      data/training/v8_paraphrased.jsonl
+```
+
+Output:
+
+```text
+     190 data/training/quantum_alpha_train_v8.jsonl
+     426 data/eval/predictions_codex_teacher.jsonl
+     200 data/training/v8_synthetic.jsonl
+     150 data/training/v8_negatives.jsonl
+     100 data/training/v8_edge_cases.jsonl
+     100 data/training/v8_paraphrased.jsonl
+    1166 total
+```
+
+The validation scripts were run with `/usr/bin/python3`. Phase 1 validation found 0 training errors and confirmed 421 successful eval predictions plus 5 source-unavailable placeholders. Phase 2 validation returned 0 errors for all four synthetic component files. Additional strict validation also returned `strict_errors 0`.
 
 ### Notes For Future Runs
 
 - The generated set is intentionally more selective than V4. V4 had a high active non-zero pair rate; the combined V8 set is 19.2%, preserving the V8 selectivity objective.
+- The real-article and eval passes depended on the available in-repo fallback sources because `data/raw` was empty in this checkout.
+- Eval rows `421`-`425` should be interpreted as explicit source-unavailable placeholders, not model failures.
 - The negative examples are stricter than generic unrelated news only: several mention IBM, Honeywell, Microsoft, Google, or NVIDIA in non-quantum contexts to teach that ticker mention alone is not a quantum alpha signal.
 - Paraphrases are true style-invariance examples because scores are exactly copied from source V8 rows.
 - The temporary manifest-and-assembler workflow is worth reusing for future data expansions because it prevents valid JSON from drifting into poor label distribution.
