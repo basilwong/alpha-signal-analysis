@@ -185,7 +185,7 @@ Combined across Phase 1 and Phase 2, the V8 training set now has 740 examples:
     - Verified final line counts and validation output after push.
 
 17. Documented the workflow.
-    - Added this execution report to `docs/codex_followup_synthetic.md`.
+    - Added this execution report to `docs/codex_v8_training_data_generation_report.md`.
     - First documentation commit was `3b4a7e0`.
     - This updated report expands that documentation to cover both Phase 1 and Phase 2.
 
