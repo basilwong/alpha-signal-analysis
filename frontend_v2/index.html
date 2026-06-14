@@ -23,19 +23,67 @@
 
     <!-- Tab Navigation -->
     <nav class="tab-nav">
-        <button class="tab-btn active" data-tab="live">Live Analysis</button>
-        <button class="tab-btn" data-tab="historical">Historical Predictions</button>
-        <button class="tab-btn" data-tab="evaluation">Evaluation Dashboard</button>
+        <button class="tab-btn active" data-tab="evaluation">Evaluation Dashboard</button>
+        <button class="tab-btn" data-tab="live">Live Signal Debugging</button>
+        <button class="tab-btn" data-tab="historical">Historical Prediction Analysis</button>
         <button class="tab-btn" data-tab="sector">Sector Map</button>
     </nav>
 
     <!-- Tab Content -->
     <main class="content">
-        <!-- Tab 1: Live Analysis -->
-        <section id="tab-live" class="tab-panel active">
+        <!-- Tab 1: Evaluation Dashboard -->
+        <section id="tab-evaluation" class="tab-panel active">
             <div class="panel-header">
-                <h2>Live Signal Analysis</h2>
-                <p class="panel-desc">Paste an article and get real-time signal predictions from fine-tuned models running on GPU.</p>
+                <h2>Evaluation Dashboard</h2>
+                <p class="panel-desc">Fine-tuning and debugging tool for LLMs generating alpha signals. Compare model iterations using Information Coefficient (IC) to measure predictive power against realized market returns.</p>
+            </div>
+
+            <div class="eval-context">
+                <div class="context-card">
+                    <h4>What is Information Coefficient (IC)?</h4>
+                    <p>IC is the <strong>Spearman rank correlation</strong> between a model's predicted signal scores and the realized abnormal returns (stock return minus market return) over a given holding period. An IC of +0.15 at 5 days means the model's signal rankings meaningfully predict which stocks will outperform over the next week. In quantitative finance, IC > 0.05 with statistical significance (p < 0.10) is considered a usable signal for portfolio construction.</p>
+                </div>
+                <div class="context-card">
+                    <h4>How to Read This Dashboard</h4>
+                    <p>The <strong>Signal Decay Curve</strong> shows how predictive power changes over time. A model with high IC at short horizons but rapid decay is useful for short-term trading. A model with sustained IC across horizons (like V7d GRPO) suggests the signal captures fundamental value that the market prices in gradually. <strong>Bright markers</strong> indicate statistical significance (p < 0.10). The table below provides exact IC values and direction accuracy (% of predictions where the sign was correct).</p>
+                </div>
+            </div>
+
+            <div class="eval-controls">
+                <label>Select Models to Compare:</label>
+                <div id="eval-model-checkboxes" class="checkbox-group"></div>
+            </div>
+
+            <div class="eval-metrics-summary" id="eval-summary"></div>
+
+            <div class="eval-charts">
+                <div class="chart-section">
+                    <h3>Signal Decay Curve <span class="info-btn" title="IC (Spearman rank correlation) between predicted signals and realized abnormal returns at different holding periods. Higher = better predictive power. Bright markers = statistically significant (p < 0.10).">ⓘ</span></h3>
+                    <div id="eval-decay-chart" class="chart-container"></div>
+                </div>
+                <div class="chart-section">
+                    <h3>IC Comparison Table <span class="info-btn" title="IC values at different horizons. Statistically significant values (p<0.05) are highlighted. Direction accuracy shows % of non-trivial predictions where the predicted sign matched the realized return sign.">ⓘ</span></h3>
+                    <div id="eval-table" class="table-container"></div>
+                </div>
+            </div>
+
+            <div class="limitations">
+                <h4>Limitations</h4>
+                <ul>
+                    <li>Evaluation period: Jan-Jun 2026 (single market regime)</li>
+                    <li>Daily granularity (no intraday timing)</li>
+                    <li>Single-factor market model (SPY benchmark)</li>
+                    <li>Correlation does not imply causation</li>
+                    <li>Small sample size limits statistical power for subset analyses</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Tab 2: Live Signal Debugging -->
+        <section id="tab-live" class="tab-panel">
+            <div class="panel-header">
+                <h2>Live Signal Debugging</h2>
+                <p class="panel-desc">Test model inference in real time. Paste any article and inspect the raw signal output, reasoning trace, and structured JSON to debug model behavior.</p>
             </div>
 
             <div class="live-controls">
@@ -109,11 +157,11 @@
             </div>
         </section>
 
-        <!-- Tab 2: Historical Predictions -->
+        <!-- Tab 3: Historical Prediction Analysis -->
         <section id="tab-historical" class="tab-panel">
             <div class="panel-header">
-                <h2>Historical Predictions</h2>
-                <p class="panel-desc">Browse evaluation articles and compare predictions across all models side-by-side.</p>
+                <h2>Historical Prediction Analysis</h2>
+                <p class="panel-desc">Browse evaluation articles and compare predictions across all model iterations side-by-side against realized market outcomes.</p>
             </div>
 
             <div class="historical-controls">
@@ -125,52 +173,25 @@
                         </select>
                     </div>
                 </div>
+                <div class="control-row">
+                    <div class="control-group flex-grow">
+                        <label>Filter Models</label>
+                        <div id="hist-model-checkboxes" class="checkbox-group"></div>
+                    </div>
+                </div>
             </div>
 
             <div id="hist-results" class="results-panel">
                 <div id="hist-article-info" class="article-info"></div>
-                <h3>Signal Comparison (All Models)</h3>
+                <h3>Signal Comparison (<span id="hist-model-count">All</span> Models)</h3>
                 <div id="hist-comparison-chart" class="chart-container"></div>
-                <h3>Actual Price Movement (20 days post-event)</h3>
+                <h3>Raw Price Movement (20 days post-event)</h3>
                 <div id="hist-price-chart" class="chart-container"></div>
+                <h3>Abnormal Returns vs. Market (SPY) <span class="info-btn" title="Stock return minus SPY return over the same period. This is what the model's IC is evaluated against — positive abnormal return means the stock outperformed the broad market.">ⓘ</span></h3>
+                <div id="hist-abnormal-chart" class="chart-container"></div>
+                <h3>Abnormal Returns vs. Sector (Equal-Weight Quantum Basket) <span class="info-btn" title="Stock return minus the equal-weighted average return of all pure-play quantum tickers (IONQ, RGTI, QBTS, QUBT). Shows whether the signal correctly identified relative winners within the sector.">ⓘ</span></h3>
+                <div id="hist-sector-abnormal-chart" class="chart-container"></div>
                 <div id="hist-model-details" class="model-details-grid"></div>
-            </div>
-        </section>
-
-        <!-- Tab 3: Evaluation Dashboard -->
-        <section id="tab-evaluation" class="tab-panel">
-            <div class="panel-header">
-                <h2>Evaluation Dashboard</h2>
-                <p class="panel-desc">Compare model performance using Information Coefficient, signal decay, and direction accuracy.</p>
-            </div>
-
-            <div class="eval-controls">
-                <label>Select Models to Compare:</label>
-                <div id="eval-model-checkboxes" class="checkbox-group"></div>
-            </div>
-
-            <div class="eval-metrics-summary" id="eval-summary"></div>
-
-            <div class="eval-charts">
-                <div class="chart-section">
-                    <h3>Signal Decay Curve <span class="info-btn" title="Information Coefficient (Spearman rank correlation) between predicted signals and realized abnormal returns at different holding periods. Higher = better predictive power.">ⓘ</span></h3>
-                    <div id="eval-decay-chart" class="chart-container"></div>
-                </div>
-                <div class="chart-section">
-                    <h3>IC Comparison Table <span class="info-btn" title="IC values at different horizons. Statistically significant values (p<0.05) are highlighted.">ⓘ</span></h3>
-                    <div id="eval-table" class="table-container"></div>
-                </div>
-            </div>
-
-            <div class="limitations">
-                <h4>Limitations</h4>
-                <ul>
-                    <li>Evaluation period: Jan-Jun 2026 (single market regime)</li>
-                    <li>Daily granularity (no intraday timing)</li>
-                    <li>Single-factor market model (SPY benchmark)</li>
-                    <li>Correlation does not imply causation</li>
-                    <li>Small sample size limits statistical power for subset analyses</li>
-                </ul>
             </div>
         </section>
 

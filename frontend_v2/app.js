@@ -451,9 +451,9 @@ async function initSectorTab() {
 
 async function init() {
     try {
+        await initEvalTab();
         await initLiveTab();
         await initHistoricalTab();
-        await initEvalTab();
         await initSectorTab();
     } catch (e) {
         console.error('Init error:', e);

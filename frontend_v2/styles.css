@@ -598,3 +598,43 @@ textarea {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* Evaluation context cards */
+.eval-context {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.context-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+}
+
+.context-card h4 {
+    color: var(--accent-blue);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.context-card p {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.context-card strong {
+    color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+    .eval-context {
+        grid-template-columns: 1fr;
+    }
+}
