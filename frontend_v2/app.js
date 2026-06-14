@@ -94,6 +94,8 @@ function createSignalChart(signalVector, containerId, title = 'Signal Vector') {
 // TAB 1: LIVE ANALYSIS
 // ============================================================
 
+let feedCount = 0;
+
 async function initLiveTab() {
     const resp = await fetch(`${API_BASE}/api/models`);
     const data = await resp.json();
@@ -107,63 +109,121 @@ async function initLiveTab() {
     });
 }
 
-document.getElementById('live-analyze-btn').addEventListener('click', async () => {
+function updateFeedCount() {
+    document.getElementById('feed-count').textContent = `${feedCount} ${feedCount === 1 ? 'analysis' : 'analyses'}`;
+}
+
+function createFeedCard(id, model, source, textPreview) {
+    const feed = document.getElementById('live-feed');
+    // Remove empty state
+    const empty = feed.querySelector('.feed-empty');
+    if (empty) empty.remove();
+
+    const card = document.createElement('div');
+    card.className = 'feed-card';
+    card.id = `feed-card-${id}`;
+    card.innerHTML = `
+        <div class="feed-card-header">
+            <div class="feed-card-meta">
+                <span class="feed-model-badge">${model}</span>
+                <span class="feed-source-badge">${source}</span>
+                <span class="feed-time">${new Date().toLocaleTimeString()}</span>
+            </div>
+            <span class="feed-status loading-status">Analyzing...</span>
+        </div>
+        <div class="feed-card-preview">${textPreview}</div>
+        <div class="feed-card-body" id="feed-body-${id}"></div>
+    `;
+    feed.prepend(card);
+    return card;
+}
+
+function renderFeedResult(id, data) {
+    const card = document.getElementById(`feed-card-${id}`);
+    if (!card) return;
+
+    const status = card.querySelector('.feed-status');
+    const body = document.getElementById(`feed-body-${id}`);
+
+    if (data.error) {
+        status.textContent = 'Error';
+        status.className = 'feed-status error-status';
+        body.innerHTML = `<div class="feed-error">${data.error}</div>`;
+        return;
+    }
+
+    status.textContent = `${data.latency_ms}ms`;
+    status.className = 'feed-status success-status';
+
+    const signal = data.signal || {};
+    const sv = signal.signal_vector || {};
+    const tickers = Object.keys(sv).sort((a, b) => (sv[b]?.score || 0) - (sv[a]?.score || 0));
+
+    // Build inline signal bars
+    const signalBars = tickers.map(t => {
+        const score = sv[t]?.score || 0;
+        const color = score >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+        const width = Math.min(Math.abs(score) * 40, 80);
+        return `<div class="feed-signal-row">
+            <span class="feed-ticker">${t}</span>
+            <div class="feed-bar-container">
+                <div class="feed-bar" style="width:${width}%;background:${color};${score < 0 ? 'margin-left:auto;' : ''}"></div>
+            </div>
+            <span class="feed-score" style="color:${color}">${score >= 0 ? '+' : ''}${score.toFixed(2)}</span>
+        </div>`;
+    }).join('');
+
+    const meta = [
+        signal.event_type ? `Event: ${signal.event_type}` : '',
+        signal.time_horizon ? `Horizon: ${signal.time_horizon}` : '',
+        signal.signal_decay ? `Decay: ${signal.signal_decay}` : '',
+        signal.information_novelty ? `Novelty: ${signal.information_novelty}` : '',
+    ].filter(Boolean).join(' | ');
+
+    body.innerHTML = `
+        <div class="feed-signal-chart">${signalBars}</div>
+        ${meta ? `<div class="feed-meta-line">${meta}</div>` : ''}
+        ${signal.technical_translation ? `<div class="feed-translation">${signal.technical_translation}</div>` : ''}
+        <details class="feed-details">
+            <summary>Raw JSON</summary>
+            <pre class="feed-json">${JSON.stringify(signal, null, 2)}</pre>
+        </details>
+        ${data.thinking ? `<details class="feed-details"><summary>Thinking Trace</summary><pre class="feed-json">${data.thinking}</pre></details>` : ''}
+    `;
+}
+
+document.getElementById('live-analyze-btn').addEventListener('click', () => {
     const text = document.getElementById('live-input').value.trim();
     if (!text) return;
-
-    const btn = document.getElementById('live-analyze-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="loading"></span> Analyzing...';
 
     const model = document.getElementById('live-model').value;
     const source = document.getElementById('live-source').value;
     const thinking = document.getElementById('live-thinking').checked;
 
-    try {
-        const resp = await fetch(`${API_BASE}/api/analyze`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, source, model, enable_thinking: thinking }),
-        });
-        const data = await resp.json();
+    feedCount++;
+    updateFeedCount();
+    const id = feedCount;
+    const preview = text.length > 150 ? text.substring(0, 150) + '...' : text;
+    createFeedCard(id, model, source, preview);
 
-        if (data.error) {
-            alert(`Error: ${data.error}`);
-            return;
-        }
+    // Clear input for next analysis
+    document.getElementById('live-input').value = '';
 
-        const results = document.getElementById('live-results');
-        results.classList.remove('hidden');
+    // Fire and forget (non-blocking)
+    fetch(`${API_BASE}/api/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, source, model, enable_thinking: thinking }),
+    })
+    .then(r => r.json())
+    .then(data => renderFeedResult(id, data))
+    .catch(e => renderFeedResult(id, { error: e.message }));
+});
 
-        // Latency
-        document.getElementById('live-latency').textContent = `${data.latency_ms}ms`;
-
-        // Signal chart
-        const signal = data.signal || {};
-        const sv = signal.signal_vector || {};
-        createSignalChart(sv, 'live-signal-chart', 'Signal Vector');
-
-        // Meta
-        document.getElementById('live-event-type').textContent = signal.event_type || '--';
-        document.getElementById('live-time-horizon').textContent = signal.time_horizon || '--';
-        document.getElementById('live-signal-decay').textContent = signal.signal_decay || '--';
-        document.getElementById('live-novelty').textContent = signal.information_novelty || '--';
-
-        // Translation
-        document.getElementById('live-translation').textContent = signal.technical_translation || 'N/A';
-
-        // Thinking
-        document.getElementById('live-thinking-output').textContent = data.thinking || '(Thinking disabled)';
-
-        // JSON
-        document.getElementById('live-json').textContent = JSON.stringify(signal, null, 2);
-
-    } catch (e) {
-        alert(`Request failed: ${e.message}`);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span class="btn-icon">⚡</span> Analyze';
-    }
+document.getElementById('feed-clear-btn').addEventListener('click', () => {
+    feedCount = 0;
+    updateFeedCount();
+    document.getElementById('live-feed').innerHTML = '<div class="feed-empty">No analyses yet. Paste an article above and click Analyze.</div>';
 });
 
 // ============================================================

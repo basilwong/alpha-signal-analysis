@@ -838,3 +838,234 @@ textarea {
         font-size: 14px;
     }
 }
+
+/* Live feed styles */
+.feed-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    padding: 0 4px;
+}
+
+.feed-header h3 {
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.feed-count {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: 8px;
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 14px;
+    font-size: 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-secondary:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-secondary);
+}
+
+.live-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.feed-empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+}
+
+.feed-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.feed-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.feed-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.feed-model-badge {
+    background: var(--accent-green);
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.feed-source-badge {
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    border: 1px solid var(--border);
+}
+
+.feed-time {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.feed-status {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.loading-status {
+    color: var(--accent-yellow);
+}
+
+.success-status {
+    color: var(--accent-green);
+}
+
+.error-status {
+    color: var(--accent-red);
+}
+
+.feed-card-preview {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: var(--bg-input);
+    border-radius: 4px;
+    border-left: 3px solid var(--border);
+}
+
+.feed-card-body {
+    min-height: 0;
+}
+
+.feed-signal-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.feed-signal-row {
+    display: grid;
+    grid-template-columns: 50px 1fr 55px;
+    align-items: center;
+    gap: 8px;
+    height: 22px;
+}
+
+.feed-ticker {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+.feed-bar-container {
+    height: 14px;
+    background: var(--bg-input);
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+}
+
+.feed-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.feed-score {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    text-align: right;
+}
+
+.feed-meta-line {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    padding: 6px 0;
+    border-top: 1px solid var(--border);
+}
+
+.feed-translation {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.feed-details {
+    margin-top: 8px;
+}
+
+.feed-details summary {
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.feed-details summary:hover {
+    color: var(--text-secondary);
+}
+
+.feed-json {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    background: var(--bg-input);
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 4px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.feed-error {
+    color: var(--accent-red);
+    font-size: 13px;
+    padding: 8px 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 4px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}

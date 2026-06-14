@@ -130,7 +130,7 @@
         <section id="tab-live" class="tab-panel">
             <div class="panel-header">
                 <h2>Live Signal Debugging</h2>
-                <p class="panel-desc">Test model inference in real time. Paste any article and inspect the raw signal output, reasoning trace, and structured JSON to debug model behavior.</p>
+                <p class="panel-desc">Run multiple analyses and compare outputs. Results accumulate in the feed below. Submit new articles while previous analyses are still running.</p>
             </div>
 
             <div class="live-controls">
@@ -166,41 +166,12 @@
                 </button>
             </div>
 
-            <div id="live-results" class="results-panel hidden">
-                <div class="results-header">
-                    <span class="latency-badge" id="live-latency">--ms</span>
-                </div>
-                <div id="live-signal-chart" class="chart-container"></div>
-                <div class="signal-meta">
-                    <div class="meta-card">
-                        <label>Event Type</label>
-                        <span id="live-event-type">--</span>
-                    </div>
-                    <div class="meta-card">
-                        <label>Time Horizon</label>
-                        <span id="live-time-horizon">--</span>
-                    </div>
-                    <div class="meta-card">
-                        <label>Signal Decay</label>
-                        <span id="live-signal-decay">--</span>
-                    </div>
-                    <div class="meta-card">
-                        <label>Novelty</label>
-                        <span id="live-novelty">--</span>
-                    </div>
-                </div>
-                <div class="expandable">
-                    <button class="expand-btn" data-target="live-translation">Technical Translation ▾</button>
-                    <div id="live-translation" class="expand-content"></div>
-                </div>
-                <div class="expandable">
-                    <button class="expand-btn" data-target="live-thinking-output">Thinking Trace ▾</button>
-                    <div id="live-thinking-output" class="expand-content code"></div>
-                </div>
-                <div class="expandable">
-                    <button class="expand-btn" data-target="live-json">Raw JSON ▾</button>
-                    <div id="live-json" class="expand-content code"></div>
-                </div>
+            <div class="feed-header">
+                <h3>Results Feed <span id="feed-count" class="feed-count">0 analyses</span></h3>
+                <button id="feed-clear-btn" class="btn-secondary">Clear Feed</button>
+            </div>
+            <div id="live-feed" class="live-feed">
+                <div class="feed-empty">No analyses yet. Paste an article above and click Analyze.</div>
             </div>
         </section>
 
