@@ -638,3 +638,39 @@ textarea {
         grid-template-columns: 1fr;
     }
 }
+
+/* Product overview card */
+.product-overview {
+    margin-bottom: 24px;
+}
+
+.overview-card {
+    background: linear-gradient(135deg, #1a2035 0%, #0f1629 100%);
+    border: 1px solid var(--accent-blue);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+}
+
+.overview-card h3 {
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.overview-card p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 10px;
+}
+
+.overview-card p:last-child {
+    margin-bottom: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.overview-card strong {
+    color: var(--text-primary);
+}
