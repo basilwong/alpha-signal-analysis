@@ -51,14 +51,23 @@ document.querySelectorAll('.expand-btn').forEach(btn => {
 // ============================================================
 
 const MODEL_COLORS = {
+    // Fine-tuned (Manus Teacher)
     'Nemotron-7B (SFT + GRPO, Manus Teacher)': '#10b981',
     'Nemotron-7B (Best-of-4 SFT, Manus Teacher)': '#22c55e',
     'Nemotron-7B (SFT + DPO, Manus Teacher)': '#8b5cf6',
     'Nemotron-7B (SFT + Thinking, Manus Teacher)': '#a78bfa',
     'Nemotron-7B (SFT + Bearish, Manus Teacher)': '#f472b6',
     'Nemotron-7B (SFT, Manus Teacher)': '#f59e0b',
+    // Fine-tuned (GPT-5.5 Teacher)
+    'Nemotron-7B (SFT, GPT-5.5 Teacher)': '#fb923c',
+    'Nemotron-7B (SFT + GRPO, GPT-5.5 Teacher)': '#84cc16',
+    // Teachers
     'Manus (Teacher, Direct)': '#06b6d4',
+    'GPT-5.5 (Teacher, Direct)': '#3b82f6',
+    // Base models
     'Nemotron-7B (Base, No Fine-Tuning)': '#ef4444',
+    'Nemotron-14B (Base, No Fine-Tuning)': '#dc2626',
+    'Nemotron-32B (Base, No Fine-Tuning)': '#991b1b',
 };
 
 function getModelColor(name) {
