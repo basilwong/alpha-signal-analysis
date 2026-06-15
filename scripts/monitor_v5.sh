@@ -1,7 +1,7 @@
 #!/bin/bash
 # Monitor V5 pipeline - check every 10 minutes, restart if stalled
 
-cd /home/ubuntu/quantum-alpha-intelligence
+cd /home/ubuntu/alpha-signal-analysis
 LOG="logs/v5_monitor.log"
 
 echo "=== V5 Monitor Started $(date) ===" >> "$LOG"

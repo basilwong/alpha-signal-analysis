@@ -2,7 +2,7 @@
 # Monitor Modal batch predictions and restart when needed.
 # Checks every 5 minutes. Downloads completed batches. Kicks off next batch.
 
-cd /home/ubuntu/quantum-alpha-intelligence
+cd /home/ubuntu/alpha-signal-analysis
 TOTAL_BATCHES=9
 
 while true; do

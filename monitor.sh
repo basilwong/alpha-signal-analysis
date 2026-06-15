@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /home/ubuntu/quantum-alpha-intelligence
+cd /home/ubuntu/alpha-signal-analysis
 ITERATION=$1
 
 echo "=== ITERATION $ITERATION ($(date -u)) ==="
