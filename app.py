@@ -404,7 +404,7 @@ def _do_inference(text: str, source: str, model_name: str, enable_thinking: bool
 try:
     import spaces
 
-    @spaces.GPU
+    @spaces.GPU(duration=300)
     def gpu_inference(text: str, source: str, model_name: str, enable_thinking: bool) -> str:
         return _do_inference(text, source, model_name, enable_thinking)
 except ImportError:
