@@ -321,42 +321,128 @@ async function loadHistoricalEvent(articleIdx) {
         height: 350,
     }, { responsive: true });
 
-    // Price chart (get from first model's prediction)
+    // Price charts (raw, market-adjusted, sector-adjusted)
     if (models.length > 0) {
         const firstModel = models[0];
-        const predResp = await fetch(`${API_BASE}/api/prediction?model=${encodeURIComponent(firstModel)}&idx=0`);
-        // Find the correct idx for this model
         const eventsResp = await fetch(`${API_BASE}/api/events?model=${encodeURIComponent(firstModel)}`);
         const eventsData = await eventsResp.json();
         const matchIdx = eventsData.events.findIndex(e => e.article_idx === articleIdx);
         if (matchIdx >= 0) {
             const predData = await (await fetch(`${API_BASE}/api/prediction?model=${encodeURIComponent(firstModel)}&idx=${matchIdx}`)).json();
             const priceData = predData.price_data || {};
-            const priceTraces = Object.entries(priceData).slice(0, 5).map(([ticker, pd]) => {
-                if (!pd.values || pd.values.length === 0) return null;
-                const basePrice = pd.values[0];
-                const returns = pd.values.map(v => ((v - basePrice) / basePrice) * 100);
-                return {
-                    name: ticker,
+            const benchmarkData = predData.benchmark_data || {};
+            const purePlayTickers = ['IONQ', 'RGTI', 'QBTS', 'QUBT'];
+
+            // Compute returns for each ticker
+            const tickerReturns = {};
+            Object.entries(priceData).forEach(([ticker, pd]) => {
+                if (pd.values && pd.values.length > 0) {
+                    const basePrice = pd.values[0];
+                    tickerReturns[ticker] = {
+                        dates: pd.dates,
+                        returns: pd.values.map(v => ((v - basePrice) / basePrice) * 100),
+                    };
+                }
+            });
+
+            // Compute SPY benchmark returns
+            let spyReturns = null;
+            if (benchmarkData.SPY && benchmarkData.SPY.values.length > 0) {
+                const spyBase = benchmarkData.SPY.values[0];
+                spyReturns = {
+                    dates: benchmarkData.SPY.dates,
+                    returns: benchmarkData.SPY.values.map(v => ((v - spyBase) / spyBase) * 100),
+                };
+            }
+
+            // Compute sector basket returns (equal-weight of pure-play quantum tickers)
+            let sectorReturns = null;
+            const sectorTickers = purePlayTickers.filter(t => tickerReturns[t]);
+            if (sectorTickers.length > 0) {
+                const maxLen = Math.min(...sectorTickers.map(t => tickerReturns[t].returns.length));
+                const avgReturns = [];
+                for (let i = 0; i < maxLen; i++) {
+                    const avg = sectorTickers.reduce((sum, t) => sum + tickerReturns[t].returns[i], 0) / sectorTickers.length;
+                    avgReturns.push(avg);
+                }
+                sectorReturns = {
+                    dates: tickerReturns[sectorTickers[0]].dates.slice(0, maxLen),
+                    returns: avgReturns,
+                };
+            }
+
+            const chartLayout = (title, yTitle) => ({
+                title: { text: title, font: { color: '#e2e8f0', size: 14 } },
+                xaxis: { color: '#94a3b8', gridcolor: '#1e2a3a' },
+                yaxis: { title: yTitle, color: '#94a3b8', gridcolor: '#1e2a3a', zerolinecolor: '#3b82f6' },
+                plot_bgcolor: '#0f1629',
+                paper_bgcolor: '#1a2035',
+                legend: { font: { color: '#e2e8f0', size: 11 }, orientation: 'h', x: 0, y: -0.25, xanchor: 'left', yanchor: 'top' },
+                margin: { l: 50, r: 20, t: 40, b: 80 },
+                height: 320,
+            });
+
+            // Chart 1: Raw cumulative returns (+ SPY as dashed line)
+            const rawTraces = Object.entries(tickerReturns).slice(0, 5).map(([ticker, tr]) => ({
+                name: ticker,
+                type: 'scatter',
+                mode: 'lines',
+                x: tr.dates,
+                y: tr.returns,
+                line: { width: 2 },
+            }));
+            if (spyReturns) {
+                rawTraces.push({
+                    name: 'SPY (Market)',
                     type: 'scatter',
                     mode: 'lines',
-                    x: pd.dates,
-                    y: returns,
-                    line: { width: 2 },
-                };
-            }).filter(Boolean);
+                    x: spyReturns.dates,
+                    y: spyReturns.returns,
+                    line: { width: 2, dash: 'dash', color: '#64748b' },
+                });
+            }
+            if (rawTraces.length > 0) {
+                Plotly.newPlot('hist-price-chart', rawTraces,
+                    chartLayout('Cumulative Return (%) | Dashed = SPY Benchmark', 'Return (%)'),
+                    { responsive: true });
+            }
 
-            if (priceTraces.length > 0) {
-                Plotly.newPlot('hist-price-chart', priceTraces, {
-                    title: { text: 'Cumulative Return (%) After Event', font: { color: '#e2e8f0', size: 14 } },
-                    xaxis: { color: '#94a3b8', gridcolor: '#1e2a3a' },
-                    yaxis: { title: 'Return (%)', color: '#94a3b8', gridcolor: '#1e2a3a', zerolinecolor: '#3b82f6' },
-                    plot_bgcolor: '#0f1629',
-                    paper_bgcolor: '#1a2035',
-                    legend: { font: { color: '#e2e8f0' } },
-                    margin: { l: 50, r: 20, t: 40, b: 40 },
-                    height: 300,
-                }, { responsive: true });
+            // Chart 2: Abnormal returns vs market (stock return - SPY return)
+            if (spyReturns) {
+                const abnormalTraces = Object.entries(tickerReturns).slice(0, 5).map(([ticker, tr]) => {
+                    const maxLen = Math.min(tr.returns.length, spyReturns.returns.length);
+                    const abnormal = tr.returns.slice(0, maxLen).map((r, i) => r - spyReturns.returns[i]);
+                    return {
+                        name: ticker,
+                        type: 'scatter',
+                        mode: 'lines',
+                        x: tr.dates.slice(0, maxLen),
+                        y: abnormal,
+                        line: { width: 2 },
+                    };
+                });
+                Plotly.newPlot('hist-abnormal-chart', abnormalTraces,
+                    chartLayout('Abnormal Return (%) = Stock Return \u2212 SPY Return', 'Abnormal Return (%)'),
+                    { responsive: true });
+            }
+
+            // Chart 3: Abnormal returns vs sector basket
+            if (sectorReturns) {
+                const sectorAbnormalTraces = Object.entries(tickerReturns).slice(0, 5).map(([ticker, tr]) => {
+                    const maxLen = Math.min(tr.returns.length, sectorReturns.returns.length);
+                    const abnormal = tr.returns.slice(0, maxLen).map((r, i) => r - sectorReturns.returns[i]);
+                    return {
+                        name: ticker,
+                        type: 'scatter',
+                        mode: 'lines',
+                        x: tr.dates.slice(0, maxLen),
+                        y: abnormal,
+                        line: { width: 2 },
+                    };
+                });
+                Plotly.newPlot('hist-sector-abnormal-chart', sectorAbnormalTraces,
+                    chartLayout('Abnormal Return (%) = Stock Return \u2212 Quantum Sector Avg', 'Abnormal Return (%)'),
+                    { responsive: true });
             }
         }
     }
