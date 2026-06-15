@@ -311,9 +311,15 @@ document.getElementById('hist-event-select').addEventListener('change', (e) => {
 });
 
 async function loadHistoricalEvent(articleIdx) {
+    // Show loading state
+    const resultsPanel = document.getElementById('hist-results');
+    resultsPanel.style.opacity = '0.5';
+
     // Get comparison across all models
     const resp = await fetch(`${API_BASE}/api/prediction_comparison?article_idx=${articleIdx}`);
     const data = await resp.json();
+
+    resultsPanel.style.opacity = '1';
 
     // Find article info
     const event = allEvents.find(e => e.article_idx === articleIdx);
@@ -351,13 +357,14 @@ async function loadHistoricalEvent(articleIdx) {
     }, { responsive: true });
 
     // Price charts (raw, market-adjusted, sector-adjusted)
+    // Use a model with the most predictions for reliable price data lookup
+    const priceModel = 'Nemotron-7B (SFT, Manus Teacher)';
     if (models.length > 0) {
-        const firstModel = models[0];
-        const eventsResp = await fetch(`${API_BASE}/api/events?model=${encodeURIComponent(firstModel)}`);
+        const eventsResp = await fetch(`${API_BASE}/api/events?model=${encodeURIComponent(priceModel)}`);
         const eventsData = await eventsResp.json();
         const matchIdx = eventsData.events.findIndex(e => e.article_idx === articleIdx);
         if (matchIdx >= 0) {
-            const predData = await (await fetch(`${API_BASE}/api/prediction?model=${encodeURIComponent(firstModel)}&idx=${matchIdx}`)).json();
+            const predData = await (await fetch(`${API_BASE}/api/prediction?model=${encodeURIComponent(priceModel)}&idx=${matchIdx}`)).json();
             const priceData = predData.price_data || {};
             const benchmarkData = predData.benchmark_data || {};
             const purePlayTickers = ['IONQ', 'RGTI', 'QBTS', 'QUBT'];
