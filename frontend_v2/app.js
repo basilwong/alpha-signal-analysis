@@ -163,7 +163,24 @@ function renderFeedResult(id, data) {
     status.className = 'feed-status success-status';
 
     const signal = data.signal || {};
-    const sv = signal.signal_vector || {};
+
+    // Handle signal parse errors from backend
+    if (signal.error) {
+        body.innerHTML = `<div class="feed-error">${signal.error}</div>
+            ${signal.raw ? `<details class="feed-details"><summary>Raw Output</summary><pre class="feed-json">${signal.raw}</pre></details>` : ''}`;
+        return;
+    }
+
+    // Handle both formats: {signal_vector: {IONQ: {score: ...}}} and flat {IONQ: 1.5, ...}
+    let sv = signal.signal_vector || {};
+    if (Object.keys(sv).length === 0) {
+        // Try flat format (V4 model returns {IONQ: 1.5, RGTI: 0.8, ...})
+        const possibleTickers = ['IONQ', 'RGTI', 'QBTS', 'QUBT', 'IBM', 'GOOGL', 'MSFT', 'HON', 'NVDA'];
+        const flatKeys = Object.keys(signal).filter(k => possibleTickers.includes(k));
+        if (flatKeys.length > 0) {
+            flatKeys.forEach(t => { sv[t] = { score: signal[t] }; });
+        }
+    }
     const tickers = Object.keys(sv).sort((a, b) => (sv[b]?.score || 0) - (sv[a]?.score || 0));
 
     // Build inline signal bars

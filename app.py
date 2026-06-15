@@ -318,7 +318,7 @@ def _do_inference(text: str, source: str, model_name: str, enable_thinking: bool
     start = time.time()
     with torch.no_grad():
         outputs = model.generate(
-            **inputs, max_new_tokens=1024, temperature=0.3, do_sample=True,
+            **inputs, max_new_tokens=2048, temperature=0.3, do_sample=True,
             pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
         )
 
@@ -340,7 +340,18 @@ def _do_inference(text: str, source: str, model_name: str, enable_thinking: bool
         e = content.rfind("}") + 1
         signal = json.loads(content[s:e]) if s != -1 else json.loads(content)
     except Exception:
-        signal = {"error": "Failed to parse JSON", "raw": content[:500]}
+        # Try to salvage partial JSON by finding the outermost complete object
+        try:
+            # Sometimes the model outputs a wrapper like {"signal_vector": ...}
+            # that gets truncated. Try to parse what we have.
+            partial = content[s:e] if s != -1 else content
+            # Add closing braces if truncated
+            open_braces = partial.count("{") - partial.count("}")
+            if open_braces > 0:
+                partial += "}" * open_braces
+            signal = json.loads(partial)
+        except Exception:
+            signal = {"error": "Failed to parse JSON (output may have been truncated)", "raw": content[:500]}
 
     return json.dumps({
         "signal": signal,
