@@ -30,22 +30,22 @@ QUANTUM_TICKERS = ["IONQ", "RGTI", "QBTS", "QUBT", "QNT", "IBM", "GOOGL", "MSFT"
 # Model prediction files (historical comparison)
 MODEL_FILES = {
     # Fine-tuned models (OpenReasoning-Nemotron-7B)
-    "V7d GRPO (best)": EVAL_DIR / "predictions_v7d_grpo_clean.jsonl",
-    "V7b Rejection": EVAL_DIR / "predictions_v7b_clean.jsonl",
-    "V7c DPO": EVAL_DIR / "predictions_v7c_clean.jsonl",
-    "V7a SFT (thinking)": EVAL_DIR / "predictions_openreasoning7b_v7a.jsonl",
-    "V6 SFT (bearish)": EVAL_DIR / "predictions_openreasoning7b_v6.jsonl",
-    "V4 SFT (Manus)": EVAL_DIR / "predictions_openreasoning7b_v4.jsonl",
+    "Nemotron-7B (SFT + GRPO, Manus Teacher)": EVAL_DIR / "predictions_v7d_grpo_clean.jsonl",
+    "Nemotron-7B (Best-of-4 SFT, Manus Teacher)": EVAL_DIR / "predictions_v7b_clean.jsonl",
+    "Nemotron-7B (SFT + DPO, Manus Teacher)": EVAL_DIR / "predictions_v7c_clean.jsonl",
+    "Nemotron-7B (SFT + Thinking, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v7a.jsonl",
+    "Nemotron-7B (SFT + Bearish, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v6.jsonl",
+    "Nemotron-7B (SFT, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v4.jsonl",
     # Teacher models
-    "Manus Teacher": EVAL_DIR / "predictions_manus_teacher_v2.jsonl",
+    "Manus (Teacher, Direct)": EVAL_DIR / "predictions_manus_teacher_v2.jsonl",
     # Base models
-    "7B Base": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
+    "Nemotron-7B (Base, No Fine-Tuning)": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
 }
 
 # Models available for live inference (only fine-tuned models)
 LIVE_MODELS = {
-    "V7d GRPO (best)": "basilwong/quantum-alpha-openreasoning-7b-grpo",
-    "V4 Baseline (LoRA)": "build-small-hackathon/quantum-alpha-qwen3-8b",
+    "Nemotron-7B (SFT + GRPO, Manus Teacher)": "basilwong/quantum-alpha-openreasoning-7b-grpo",
+    "Nemotron-7B (SFT, Manus Teacher)": "build-small-hackathon/quantum-alpha-qwen3-8b",
 }
 
 MODEL_ID = "basilwong/quantum-alpha-openreasoning-7b-grpo"
@@ -167,7 +167,7 @@ async def get_models():
 
 
 @app.get("/api/events")
-async def get_events(model: str = "V4 SFT (Manus)"):
+async def get_events(model: str = "Nemotron-7B (SFT, Manus Teacher)"):
     """List all events for a given model."""
     preds = ALL_PREDICTIONS.get(model, [])
     events = []
@@ -394,7 +394,7 @@ async def analyze(request: Request):
     body = await request.json()
     text = body.get("text", "")
     source = body.get("source", "news")
-    model_name = body.get("model", "V7d GRPO (best)")
+    model_name = body.get("model", "Nemotron-7B (SFT + GRPO, Manus Teacher)")
     enable_thinking = body.get("enable_thinking", False)
 
     if not text:

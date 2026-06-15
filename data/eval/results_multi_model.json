@@ -1,5 +1,5 @@
 {
-  "V7d GRPO (best)": {
+  "Nemotron-7B (SFT + GRPO, Manus Teacher)": {
     "n_predictions": 342,
     "n_observations": 1540,
     "decay_curve": [
@@ -39,7 +39,7 @@
       "n": 261
     }
   },
-  "V7b Rejection": {
+  "Nemotron-7B (Best-of-4 SFT, Manus Teacher)": {
     "n_predictions": 258,
     "n_observations": 938,
     "decay_curve": [
@@ -79,7 +79,7 @@
       "n": 147
     }
   },
-  "V7c DPO": {
+  "Nemotron-7B (SFT + DPO, Manus Teacher)": {
     "n_predictions": 340,
     "n_observations": 1444,
     "decay_curve": [
@@ -119,7 +119,7 @@
       "n": 221
     }
   },
-  "V7a SFT (thinking)": {
+  "Nemotron-7B (SFT + Thinking, Manus Teacher)": {
     "n_predictions": 363,
     "n_observations": 6688,
     "decay_curve": [
@@ -159,7 +159,7 @@
       "n": 1276
     }
   },
-  "V6 SFT (bearish)": {
+  "Nemotron-7B (SFT + Bearish, Manus Teacher)": {
     "n_predictions": 405,
     "n_observations": 7704,
     "decay_curve": [
@@ -199,7 +199,7 @@
       "n": 1498
     }
   },
-  "V4 SFT (Manus)": {
+  "Nemotron-7B (SFT, Manus Teacher)": {
     "n_predictions": 388,
     "n_observations": 3265,
     "decay_curve": [
@@ -239,7 +239,7 @@
       "n": 665
     }
   },
-  "Manus Teacher": {
+  "Manus (Teacher, Direct)": {
     "n_predictions": 421,
     "n_observations": 4465,
     "decay_curve": [
@@ -279,7 +279,7 @@
       "n": 860
     }
   },
-  "7B Base": {
+  "Nemotron-7B (Base, No Fine-Tuning)": {
     "n_predictions": 421,
     "n_observations": 3214,
     "decay_curve": [

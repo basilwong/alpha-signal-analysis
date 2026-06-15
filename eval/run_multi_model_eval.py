@@ -23,16 +23,16 @@ MARKET_TICKER = "SPY"
 # Models to evaluate
 MODELS = {
     # Fine-tuned models (OpenReasoning-Nemotron-7B)
-    "V7d GRPO (best)": EVAL_DIR / "predictions_v7d_grpo_clean.jsonl",
-    "V7b Rejection": EVAL_DIR / "predictions_v7b_clean.jsonl",
-    "V7c DPO": EVAL_DIR / "predictions_v7c_clean.jsonl",
-    "V7a SFT (thinking)": EVAL_DIR / "predictions_openreasoning7b_v7a.jsonl",
-    "V6 SFT (bearish)": EVAL_DIR / "predictions_openreasoning7b_v6.jsonl",
-    "V4 SFT (Manus)": EVAL_DIR / "predictions_openreasoning7b_v4.jsonl",
+    "Nemotron-7B (SFT + GRPO, Manus Teacher)": EVAL_DIR / "predictions_v7d_grpo_clean.jsonl",
+    "Nemotron-7B (Best-of-4 SFT, Manus Teacher)": EVAL_DIR / "predictions_v7b_clean.jsonl",
+    "Nemotron-7B (SFT + DPO, Manus Teacher)": EVAL_DIR / "predictions_v7c_clean.jsonl",
+    "Nemotron-7B (SFT + Thinking, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v7a.jsonl",
+    "Nemotron-7B (SFT + Bearish, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v6.jsonl",
+    "Nemotron-7B (SFT, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v4.jsonl",
     # Teacher models
-    "Manus Teacher": EVAL_DIR / "predictions_manus_teacher_v2.jsonl",
+    "Manus (Teacher, Direct)": EVAL_DIR / "predictions_manus_teacher_v2.jsonl",
     # Base models
-    "7B Base": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
+    "Nemotron-7B (Base, No Fine-Tuning)": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
 }
 
 

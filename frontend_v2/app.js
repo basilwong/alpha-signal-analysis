@@ -51,14 +51,14 @@ document.querySelectorAll('.expand-btn').forEach(btn => {
 // ============================================================
 
 const MODEL_COLORS = {
-    'V7d GRPO (best)': '#10b981',
-    'V7b Rejection': '#22c55e',
-    'V7c DPO': '#8b5cf6',
-    'V7a SFT (thinking)': '#a78bfa',
-    'V6 SFT (bearish)': '#f472b6',
-    'V4 SFT (Manus)': '#f59e0b',
-    'Manus Teacher': '#06b6d4',
-    '7B Base': '#ef4444',
+    'Nemotron-7B (SFT + GRPO, Manus Teacher)': '#10b981',
+    'Nemotron-7B (Best-of-4 SFT, Manus Teacher)': '#22c55e',
+    'Nemotron-7B (SFT + DPO, Manus Teacher)': '#8b5cf6',
+    'Nemotron-7B (SFT + Thinking, Manus Teacher)': '#a78bfa',
+    'Nemotron-7B (SFT + Bearish, Manus Teacher)': '#f472b6',
+    'Nemotron-7B (SFT, Manus Teacher)': '#f59e0b',
+    'Manus (Teacher, Direct)': '#06b6d4',
+    'Nemotron-7B (Base, No Fine-Tuning)': '#ef4444',
 };
 
 function getModelColor(name) {
@@ -259,7 +259,7 @@ let allEvents = [];
 
 async function initHistoricalTab() {
     // Load events from the first available model
-    const resp = await fetch(`${API_BASE}/api/events?model=V4 SFT (Manus)`);
+    const resp = await fetch(`${API_BASE}/api/events?model=Nemotron-7B (SFT, Manus Teacher)`);
     const data = await resp.json();
     allEvents = data.events || [];
 
