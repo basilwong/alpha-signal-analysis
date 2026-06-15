@@ -6,7 +6,7 @@ for each article. This is the updated schema that produces cross-sectional
 signals suitable for evaluation with Alphalens.
 
 Usage:
-    python scripts/generate_training_data_v2.py --input data/raw/articles.jsonl --output data/training/quantum_alpha_train_v2.jsonl --limit 5
+    python scripts/generate_training_data_v2.py --input data/raw/articles.jsonl --output data/training/alpha_signal_train_v2.jsonl --limit 5
 """
 
 import os
@@ -221,7 +221,7 @@ def process_articles(input_path: str, output_path: str, limit: int = None):
 def main():
     parser = argparse.ArgumentParser(description="Generate V2 training data (signal vector schema)")
     parser.add_argument("--input", type=str, default="data/raw/articles.jsonl")
-    parser.add_argument("--output", type=str, default="data/training/quantum_alpha_train_v2.jsonl")
+    parser.add_argument("--output", type=str, default="data/training/alpha_signal_train_v2.jsonl")
     parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
     process_articles(args.input, args.output, args.limit)

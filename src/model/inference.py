@@ -46,7 +46,7 @@ Output ONLY the JSON object. No additional text, no markdown formatting, no code
 
 
 class QuantumAlphaModel:
-    """Wrapper for the fine-tuned Quantum Alpha model."""
+    """Wrapper for the fine-tuned Alpha Signal model."""
 
     def __init__(self, model_id: str = MODEL_ID, use_base: bool = False):
         """

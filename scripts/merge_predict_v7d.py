@@ -11,7 +11,7 @@ import re
 import time
 import os
 
-app = modal.App("quantum-alpha-v7d-predict")
+app = modal.App("alpha-signal-v7d-predict")
 
 image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -25,11 +25,11 @@ image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 BASE_MODEL = "nvidia/OpenReasoning-Nemotron-7B"
-ADAPTER_PATH = "/outputs/quantum-alpha-grpo-v7d-clean/checkpoint-184"
+ADAPTER_PATH = "/outputs/alpha-signal-grpo-v7d-clean/checkpoint-184"
 MERGED_OUTPUT = "/outputs/v7d-grpo-merged"
 EVAL_FILE = "/outputs/articles_eval.jsonl"
 PREDICTIONS_FILE = "/outputs/predictions_v7d_grpo_clean.jsonl"

@@ -14,7 +14,7 @@ async function initClient() {
     try {
         client = await Client.connect(window.location.origin);
         document.getElementById("last-updated").textContent = "Connected";
-        console.log("Connected to Quantum Alpha backend");
+        console.log("Connected to Alpha Signal backend");
         await loadDashboard();
     } catch (error) {
         console.error("Failed to connect:", error);

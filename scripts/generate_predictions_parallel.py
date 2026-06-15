@@ -7,13 +7,13 @@ by keeping per-container workload under 1 hour.
 
 Usage:
     # Upload eval articles to volume:
-    modal volume put quantum-alpha-outputs data/raw/articles_eval.jsonl articles_eval.jsonl --force
+    modal volume put alpha-signal-outputs data/raw/articles_eval.jsonl articles_eval.jsonl --force
 
     # Run parallel predictions:
     modal run scripts/generate_predictions_parallel.py
 
     # Download results:
-    modal volume get quantum-alpha-outputs predictions_v3_final.jsonl data/eval/predictions_v3_final.jsonl
+    modal volume get alpha-signal-outputs predictions_v3_final.jsonl data/eval/predictions_v3_final.jsonl
 """
 
 import modal
@@ -22,7 +22,7 @@ import re
 import time
 import os
 
-app = modal.App("quantum-alpha-predictions-parallel")
+app = modal.App("alpha-signal-predictions-parallel")
 
 predict_image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -41,8 +41,8 @@ predict_image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 MODEL_ID = "basilwong/quantum-alpha-qwen3-8b"
 

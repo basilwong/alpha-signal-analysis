@@ -11,7 +11,7 @@ import re
 import time
 import os
 
-app = modal.App("quantum-alpha-14b-sft-predict")
+app = modal.App("alpha-signal-14b-sft-predict")
 
 image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -24,11 +24,11 @@ image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 BASE_MODEL = "nvidia/OpenReasoning-Nemotron-14B"
-ADAPTER_PATH = "/outputs/quantum-alpha-14b-sft/checkpoint-100"
+ADAPTER_PATH = "/outputs/alpha-signal-14b-sft/checkpoint-100"
 MERGED_OUTPUT = "/outputs/14b-sft-merged"
 EVAL_FILE = "/outputs/articles_eval.jsonl"
 PREDICTIONS_FILE = "/outputs/predictions_14b_sft.jsonl"

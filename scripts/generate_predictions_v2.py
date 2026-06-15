@@ -6,13 +6,13 @@ Also reads from the output file for resume support.
 
 Usage:
     # Upload eval articles to volume:
-    modal volume put quantum-alpha-outputs data/raw/articles_eval.jsonl articles_eval.jsonl --force
+    modal volume put alpha-signal-outputs data/raw/articles_eval.jsonl articles_eval.jsonl --force
 
     # Run (detached):
     modal run --detach scripts/generate_predictions_v2.py
 
     # Download results:
-    modal volume get quantum-alpha-outputs predictions_v2_final.jsonl data/eval/predictions_v2_final.jsonl
+    modal volume get alpha-signal-outputs predictions_v2_final.jsonl data/eval/predictions_v2_final.jsonl
 """
 
 import modal
@@ -22,7 +22,7 @@ import time
 import os
 import traceback
 
-app = modal.App("quantum-alpha-predictions-v2")
+app = modal.App("alpha-signal-predictions-v2")
 
 predict_image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -41,8 +41,8 @@ predict_image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 MODEL_ID = "basilwong/quantum-alpha-qwen3-8b"
 
@@ -328,5 +328,5 @@ def main():
     print(f"ALL BATCHES COMPLETE")
     print(f"Download all results:")
     print(f"  for i in $(seq 0 {len(batches)-1}); do")
-    print(f"    modal volume get quantum-alpha-outputs predictions_batch_$(printf '%03d' $i).jsonl data/eval/predictions_batch_$(printf '%03d' $i).jsonl")
+    print(f"    modal volume get alpha-signal-outputs predictions_batch_$(printf '%03d' $i).jsonl data/eval/predictions_batch_$(printf '%03d' $i).jsonl")
     print(f"  done")

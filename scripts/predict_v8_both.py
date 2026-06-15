@@ -12,7 +12,7 @@ import re
 import time
 import os
 
-app = modal.App("quantum-alpha-v8-predictions")
+app = modal.App("alpha-signal-v8-predictions")
 
 image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -25,12 +25,12 @@ image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 BASE_MODEL = "nvidia/OpenReasoning-Nemotron-7B"
-V8_SFT_ADAPTER = "/outputs/quantum-alpha-v8-sft/checkpoint-42"
-V8_GRPO_ADAPTER = "/outputs/quantum-alpha-v8-grpo/checkpoint-184"
+V8_SFT_ADAPTER = "/outputs/alpha-signal-v8-sft/checkpoint-42"
+V8_GRPO_ADAPTER = "/outputs/alpha-signal-v8-grpo/checkpoint-184"
 V8_SFT_MERGED = "/outputs/v8-sft-merged-fixed"
 V8_GRPO_MERGED = "/outputs/v8-grpo-merged"
 EVAL_FILE = "/outputs/articles_eval.jsonl"

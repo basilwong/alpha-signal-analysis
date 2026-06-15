@@ -14,7 +14,7 @@ import time
 import os
 import numpy as np
 
-app = modal.App("quantum-alpha-v8-phase2")
+app = modal.App("alpha-signal-v8-phase2")
 
 train_image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -44,11 +44,11 @@ predict_image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 BASE_MODEL = "nvidia/OpenReasoning-Nemotron-7B"
-V8_ADAPTER = "/outputs/quantum-alpha-v8-sft/checkpoint-42"
+V8_ADAPTER = "/outputs/alpha-signal-v8-sft/checkpoint-42"
 V8_MERGED = "/outputs/v8-sft-merged"
 EVAL_FILE = "/outputs/articles_eval.jsonl"
 GRPO_DATA = "/outputs/grpo_train_articles_with_returns.jsonl"
@@ -240,7 +240,7 @@ def train_v8_grpo():
         return rewards
 
     grpo_config = GRPOConfig(
-        output_dir="/outputs/quantum-alpha-v8-grpo",
+        output_dir="/outputs/alpha-signal-v8-grpo",
         num_train_epochs=1,
         per_device_train_batch_size=1, gradient_accumulation_steps=4,
         learning_rate=5e-6, num_generations=4, max_completion_length=1500,

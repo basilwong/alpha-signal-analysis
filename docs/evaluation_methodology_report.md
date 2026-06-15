@@ -83,7 +83,7 @@ The judge model is provided with a rubric to score the student model's outputs o
 
 This approach has been shown to correlate highly with human expert evaluations while being scalable and automated [9].
 
-## Proposed Evaluation Protocol for Quantum Alpha
+## Proposed Evaluation Protocol for Alpha Signal
 
 To rigorously quantify the value of our fine-tuning on Qwen3-8B, we will implement a three-tiered evaluation protocol.
 

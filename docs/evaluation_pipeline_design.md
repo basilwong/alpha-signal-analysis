@@ -2,7 +2,7 @@
 
 ## 1. Objective
 
-Build a reproducible evaluation pipeline that quantifies the predictive power of the Quantum Alpha model by computing Abnormal Returns, Information Coefficient, and Signal Decay metrics against historical market data. The pipeline must also produce visualizations suitable for embedding in the Gradio app and the hackathon submission materials.
+Build a reproducible evaluation pipeline that quantifies the predictive power of the Alpha Signal model by computing Abnormal Returns, Information Coefficient, and Signal Decay metrics against historical market data. The pipeline must also produce visualizations suitable for embedding in the Gradio app and the hackathon submission materials.
 
 ## 2. Architecture Overview
 

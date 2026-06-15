@@ -10,9 +10,9 @@ PREV_COUNT=0
 
 while true; do
     # Get current count
-    CURRENT_COUNT=$(wc -l < data/training/quantum_alpha_train_v5_raw.jsonl 2>/dev/null || echo 0)
-    SUCCESSES=$(grep -c '"success": true' data/training/quantum_alpha_train_v5_raw.jsonl 2>/dev/null || echo 0)
-    FAILURES=$(grep -c '"success": false' data/training/quantum_alpha_train_v5_raw.jsonl 2>/dev/null || echo 0)
+    CURRENT_COUNT=$(wc -l < data/training/alpha_signal_train_v5_raw.jsonl 2>/dev/null || echo 0)
+    SUCCESSES=$(grep -c '"success": true' data/training/alpha_signal_train_v5_raw.jsonl 2>/dev/null || echo 0)
+    FAILURES=$(grep -c '"success": false' data/training/alpha_signal_train_v5_raw.jsonl 2>/dev/null || echo 0)
     RUNNING=$(ps aux | grep generate_v5_thinking | grep -v grep | wc -l)
     
     echo "[$(date)] Total=$CURRENT_COUNT Success=$SUCCESSES Fail=$FAILURES Running=$RUNNING" >> "$LOG"
@@ -30,10 +30,10 @@ while true; do
         # Remove failures so they get retried
         python3 -c "
 import json
-with open('data/training/quantum_alpha_train_v5_raw.jsonl') as f:
+with open('data/training/alpha_signal_train_v5_raw.jsonl') as f:
     records = [json.loads(l) for l in f if l.strip()]
 successes = [r for r in records if r.get('success')]
-with open('data/training/quantum_alpha_train_v5_raw.jsonl', 'w') as f:
+with open('data/training/alpha_signal_train_v5_raw.jsonl', 'w') as f:
     for r in successes:
         f.write(json.dumps(r) + '\n')
 print(f'Kept {len(successes)} successes, removed {len(records)-len(successes)} failures')
@@ -51,10 +51,10 @@ print(f'Kept {len(successes)} successes, removed {len(records)-len(successes)} f
         # Remove failures
         python3 -c "
 import json
-with open('data/training/quantum_alpha_train_v5_raw.jsonl') as f:
+with open('data/training/alpha_signal_train_v5_raw.jsonl') as f:
     records = [json.loads(l) for l in f if l.strip()]
 successes = [r for r in records if r.get('success')]
-with open('data/training/quantum_alpha_train_v5_raw.jsonl', 'w') as f:
+with open('data/training/alpha_signal_train_v5_raw.jsonl', 'w') as f:
     for r in successes:
         f.write(json.dumps(r) + '\n')
 print(f'Kept {len(successes)} successes, removed {len(records)-len(successes)} failures')

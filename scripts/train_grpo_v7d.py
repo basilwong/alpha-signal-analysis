@@ -14,7 +14,7 @@ import re
 import os
 import numpy as np
 
-app = modal.App("quantum-alpha-v7d-grpo")
+app = modal.App("alpha-signal-v7d-grpo")
 
 train_image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -32,13 +32,13 @@ train_image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 BASE_MODEL = "nvidia/OpenReasoning-Nemotron-7B"
 SFT_ADAPTER = "/outputs/quantum-alpha-openreasoning-7b/checkpoint-100"
 GRPO_DATA = "/outputs/grpo_train_articles_with_returns.jsonl"
-OUTPUT_DIR = "/outputs/quantum-alpha-grpo-v7d-clean"
+OUTPUT_DIR = "/outputs/alpha-signal-grpo-v7d-clean"
 
 ACTIVE_TICKERS = ["IONQ", "RGTI", "QBTS", "QUBT", "IBM", "HON"]
 

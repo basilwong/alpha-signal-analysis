@@ -30,7 +30,7 @@ while true; do
         BATCH_FILE="data/eval/predictions_batch_$(printf '%03d' $i).jsonl"
         if [ ! -f "$BATCH_FILE" ]; then
             # Try to download from volume
-            modal volume get quantum-alpha-outputs "predictions_batch_$(printf '%03d' $i).jsonl" "$BATCH_FILE" --force 2>/dev/null
+            modal volume get alpha-signal-outputs "predictions_batch_$(printf '%03d' $i).jsonl" "$BATCH_FILE" --force 2>/dev/null
             if [ -f "$BATCH_FILE" ] && [ -s "$BATCH_FILE" ]; then
                 COUNT=$(wc -l < "$BATCH_FILE")
                 echo "  Downloaded batch $i: $COUNT results"
@@ -58,7 +58,7 @@ while true; do
     fi
     
     # Check if Modal app is running
-    RUNNING=$(modal app list 2>&1 | grep "quantum-alpha-predictions-v2" | grep -c "ephemeral (detached)")
+    RUNNING=$(modal app list 2>&1 | grep "alpha-signal-predictions-v2" | grep -c "ephemeral (detached)")
     
     if [ $RUNNING -eq 0 ]; then
         echo "  Modal app not running. Restarting for next batch..."

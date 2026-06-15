@@ -17,7 +17,7 @@ from datetime import timedelta
 
 DATA_DIR = Path("data")
 MARKET_DIR = DATA_DIR / "market"
-TRAIN_FILE = DATA_DIR / "training" / "quantum_alpha_train_v4.jsonl"
+TRAIN_FILE = DATA_DIR / "training" / "alpha_signal_train_v4.jsonl"
 OUTPUT_FILE = DATA_DIR / "training" / "grpo_train_articles_with_returns.jsonl"
 
 QUANTUM_TICKERS = ["IONQ", "RGTI", "QBTS", "QUBT", "IBM", "HON"]

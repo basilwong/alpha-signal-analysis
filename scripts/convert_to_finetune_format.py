@@ -22,7 +22,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 DATA_TRAINING = PROJECT_ROOT / "data" / "training"
-OUTPUT_FILE = DATA_TRAINING / "quantum_alpha_train_v4.jsonl"
+OUTPUT_FILE = DATA_TRAINING / "alpha_signal_train_v4.jsonl"
 
 # ============================================================
 # System Prompt (incorporates all fixes)

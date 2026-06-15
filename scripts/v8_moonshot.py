@@ -17,7 +17,7 @@ import time
 import os
 import numpy as np
 
-app = modal.App("quantum-alpha-v8-moonshot")
+app = modal.App("alpha-signal-v8-moonshot")
 
 train_image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -47,8 +47,8 @@ predict_image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 BASE_7B = "nvidia/OpenReasoning-Nemotron-7B"
 BASE_14B = "nvidia/OpenReasoning-Nemotron-14B"
@@ -230,7 +230,7 @@ def train_v8_sft():
         tokenizer.pad_token = tokenizer.eos_token
 
     all_rows = []
-    with open("/outputs/quantum_alpha_train_v8_combined.jsonl") as f:
+    with open("/outputs/alpha_signal_train_v8_combined.jsonl") as f:
         for line in f:
             if line.strip():
                 row = json.loads(line)
@@ -245,7 +245,7 @@ def train_v8_sft():
     print(f"Dataset: {len(train_ds)} train, {len(val_ds)} val")
 
     sft_config = SFTConfig(
-        output_dir="/outputs/quantum-alpha-v8-sft",
+        output_dir="/outputs/alpha-signal-v8-sft",
         num_train_epochs=2,
         per_device_train_batch_size=1, gradient_accumulation_steps=16,
         learning_rate=2e-4, weight_decay=0.01, warmup_steps=10,

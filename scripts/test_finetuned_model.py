@@ -11,7 +11,7 @@ Usage:
 import modal
 import json
 
-app = modal.App("quantum-alpha-test-inference")
+app = modal.App("alpha-signal-test-inference")
 
 # Reuse the same image from training
 test_image = (
@@ -31,7 +31,7 @@ test_image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
 
 # Test articles
 TEST_ARTICLES = [

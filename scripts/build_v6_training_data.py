@@ -2,7 +2,7 @@
 Build V6 training data by:
 1. Taking the base V5 data (881 examples, already in messages format)
 2. Converting the bearish/robustness supplements from flat format to messages format
-3. Combining into a single quantum_alpha_train_v6.jsonl
+3. Combining into a single alpha_signal_train_v6.jsonl
 
 Usage:
     python scripts/build_v6_training_data.py
@@ -11,13 +11,13 @@ Usage:
 import json
 from pathlib import Path
 
-BASE_FILE = "data/training/quantum_alpha_train_v5.jsonl"
+BASE_FILE = "data/training/alpha_signal_train_v5.jsonl"
 SUPPLEMENT_FILES = [
-    "data/training/quantum_alpha_train_v5_bearish.jsonl",
-    "data/training/quantum_alpha_train_v5_bearish_b2.jsonl",
-    "data/training/quantum_alpha_train_v5_robustness.jsonl",
+    "data/training/alpha_signal_train_v5_bearish.jsonl",
+    "data/training/alpha_signal_train_v5_bearish_b2.jsonl",
+    "data/training/alpha_signal_train_v5_robustness.jsonl",
 ]
-OUTPUT_FILE = "data/training/quantum_alpha_train_v6.jsonl"
+OUTPUT_FILE = "data/training/alpha_signal_train_v6.jsonl"
 
 # Extract system prompt from the base V5 data
 with open(BASE_FILE) as f:

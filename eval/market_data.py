@@ -159,7 +159,7 @@ def download_all_market_data(start: str = "2024-01-01"):
 
 
 if __name__ == "__main__":
-    print("Downloading all market data for Quantum Alpha evaluation...")
+    print("Downloading all market data for Alpha Signal evaluation...")
     provider = download_all_market_data(start="2024-01-01")
 
     # Print summary

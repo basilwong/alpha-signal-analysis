@@ -10,7 +10,7 @@ import modal
 import json
 import os
 
-app = modal.App("quantum-alpha-v7b-rejection")
+app = modal.App("alpha-signal-v7b-rejection")
 
 train_image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -28,13 +28,13 @@ train_image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 BASE_MODEL = "nvidia/OpenReasoning-Nemotron-7B"
 SFT_ADAPTER = "/outputs/quantum-alpha-openreasoning-7b/checkpoint-100"
 TRAIN_FILE = "/outputs/v7b_best_of_4_clean.jsonl"
-OUTPUT_DIR = "/outputs/quantum-alpha-v7b-clean"
+OUTPUT_DIR = "/outputs/alpha-signal-v7b-clean"
 
 
 @app.function(

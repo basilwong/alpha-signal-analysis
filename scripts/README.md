@@ -38,13 +38,13 @@ Uses `qwen3-max` (Alibaba Cloud Model Studio, Singapore free tier) to label each
 # Test with 5 articles first (verify quality)
 python scripts/generate_training_data.py \
     --input data/raw/articles.jsonl \
-    --output data/training/quantum_alpha_train.jsonl \
+    --output data/training/alpha_signal_train.jsonl \
     --limit 5
 
 # Generate 200 labeled examples (recommended for first training run)
 python scripts/generate_training_data.py \
     --input data/raw/articles.jsonl \
-    --output data/training/quantum_alpha_train.jsonl \
+    --output data/training/alpha_signal_train.jsonl \
     --limit 200
 ```
 
@@ -54,12 +54,12 @@ To override, set the environment variable:
 export DASHSCOPE_API_KEY="your-key-here"
 ```
 
-Expected output: `data/training/quantum_alpha_train.jsonl` with instruction-tuning pairs.
+Expected output: `data/training/alpha_signal_train.jsonl` with instruction-tuning pairs.
 
 ## Step 3: Upload Training Data to Modal
 
 ```bash
-modal volume put quantum-alpha-outputs data/training/quantum_alpha_train.jsonl quantum_alpha_train.jsonl
+modal volume put alpha-signal-outputs data/training/alpha_signal_train.jsonl alpha_signal_train.jsonl
 ```
 
 ## Step 4: Test Modal Environment

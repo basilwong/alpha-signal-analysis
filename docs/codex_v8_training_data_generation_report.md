@@ -19,7 +19,7 @@ This report covers both phases:
 
 | File | Rows | Status | Purpose |
 |------|------|--------|---------|
-| `data/training/quantum_alpha_train_v8.jsonl` | 190 | Complete | Real-article V8 training set with thinking traces |
+| `data/training/alpha_signal_train_v8.jsonl` | 190 | Complete | Real-article V8 training set with thinking traces |
 | `data/eval/predictions_codex_teacher.jsonl` | 426 | Complete | Codex teacher eval baseline predictions |
 | `data/training/v8_synthetic.jsonl` | 200 | Complete | Synthetic quantum computing scenarios |
 | `data/training/v8_negatives.jsonl` | 150 | Complete | Non-quantum hard negatives, all-zero labels |
@@ -32,7 +32,7 @@ The first phase generated the core V8 real-article training file and Codex teach
 
 | File | Rows | Type A | Type B | Type C | Notes |
 |------|------|--------|--------|--------|-------|
-| `quantum_alpha_train_v8.jsonl` | 190 | 52 | 128 | 10 | All rows are successful OpenAI messages examples |
+| `alpha_signal_train_v8.jsonl` | 190 | 52 | 128 | 10 | All rows are successful OpenAI messages examples |
 | `predictions_codex_teacher.jsonl` | 426 | 73 | 330 | 18 | 421 successful predictions plus 5 source-unavailable error rows |
 
 Eval details:
@@ -49,7 +49,7 @@ Training selectivity from Phase 1:
 
 | Component | Rows | Type A | Type B | Type C | Active Non-Zero Pairs |
 |-----------|------|--------|--------|--------|------------------------|
-| `quantum_alpha_train_v8.jsonl` | 190 | 52 | 128 | 10 | 204 / 1330, 15.3% |
+| `alpha_signal_train_v8.jsonl` | 190 | 52 | 128 | 10 | 204 / 1330, 15.3% |
 
 ### Phase 2: Synthetic Components
 
@@ -67,7 +67,7 @@ Combined across Phase 1 and Phase 2, the V8 training set now has 740 examples:
 
 | Component | Rows | Type A | Type B | Type C | Active Non-Zero Pairs |
 |-----------|------|--------|--------|--------|------------------------|
-| `quantum_alpha_train_v8.jsonl` | 190 | 52 | 128 | 10 | 204 / 1330, 15.3% |
+| `alpha_signal_train_v8.jsonl` | 190 | 52 | 128 | 10 | 204 / 1330, 15.3% |
 | `v8_synthetic.jsonl` | 200 | 70 | 80 | 50 | 468 / 1400, 33.4% |
 | `v8_negatives.jsonl` | 150 | 0 | 150 | 0 | 0 / 1050, 0.0% |
 | `v8_edge_cases.jsonl` | 100 | 0 | 60 | 40 | 160 / 700, 22.9% |
@@ -100,7 +100,7 @@ Combined across Phase 1 and Phase 2, the V8 training set now has 740 examples:
    - Processed every available training article with a fresh Codex worker session.
    - Generated OpenAI messages format records with the exact V8 system prompt.
    - Included `<think>...</think>` traces followed by JSON signal objects.
-   - Produced `data/training/quantum_alpha_train_v8.jsonl` with 190 rows.
+   - Produced `data/training/alpha_signal_train_v8.jsonl` with 190 rows.
    - Final distribution was 52 Type A, 128 Type B, and 10 Type C.
 
 5. Ran the eval GPT-5.5/xhigh teacher pass.
@@ -111,7 +111,7 @@ Combined across Phase 1 and Phase 2, the V8 training set now has 740 examples:
    - Rows `421`-`425` are explicit `status: error` source-unavailable placeholders to preserve requested eval shape and article index continuity.
 
 6. Validated Phase 1 outputs.
-   - Verified `quantum_alpha_train_v8.jsonl` had 190 rows.
+   - Verified `alpha_signal_train_v8.jsonl` had 190 rows.
    - Verified `predictions_codex_teacher.jsonl` had 426 rows.
    - Verified 421 eval rows had `status: success`.
    - Verified eval error rows were exactly `[421, 422, 423, 424, 425]`.
@@ -128,7 +128,7 @@ Combined across Phase 1 and Phase 2, the V8 training set now has 740 examples:
 8. Reviewed the synthetic follow-up prompt and tightened the execution strategy.
    - Kept the four requested synthetic output files and target counts.
    - Added a manifest-first workflow so category, type distribution, ticker coverage, and style coverage were controlled before generation.
-   - Preserved the exact system prompt from the first row of `quantum_alpha_train_v8.jsonl`.
+   - Preserved the exact system prompt from the first row of `alpha_signal_train_v8.jsonl`.
    - Required GPT-5.5 with `xhigh` reasoning through fresh Codex worker sessions.
    - Avoided OpenAI API usage entirely.
 
@@ -194,14 +194,14 @@ Combined across Phase 1 and Phase 2, the V8 training set now has 740 examples:
 Phase 1 line counts:
 
 ```bash
-wc -l data/training/quantum_alpha_train_v8.jsonl \
+wc -l data/training/alpha_signal_train_v8.jsonl \
       data/eval/predictions_codex_teacher.jsonl
 ```
 
 Output:
 
 ```text
-     190 data/training/quantum_alpha_train_v8.jsonl
+     190 data/training/alpha_signal_train_v8.jsonl
      426 data/eval/predictions_codex_teacher.jsonl
      616 total
 ```
@@ -228,7 +228,7 @@ Output:
 Combined output file line counts:
 
 ```bash
-wc -l data/training/quantum_alpha_train_v8.jsonl \
+wc -l data/training/alpha_signal_train_v8.jsonl \
       data/eval/predictions_codex_teacher.jsonl \
       data/training/v8_synthetic.jsonl \
       data/training/v8_negatives.jsonl \
@@ -239,7 +239,7 @@ wc -l data/training/quantum_alpha_train_v8.jsonl \
 Output:
 
 ```text
-     190 data/training/quantum_alpha_train_v8.jsonl
+     190 data/training/alpha_signal_train_v8.jsonl
      426 data/eval/predictions_codex_teacher.jsonl
      200 data/training/v8_synthetic.jsonl
      150 data/training/v8_negatives.jsonl
@@ -309,7 +309,7 @@ Generate 4 additional training data files that complement the V8 real-article da
 
 **Total: ~550 additional examples**, bringing V8 from 190 to ~740 examples.
 
-All files use the same format as `quantum_alpha_train_v8.jsonl` (OpenAI messages with `<think>` traces).
+All files use the same format as `alpha_signal_train_v8.jsonl` (OpenAI messages with `<think>` traces).
 
 ---
 
@@ -319,7 +319,7 @@ All files use the same format as `quantum_alpha_train_v8.jsonl` (OpenAI messages
 {"messages": [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}, {"role": "assistant", "content": "<think>\n...\n</think>\n{...}"}]}
 ```
 
-Use the same system prompt from `quantum_alpha_train_v8.jsonl` (read the first example's system message).
+Use the same system prompt from `alpha_signal_train_v8.jsonl` (read the first example's system message).
 
 ---
 
@@ -596,4 +596,4 @@ git push origin fix/label-quality
 
 4. **Negatives must be genuinely unrelated.** Not "quantum computing article that's bearish" — literally "article about corn futures" or "Tesla earnings report." The model must learn that non-quantum content = instant zeros without even needing to reason deeply.
 
-5. **Use the same system prompt** from the existing V8 training data (read it from `quantum_alpha_train_v8.jsonl`).
+5. **Use the same system prompt** from the existing V8 training data (read it from `alpha_signal_train_v8.jsonl`).

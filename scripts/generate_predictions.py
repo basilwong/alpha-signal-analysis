@@ -7,16 +7,16 @@ client staying connected.
 
 Usage:
     # Upload articles to volume first:
-    modal volume put quantum-alpha-outputs data/raw/articles.jsonl articles.jsonl --force
+    modal volume put alpha-signal-outputs data/raw/articles.jsonl articles.jsonl --force
 
     # Run predictions (detached - survives local disconnect):
     modal run --detach scripts/generate_predictions.py
 
     # Check progress:
-    modal volume ls quantum-alpha-outputs
+    modal volume ls alpha-signal-outputs
 
     # Download results when done:
-    modal volume get quantum-alpha-outputs predictions_v2.jsonl data/eval/predictions_v2.jsonl
+    modal volume get alpha-signal-outputs predictions_v2.jsonl data/eval/predictions_v2.jsonl
 """
 
 import modal
@@ -24,7 +24,7 @@ import json
 import traceback
 import time
 
-app = modal.App("quantum-alpha-predictions")
+app = modal.App("alpha-signal-predictions")
 
 predict_image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -43,8 +43,8 @@ predict_image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 MODEL_ID = "basilwong/quantum-alpha-qwen3-8b"
 
@@ -286,7 +286,7 @@ def main():
     """Just triggers the remote function. Can disconnect safely."""
     print("Starting fully-remote prediction run...")
     print("Safe to disconnect. Results will be saved to Modal volume.")
-    print("Check progress: modal app logs quantum-alpha-predictions")
-    print("Download results: modal volume get quantum-alpha-outputs predictions_v2.jsonl data/eval/predictions_v2.jsonl")
+    print("Check progress: modal app logs alpha-signal-predictions")
+    print("Download results: modal volume get alpha-signal-outputs predictions_v2.jsonl data/eval/predictions_v2.jsonl")
     result = run_all_predictions.remote()
     print(f"\nResult: {result}")

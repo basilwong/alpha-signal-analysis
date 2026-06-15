@@ -15,7 +15,7 @@ import time
 import os
 import numpy as np
 
-app = modal.App("quantum-alpha-v7bc-candidates")
+app = modal.App("alpha-signal-v7bc-candidates")
 
 image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -29,8 +29,8 @@ image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 MERGED_MODEL = "/outputs/openreasoning-7b-merged"  # V4 merged model
 GRPO_DATA = "/outputs/grpo_train_articles_with_returns.jsonl"

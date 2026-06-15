@@ -1,7 +1,7 @@
 """
 Convert V5 raw output to final fine-tuning format.
 
-Produces quantum_alpha_train_v5.jsonl with:
+Produces alpha_signal_train_v5.jsonl with:
 - System message (V5 system prompt)
 - User message (market context + article)
 - Assistant message (<think>...</think> + JSON)
@@ -20,8 +20,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from scripts.generate_v5_thinking import V5_SYSTEM_PROMPT, build_user_message
 
 DATA_TRAINING = PROJECT_ROOT / "data" / "training"
-INPUT_FILE = DATA_TRAINING / "quantum_alpha_train_v5_raw.jsonl"
-OUTPUT_FILE = DATA_TRAINING / "quantum_alpha_train_v5.jsonl"
+INPUT_FILE = DATA_TRAINING / "alpha_signal_train_v5_raw.jsonl"
+OUTPUT_FILE = DATA_TRAINING / "alpha_signal_train_v5.jsonl"
 
 
 def main():

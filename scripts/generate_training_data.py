@@ -12,7 +12,7 @@ The pipeline:
 
 Usage:
     export DASHSCOPE_API_KEY="your-key-here"
-    python scripts/generate_training_data.py --input data/raw/articles.jsonl --output data/training/quantum_alpha_train.jsonl
+    python scripts/generate_training_data.py --input data/raw/articles.jsonl --output data/training/alpha_signal_train.jsonl
 """
 
 import os
@@ -213,7 +213,7 @@ def main():
         help="Path to input JSONL file with raw articles"
     )
     parser.add_argument(
-        "--output", type=str, default="data/training/quantum_alpha_train.jsonl",
+        "--output", type=str, default="data/training/alpha_signal_train.jsonl",
         help="Path to output JSONL file for training data"
     )
     parser.add_argument(

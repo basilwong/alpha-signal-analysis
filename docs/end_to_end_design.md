@@ -49,7 +49,7 @@ Both versions share the same frontend, data ingestion pipeline, and output schem
 │  │  V1: qwen3-max (Teacher)    │    │  V2: Fine-tuned qwen3-8b        │    │
 │  │                             │    │                                   │    │
 │  │  Provider: Alibaba Cloud    │    │  Provider: HF ZeroGPU or Modal   │    │
-│  │  Endpoint: Singapore API    │    │  Model: basilwong/quantum-alpha  │    │
+│  │  Endpoint: Singapore API    │    │  Model: basilwong/alpha-signal  │    │
 │  │  Memory: ChromaDB/Vector DB │    │  Memory: None (stateless)        │    │
 │  │  Context: Persistent across │    │  Context: Per-request only       │    │
 │  │           sessions          │    │                                   │    │
@@ -179,7 +179,7 @@ This pipeline runs once to produce the fine-tuned V2 model.
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │  python scripts/generate_training_data.py                            │   │
 │  │  Teacher: qwen3-max (Alibaba Cloud Singapore, free tier)             │   │
-│  │  Output: data/training/quantum_alpha_train.jsonl                     │   │
+│  │  Output: data/training/alpha_signal_train.jsonl                     │   │
 │  │  Format: {"messages": [system, user, assistant]} per example         │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                    │                                         │
@@ -311,7 +311,7 @@ This pipeline runs once to produce the fine-tuned V2 model.
 | Step | Action | Dependency | Output |
 |------|--------|------------|--------|
 | 1 | Collect 200+ raw articles | None | `data/raw/articles.jsonl` |
-| 2 | Generate training labels (teacher) | Step 1 + Qwen API key | `data/training/quantum_alpha_train.jsonl` |
+| 2 | Generate training labels (teacher) | Step 1 + Qwen API key | `data/training/alpha_signal_train.jsonl` |
 | 3 | Fine-tune on Modal | Step 2 + Modal auth | `basilwong/quantum-alpha-qwen3-8b` on HF Hub |
 | 4 | Evaluate (Tier 1 + Tier 2) | Step 3 | Accuracy metrics + comparison report |
 | 5 | Wire inference into Gradio app | Step 3 | Working `/analyze_news` endpoint |

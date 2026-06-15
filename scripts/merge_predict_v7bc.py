@@ -12,7 +12,7 @@ import re
 import time
 import os
 
-app = modal.App("quantum-alpha-v7bc-predict")
+app = modal.App("alpha-signal-v7bc-predict")
 
 image = (
     modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
@@ -26,20 +26,20 @@ image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("hf-cache-quantum-alpha", create_if_missing=True)
-output_vol = modal.Volume.from_name("quantum-alpha-outputs", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name("hf-cache-alpha-signal", create_if_missing=True)
+output_vol = modal.Volume.from_name("alpha-signal-outputs", create_if_missing=True)
 
 BASE_MODEL = "nvidia/OpenReasoning-Nemotron-7B"
 EVAL_FILE = "/outputs/articles_eval.jsonl"
 
 MODELS = {
     "v7b": {
-        "adapter": "/outputs/quantum-alpha-v7b-clean/checkpoint-30",
+        "adapter": "/outputs/alpha-signal-v7b-clean/checkpoint-30",
         "merged": "/outputs/v7b-clean-merged",
         "predictions": "/outputs/predictions_v7b_clean.jsonl",
     },
     "v7c": {
-        "adapter": "/outputs/quantum-alpha-v7c-dpo-clean/checkpoint-64",
+        "adapter": "/outputs/alpha-signal-v7c-dpo-clean/checkpoint-64",
         "merged": "/outputs/v7c-clean-merged",
         "predictions": "/outputs/predictions_v7c_clean.jsonl",
     },

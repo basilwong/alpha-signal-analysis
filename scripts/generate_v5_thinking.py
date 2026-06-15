@@ -44,7 +44,7 @@ MAX_POLL_TIME = 1200
 
 DATA_TRAINING = PROJECT_ROOT / "data" / "training"
 MARKET_DIR = PROJECT_ROOT / "data" / "market"
-OUTPUT_FILE = DATA_TRAINING / "quantum_alpha_train_v5_raw.jsonl"
+OUTPUT_FILE = DATA_TRAINING / "alpha_signal_train_v5_raw.jsonl"
 
 # ============================================================
 # V5 System Prompt

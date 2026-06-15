@@ -10,7 +10,7 @@ for i in $(seq 0 8); do
   batch_file="predictions_batch_$(printf '%03d' $i).jsonl"
   local_file="data/eval/$batch_file"
   if [ ! -s "$local_file" ]; then
-    modal volume get quantum-alpha-outputs "$batch_file" "$local_file" --force 2>/dev/null
+    modal volume get alpha-signal-outputs "$batch_file" "$local_file" --force 2>/dev/null
   fi
 done
 
@@ -36,7 +36,7 @@ fi
 
 # Step 3: Check if app is running
 echo "---APP STATUS---"
-APP_LINE=$(modal app list 2>&1 | grep "quantum-alpha-predictions-v2" | grep "ephemeral")
+APP_LINE=$(modal app list 2>&1 | grep "alpha-signal-predictions-v2" | grep "ephemeral")
 if [ -n "$APP_LINE" ]; then
   echo "  App is running: $APP_LINE"
   echo "ACTION: Waiting (app still running)"

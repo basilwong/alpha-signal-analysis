@@ -150,7 +150,7 @@ MODEL_CONFIG = {
 # Modal Configuration
 MODAL_CONFIG = {
     "workspace_id": "ac-PGYLNihy2INHkVQupXFTUV",
-    "app_name": "quantum-alpha-finetune",
+    "app_name": "alpha-signal-finetune",
     "gpu": "A100",
 }
 

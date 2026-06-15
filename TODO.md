@@ -14,7 +14,7 @@
 - [ ] Review and validate teacher outputs manually (spot check 10-20 examples)
 - [ ] Run full generation on all 200+ articles
 - [ ] Split dataset 90/10 into train/validation
-- [ ] Target: `data/training/quantum_alpha_train.jsonl` ready
+- [ ] Target: `data/training/alpha_signal_train.jsonl` ready
 
 ### Fine-Tuning (Modal)
 - [ ] Verify Modal environment works (test_setup passes)

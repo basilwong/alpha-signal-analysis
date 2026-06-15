@@ -1,4 +1,4 @@
-# Codex Prompt: Generate Quantum Alpha Training Data (V8) + Eval Predictions
+# Codex Prompt: Generate Alpha Signal Training Data (V8) + Eval Predictions
 
 ## Repository Setup
 
@@ -23,13 +23,13 @@ pip install pandas pyarrow numpy
 | `data/market/*.parquet` | Daily OHLCV data for: IONQ, RGTI, QBTS, QUBT, QNT, IBM, HON, MSFT, GOOGL, NVDA, SPY, QTUM |
 | `src/market_context.py` | Helper module: `get_market_context(date)` computes the full market context table |
 | `src/config.py` | Ticker universe, liquidity tiers, score ranges |
-| `data/training/quantum_alpha_train_v4.jsonl` | Previous best training data (881 examples, reference for format) |
+| `data/training/alpha_signal_train_v4.jsonl` | Previous best training data (881 examples, reference for format) |
 
 ### Output Files to Generate
 
 | File | Description |
 |------|-------------|
-| `data/training/quantum_alpha_train_v8.jsonl` | New training data (~194 examples with thinking traces) |
+| `data/training/alpha_signal_train_v8.jsonl` | New training data (~194 examples with thinking traces) |
 | `data/eval/predictions_codex_teacher.jsonl` | Eval predictions (426 articles, Codex teacher baseline) |
 
 ---
@@ -56,7 +56,7 @@ Generate training data from the 194 articles in `data/raw/articles_train.jsonl`.
 
 ### Output Format (OpenAI messages format)
 
-Each line of `quantum_alpha_train_v8.jsonl` is a JSON object:
+Each line of `alpha_signal_train_v8.jsonl` is a JSON object:
 
 ```json
 {"messages": [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}, {"role": "assistant", "content": "<think>\n...\n</think>\n{...}"}]}
@@ -269,7 +269,7 @@ This article reports that Rigetti has partnered with a European bank for a quant
 
 4. **Validate each example:** All 10 tickers present, inactive = 0.0, ranges respected, thinking present, JSON parses.
 
-5. **Save to `data/training/quantum_alpha_train_v8.jsonl`**
+5. **Save to `data/training/alpha_signal_train_v8.jsonl`**
 
 ---
 
@@ -354,7 +354,7 @@ After BOTH tasks are complete:
 cd alpha-signal-analysis
 
 # Verify the output files exist and have expected line counts
-wc -l data/training/quantum_alpha_train_v8.jsonl   # Should be ~194
+wc -l data/training/alpha_signal_train_v8.jsonl   # Should be ~194
 wc -l data/eval/predictions_codex_teacher.jsonl     # Should be 426
 
 # Run validation
@@ -404,16 +404,16 @@ def validate(filepath, name):
     print(f'  Target: A=30-35%, B=40-50%, C=20-25%')
     print()
 
-validate('data/training/quantum_alpha_train_v8.jsonl', 'Training V8')
+validate('data/training/alpha_signal_train_v8.jsonl', 'Training V8')
 validate('data/eval/predictions_codex_teacher.jsonl', 'Eval Predictions')
 "
 
 # Stage, commit, and push
-git add data/training/quantum_alpha_train_v8.jsonl
+git add data/training/alpha_signal_train_v8.jsonl
 git add data/eval/predictions_codex_teacher.jsonl
 git commit -m "V8 training data + Codex teacher eval predictions
 
-Training (quantum_alpha_train_v8.jsonl):
+Training (alpha_signal_train_v8.jsonl):
 - X examples from real articles (report actual count)
 - ~40-50% Type B (thinking leads to zeros)
 - ~30-35% Type A (genuine signal)

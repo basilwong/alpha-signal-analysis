@@ -66,9 +66,9 @@ def analyze_training_file(path, label):
     
     return examples
 
-v2_examples = analyze_training_file("data/training/quantum_alpha_train_v2.jsonl", "V2 (May-Jun 2026)")
-v3_examples = analyze_training_file("data/training/quantum_alpha_train_v3.jsonl", "V3 (Aug 2024 - Dec 2025)")
-combined_examples = analyze_training_file("data/training/quantum_alpha_train_combined.jsonl", "Combined (V2+V3)")
+v2_examples = analyze_training_file("data/training/alpha_signal_train_v2.jsonl", "V2 (May-Jun 2026)")
+v3_examples = analyze_training_file("data/training/alpha_signal_train_v3.jsonl", "V3 (Aug 2024 - Dec 2025)")
+combined_examples = analyze_training_file("data/training/alpha_signal_train_combined.jsonl", "Combined (V2+V3)")
 
 # 2. Analyze the error pattern in predictions
 print("\n" + "=" * 60)
