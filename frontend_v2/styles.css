@@ -1439,3 +1439,16 @@ textarea {
         font-size: 10px;
     }
 }
+
+/* No signal indicator */
+.feed-no-signal {
+    color: var(--accent-yellow);
+    font-size: 12px;
+    padding: 8px 12px;
+    background: rgba(255, 204, 0, 0.08);
+    border: 1px solid rgba(255, 204, 0, 0.2);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}

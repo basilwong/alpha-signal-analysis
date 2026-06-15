@@ -183,15 +183,26 @@ function renderFeedResult(id, data) {
 
     // Handle both formats: {signal_vector: {IONQ: {score: ...}}} and flat {IONQ: 1.5, ...}
     let sv = signal.signal_vector || {};
+    const possibleTickers = ['IONQ', 'RGTI', 'QBTS', 'QUBT', 'IBM', 'GOOGL', 'MSFT', 'HON', 'NVDA'];
+    if (typeof sv === 'object' && !Array.isArray(sv)) {
+        // Normalize: if values are plain numbers, wrap them
+        Object.keys(sv).forEach(t => {
+            if (typeof sv[t] === 'number') {
+                sv[t] = { score: sv[t] };
+            }
+        });
+    }
     if (Object.keys(sv).length === 0) {
         // Try flat format (V4 model returns {IONQ: 1.5, RGTI: 0.8, ...})
-        const possibleTickers = ['IONQ', 'RGTI', 'QBTS', 'QUBT', 'IBM', 'GOOGL', 'MSFT', 'HON', 'NVDA'];
         const flatKeys = Object.keys(signal).filter(k => possibleTickers.includes(k));
         if (flatKeys.length > 0) {
             flatKeys.forEach(t => { sv[t] = { score: signal[t] }; });
         }
     }
-    const tickers = Object.keys(sv).sort((a, b) => (sv[b]?.score || 0) - (sv[a]?.score || 0));
+    const tickers = Object.keys(sv).filter(t => possibleTickers.includes(t)).sort((a, b) => (sv[b]?.score || 0) - (sv[a]?.score || 0));
+
+    // Check if all scores are zero (no signal)
+    const allZero = tickers.every(t => (sv[t]?.score || 0) === 0);
 
     // Build inline signal bars
     const signalBars = tickers.map(t => {
@@ -214,10 +225,14 @@ function renderFeedResult(id, data) {
         signal.information_novelty ? `Novelty: ${signal.information_novelty}` : '',
     ].filter(Boolean).join(' | ');
 
+    // Get rationale text (model uses different field names)
+    const rationale = signal.signal_rationale || signal.signal_reasoning || signal.technical_translation || '';
+
     body.innerHTML = `
+        ${allZero ? '<div class="feed-no-signal">NO SIGNAL — Model determined no actionable trading signal from this input.</div>' : ''}
         <div class="feed-signal-chart">${signalBars}</div>
         ${meta ? `<div class="feed-meta-line">${meta}</div>` : ''}
-        ${signal.technical_translation ? `<div class="feed-translation">${signal.technical_translation}</div>` : ''}
+        ${rationale ? `<div class="feed-translation">${rationale}</div>` : ''}
         <details class="feed-details">
             <summary>Raw JSON</summary>
             <pre class="feed-json">${JSON.stringify(signal, null, 2)}</pre>
