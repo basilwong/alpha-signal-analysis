@@ -1,5 +1,5 @@
 """
-Article Collection Script for Quantum Alpha Intelligence Platform
+Article Collection Script for Alpha Signal Analysis Platform
 
 Collects quantum computing news articles from multiple sources
 and saves them in the format expected by the training data generation pipeline.

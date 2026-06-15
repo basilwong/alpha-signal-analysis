@@ -1,1 +1,1 @@
-# Quantum Alpha Intelligence Platform
+# Alpha Signal Analysis Platform

@@ -1,4 +1,4 @@
-# Frontend Design V2: Quantum Alpha Intelligence Platform
+# Frontend Design V2: Alpha Signal Analysis Platform
 
 ## Design Philosophy
 

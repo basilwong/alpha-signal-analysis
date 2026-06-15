@@ -1,5 +1,5 @@
 """
-Inference module for the Quantum Alpha Intelligence Platform.
+Inference module for the Alpha Signal Analysis Platform.
 
 Loads the fine-tuned Qwen3-8B model and provides a simple interface
 for generating structured signals from raw text input.

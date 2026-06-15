@@ -1,6 +1,6 @@
 # Hugging Face Space Setup Guide
 
-This document covers how to create, configure, and deploy the Quantum Alpha Intelligence Platform as a Hugging Face Space under the `build-small-hackathon` organization.
+This document covers how to create, configure, and deploy the Alpha Signal Analysis Platform as a Hugging Face Space under the `build-small-hackathon` organization.
 
 ## Overview
 
@@ -50,14 +50,14 @@ from huggingface_hub import move_repo
 
 move_repo(
     from_id="build-small-hackathon/hackathon-test",
-    to_id="build-small-hackathon/quantum-alpha-intelligence"
+    to_id="build-small-hackathon/alpha-signal-analysis"
 )
 ```
 
 Or via CLI:
 
 ```bash
-huggingface-cli repo move build-small-hackathon/hackathon-test build-small-hackathon/quantum-alpha-intelligence --type space
+huggingface-cli repo move build-small-hackathon/hackathon-test build-small-hackathon/alpha-signal-analysis --type space
 ```
 
 **Note:** After renaming, the old URL will redirect to the new one for a period of time, but you should update any references.
@@ -68,7 +68,7 @@ The Space's behavior is configured via a YAML block at the top of the `README.md
 
 ```yaml
 ---
-title: Quantum Alpha Intelligence
+title: Alpha Signal Analysis
 emoji: ⚛
 colorFrom: indigo
 colorTo: cyan

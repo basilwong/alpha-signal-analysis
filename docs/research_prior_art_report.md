@@ -4,7 +4,7 @@
 
 Using natural language processing and large language models to extract alpha from unstructured text is a rapidly growing field in quantitative finance [1]. This review examines academic literature and industry frameworks to understand how models can generate predictive trading signals for specific stock sectors. 
 
-Our findings indicate that the most significant opportunities for large language models to generate alpha lie in highly technical, low-readability news sectors where information diffusion is slow and retail investors struggle to interpret developments [2] [3]. The quantum computing sector represents a prime example of such an environment. This review analyzes key methodologies, empirical results, architectural frameworks, and critical limitations of prior work to guide the design of the Quantum Alpha Intelligence Platform.
+Our findings indicate that the most significant opportunities for large language models to generate alpha lie in highly technical, low-readability news sectors where information diffusion is slow and retail investors struggle to interpret developments [2] [3]. The quantum computing sector represents a prime example of such an environment. This review analyzes key methodologies, empirical results, architectural frameworks, and critical limitations of prior work to guide the design of the Alpha Signal Analysis Platform.
 
 ## Key Academic and Industry Prior Art
 
@@ -81,7 +81,7 @@ Systematic backtests over a longer-term evaluation and a broader cross-section o
 
 This suggests that large language models struggle to adapt to changing market regimes and macroeconomic shifts when used as automated traders [11].
 
-### Design Principles for the Quantum Alpha Intelligence Platform
+### Design Principles for the Alpha Signal Analysis Platform
 
 Based on these findings and limitations, we will design our platform around three core principles:
 

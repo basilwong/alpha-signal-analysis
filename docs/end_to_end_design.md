@@ -1,4 +1,4 @@
-# Quantum Alpha Intelligence Platform: End-to-End System Design
+# Alpha Signal Analysis Platform: End-to-End System Design
 
 ## 1. System Overview
 
@@ -245,7 +245,7 @@ This pipeline runs once to produce the fine-tuned V2 model.
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Hugging Face Space: build-small-hackathon/              │
-│                      quantum-alpha-intelligence          │
+│                      alpha-signal-analysis          │
 │                                                         │
 │  Hardware: ZeroGPU (free, on-demand A100 allocation)    │
 │  SDK: Gradio                                            │

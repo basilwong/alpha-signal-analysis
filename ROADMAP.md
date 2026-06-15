@@ -1,8 +1,8 @@
-# Quantum Alpha Intelligence Platform: Roadmap
+# Alpha Signal Analysis Platform: Roadmap
 
 ## Project Overview
 
-Quantum Alpha Intelligence is an NLP-driven alpha signal generator for the quantum computing sector. It uses fine-tuned small language models to analyze news, research papers, and press releases, producing cross-sectional trading signals across 9 public quantum computing companies simultaneously. The platform compares multiple models and fine-tuning approaches to demonstrate that domain-specific fine-tuning on a small model can match or exceed larger general-purpose models.
+Alpha Signal Analysis is an NLP-driven alpha signal generator for the quantum computing sector. It uses fine-tuned small language models to analyze news, research papers, and press releases, producing cross-sectional trading signals across 9 public quantum computing companies simultaneously. The platform compares multiple models and fine-tuning approaches to demonstrate that domain-specific fine-tuning on a small model can match or exceed larger general-purpose models.
 
 **Hackathon Submissions:**
 1. **Build Small** (Hugging Face/Gradio) — Deadline: June 15, 2026

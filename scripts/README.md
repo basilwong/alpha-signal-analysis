@@ -1,6 +1,6 @@
 # Scripts: Pipeline Runbook
 
-All commands should be run from the project root (`quantum-alpha-intelligence/`).
+All commands should be run from the project root (`alpha-signal-analysis/`).
 
 ## Prerequisites
 

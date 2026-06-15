@@ -12,8 +12,8 @@ To view the trading terminal dashboard locally, follow these steps:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/basilwong/quantum-alpha-intelligence.git
-cd quantum-alpha-intelligence
+git clone https://github.com/basilwong/alpha-signal-analysis.git
+cd alpha-signal-analysis
 
 # 2. Create a virtual environment (recommended)
 python3 -m venv venv

@@ -1,5 +1,5 @@
 """
-Quantum Alpha Intelligence Platform - V2 Frontend
+Alpha Signal Analysis Platform - V2 Frontend
 Three-tab interface: Signal Explorer | Evaluation Dashboard | Sector Map
 
 Uses pre-computed predictions and market data for historical browsing,
@@ -617,7 +617,7 @@ def live_analyze(text: str, source: str) -> tuple:
 # ============================================================
 
 with gr.Blocks(
-    title="Quantum Alpha Intelligence",
+    title="Alpha Signal Analysis",
     theme=gr.themes.Base(primary_hue="emerald", neutral_hue="slate"),
     css="""
     .main-title { text-align: center; }
@@ -627,7 +627,7 @@ with gr.Blocks(
 
     gr.Markdown(
         """
-        # Quantum Alpha Intelligence
+        # Alpha Signal Analysis
         ### Cross-Sectional NLP Signal Generator for the Quantum Computing Sector
         """,
         elem_classes="main-title"

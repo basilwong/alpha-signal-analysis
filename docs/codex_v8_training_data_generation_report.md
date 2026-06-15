@@ -283,7 +283,7 @@ Your previous run (commit `d702986`) successfully generated V8 training data fro
 ## Repository Setup
 
 ```bash
-cd quantum-alpha-intelligence
+cd alpha-signal-analysis
 git checkout fix/label-quality
 git pull origin fix/label-quality
 
@@ -551,7 +551,7 @@ for filename, target in files.items():
 ## Pushing Results
 
 ```bash
-cd quantum-alpha-intelligence
+cd alpha-signal-analysis
 
 # Verify
 wc -l data/training/v8_synthetic.jsonl      # ~200

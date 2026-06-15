@@ -1,5 +1,5 @@
 """
-Training Data Generation Pipeline for Quantum Alpha Intelligence Platform
+Training Data Generation Pipeline for Alpha Signal Analysis Platform
 
 Uses Qwen3.7-Max (via Qwen Cloud / DashScope API) as the teacher model
 to generate high-quality labeled training examples for fine-tuning Qwen3-8B.

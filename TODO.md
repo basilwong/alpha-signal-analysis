@@ -43,7 +43,7 @@
 - [ ] Add loading states and error handling
 
 ### Submission (Build Small Hackathon — June 15)
-- [ ] Deploy to HF Space: `build-small-hackathon/quantum-alpha-intelligence`
+- [ ] Deploy to HF Space: `build-small-hackathon/alpha-signal-analysis`
 - [ ] Verify app runs on ZeroGPU
 - [ ] Record 2-minute demo video
 - [ ] Write social media post
@@ -79,8 +79,8 @@
 
 ## Completed
 - [x] Research hackathon rules and requirements
-- [x] Set up GitHub repo (basilwong/quantum-alpha-intelligence)
-- [x] Create HF Space (build-small-hackathon/quantum-alpha-intelligence)
+- [x] Set up GitHub repo (basilwong/alpha-signal-analysis)
+- [x] Create HF Space (build-small-hackathon/alpha-signal-analysis)
 - [x] Build frontend skeleton (custom trading terminal UI)
 - [x] Write Gradio Server app skeleton with API endpoints
 - [x] Research prior art (NLP alpha generation papers)

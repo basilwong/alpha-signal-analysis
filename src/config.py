@@ -1,5 +1,5 @@
 """
-Configuration for the Quantum Alpha Intelligence Platform.
+Configuration for the Alpha Signal Analysis Platform.
 
 Updated: fix/label-quality branch
 Changes:

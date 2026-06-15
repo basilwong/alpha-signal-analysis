@@ -1,5 +1,5 @@
 """
-Quantum Alpha Intelligence Platform — gr.Server Backend
+Alpha Signal Analysis Platform — gr.Server Backend
 
 This is the Gradio Server backend that exposes API endpoints for the custom frontend.
 The frontend is served as static HTML/CSS/JS from the /frontend directory.
@@ -136,7 +136,7 @@ SECTOR_DATA = {
 # FASTAPI APP
 # ============================================================
 
-app = FastAPI(title="Quantum Alpha Intelligence API")
+app = FastAPI(title="Alpha Signal Analysis API")
 
 
 @app.get("/api/models")

@@ -1,5 +1,5 @@
 /**
- * Quantum Alpha Intelligence - Frontend Application
+ * Alpha Signal Analysis - Frontend Application
  * 
  * Connects to the Gradio Server backend via @gradio/client
  * to fetch signals, briefings, and run analysis.

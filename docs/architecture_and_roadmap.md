@@ -1,8 +1,8 @@
-# Quantum Alpha Intelligence Platform: Technical Architecture and Roadmap
+# Alpha Signal Analysis Platform: Technical Architecture and Roadmap
 
 ## Executive Summary
 
-The Quantum Alpha Intelligence Platform is a domain-specific market intelligence system designed for the Build Small Hackathon on Hugging Face [1]. The platform bridges the gap between highly complex quantum physics advancements and actionable investment signals [2]. By utilizing a fine-tuned small language model under the 32 billion parameter limit, the system ingests unstructured text from news feeds, research papers, and regulatory filings to generate structured trading signals and deep-dive analytical briefings [1] [3]. 
+The Alpha Signal Analysis Platform is a domain-specific market intelligence system designed for the Build Small Hackathon on Hugging Face [1]. The platform bridges the gap between highly complex quantum physics advancements and actionable investment signals [2]. By utilizing a fine-tuned small language model under the 32 billion parameter limit, the system ingests unstructured text from news feeds, research papers, and regulatory filings to generate structured trading signals and deep-dive analytical briefings [1] [3]. 
 
 This project targets three specific merit badges: **Well-Tuned** by publishing a custom fine-tuned model, **Off-Brand** by delivering a fully customized dashboard using Gradio's new Server mode, and **Field Notes** by publishing a comprehensive engineering report [1] [4].
 

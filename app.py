@@ -1,5 +1,5 @@
 """
-Quantum Alpha Intelligence Platform — Gradio Server Mode
+Alpha Signal Analysis Platform — Gradio Server Mode
 
 Uses gradio.Server (inherits from FastAPI) to serve both custom API endpoints
 and the custom frontend. This avoids port binding conflicts on HF Spaces because
@@ -152,7 +152,7 @@ SECTOR_DATA = {
 # GRADIO SERVER APP
 # ============================================================
 
-app = Server(title="Quantum Alpha Intelligence API")
+app = Server(title="Alpha Signal Analysis API")
 
 
 # ============================================================

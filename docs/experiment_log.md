@@ -126,7 +126,7 @@ Running documentation of experiment results, issues encountered, and lessons lea
 - Key learning: The V2 schema uses ~3-4x more output tokens than V1. Budget accordingly.
 
 ### Hugging Face
-- Space: `build-small-hackathon/quantum-alpha-intelligence`
+- Space: `build-small-hackathon/alpha-signal-analysis`
 - Model: `basilwong/quantum-alpha-qwen3-8b`
 - ZeroGPU: Available through hackathon org
 - Key learning: Model repo must be public for the Space to access it without a token.

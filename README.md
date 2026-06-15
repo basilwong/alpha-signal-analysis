@@ -1,4 +1,4 @@
-# Quantum Alpha Intelligence Platform
+# Alpha Signal Analysis Platform
 
 **NLP-driven market intelligence for the quantum computing sector.**
 
@@ -55,7 +55,7 @@ DATA INGESTION          NLP PROCESSING              PRESENTATION
 ## Project Structure
 
 ```
-quantum-alpha-intelligence/
+alpha-signal-analysis/
 ├── src/
 │   ├── ingestion/       # Data collection scripts (SEC, arXiv, RSS, Yahoo)
 │   ├── model/           # Fine-tuning scripts, model config, inference
@@ -101,8 +101,8 @@ quantum-alpha-intelligence/
 
 ```bash
 # Clone the repository
-git clone https://github.com/basilwong/quantum-alpha-intelligence.git
-cd quantum-alpha-intelligence
+git clone https://github.com/basilwong/alpha-signal-analysis.git
+cd alpha-signal-analysis
 
 # Install dependencies
 pip install -r requirements.txt

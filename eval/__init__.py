@@ -1,1 +1,1 @@
-# Evaluation pipeline for Quantum Alpha Intelligence Platform
+# Evaluation pipeline for Alpha Signal Analysis Platform

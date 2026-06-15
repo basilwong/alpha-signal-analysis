@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-A critical challenge in applying large language models to quantitative finance is verifying that domain-specific fine-tuning actually improves performance compared to prompting base models [1]. This review examines established academic benchmarks, industry validation frameworks, and quantitative financial metrics to establish a robust, mathematically grounded evaluation methodology for the Quantum Alpha Intelligence Platform.
+A critical challenge in applying large language models to quantitative finance is verifying that domain-specific fine-tuning actually improves performance compared to prompting base models [1]. This review examines established academic benchmarks, industry validation frameworks, and quantitative financial metrics to establish a robust, mathematically grounded evaluation methodology for the Alpha Signal Analysis Platform.
 
 Our research reveals that validating financial language models requires a multi-tiered approach [2]. Traditional natural language processing metrics are insufficient on their own because they do not capture financial utility or decision-making accuracy [3]. Conversely, purely market-based metrics like portfolio returns are highly noisy and prone to overfitting [4]. 
 

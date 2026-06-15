@@ -4,8 +4,8 @@
 
 ```bash
 # Clone the repo
-git clone https://github.com/basilwong/quantum-alpha-intelligence.git
-cd quantum-alpha-intelligence
+git clone https://github.com/basilwong/alpha-signal-analysis.git
+cd alpha-signal-analysis
 
 # Switch to the working branch
 git checkout fix/label-quality
@@ -351,7 +351,7 @@ The V4 model worked because it was SELECTIVE. It only scored ~3,265 ticker-artic
 After BOTH tasks are complete:
 
 ```bash
-cd quantum-alpha-intelligence
+cd alpha-signal-analysis
 
 # Verify the output files exist and have expected line counts
 wc -l data/training/quantum_alpha_train_v8.jsonl   # Should be ~194

@@ -2,7 +2,7 @@
 
 ## The Challenge
 
-The Quantum Alpha Intelligence platform needed a custom frontend. Not a Gradio widget grid, not a Streamlit dashboard, but a purpose built terminal style interface with interactive Plotly charts, tabbed navigation, a welcome overlay, concurrent inference feeds, and a FastAPI backend serving JSON endpoints. The problem: Hugging Face Spaces with ZeroGPU expects a Gradio app, manages port binding internally, and wraps `demo.launch()` with its own runtime. Our custom HTML/CSS/JS frontend with a FastAPI backend kept crashing on deploy.
+The Alpha Signal Analysis platform needed a custom frontend. Not a Gradio widget grid, not a Streamlit dashboard, but a purpose built terminal style interface with interactive Plotly charts, tabbed navigation, a welcome overlay, concurrent inference feeds, and a FastAPI backend serving JSON endpoints. The problem: Hugging Face Spaces with ZeroGPU expects a Gradio app, manages port binding internally, and wraps `demo.launch()` with its own runtime. Our custom HTML/CSS/JS frontend with a FastAPI backend kept crashing on deploy.
 
 ## The Port Binding Problem
 
@@ -29,7 +29,7 @@ from gradio import Server
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 
-app = Server(title="Quantum Alpha Intelligence API")
+app = Server(title="Alpha Signal Analysis API")
 
 @app.get("/api/models")
 async def get_models():
@@ -345,4 +345,4 @@ HF Space (zero-a10g)
 └── data/market/*.parquet         → Price data (SPY + 10 quantum tickers)
 ```
 
-The live deployment serves at [build-small-hackathon-quantum-alpha-intelligence.hf.space](https://build-small-hackathon-quantum-alpha-intelligence.hf.space), with the Nemotron-7B GRPO model (IC@5d = +0.157, p = 0.006) available for real time inference on ZeroGPU.
+The live deployment serves at [build-small-hackathon-alpha-signal-analysis.hf.space](https://build-small-hackathon-alpha-signal-analysis.hf.space), with the Nemotron-7B GRPO model (IC@5d = +0.157, p = 0.006) available for real time inference on ZeroGPU.

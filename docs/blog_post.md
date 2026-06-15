@@ -1,4 +1,4 @@
-# Quantum Alpha Intelligence: Building a Domain-Specific NLP Signal Generator for the Quantum Computing Sector
+# Alpha Signal Analysis: Building a Domain-Specific NLP Signal Generator for the Quantum Computing Sector
 
 ## The Hypothesis
 
@@ -34,7 +34,7 @@ This project builds on several established research threads:
 
 ## System Architecture
 
-The Quantum Alpha Intelligence platform consists of four major components:
+The Alpha Signal Analysis platform consists of four major components:
 
 ### 1. Data Ingestion Pipeline
 

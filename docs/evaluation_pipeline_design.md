@@ -569,7 +569,7 @@ The evaluation results will be displayed in a new "Model Performance" tab in the
 ## 7. File Structure
 
 ```
-quantum-alpha-intelligence/
+alpha-signal-analysis/
 ├── eval/
 │   ├── __init__.py
 │   ├── market_data.py          # Yahoo Finance data provider

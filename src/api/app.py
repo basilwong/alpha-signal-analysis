@@ -1,5 +1,5 @@
 """
-Quantum Alpha Intelligence Platform - Gradio Server Application
+Alpha Signal Analysis Platform - Gradio Server Application
 
 Uses gradio.Server to serve a custom trading terminal frontend
 while maintaining Gradio's backend queuing and streaming capabilities.
@@ -82,13 +82,13 @@ async def homepage():
     if os.path.exists(html_path):
         with open(html_path, "r", encoding="utf-8") as f:
             return f.read()
-    return "<h1>Quantum Alpha Intelligence Platform</h1><p>Frontend not yet built.</p>"
+    return "<h1>Alpha Signal Analysis Platform</h1><p>Frontend not yet built.</p>"
 
 
 @app.get("/health")
 async def health():
     """Health check endpoint."""
-    return {"status": "ok", "service": "quantum-alpha-intelligence"}
+    return {"status": "ok", "service": "alpha-signal-analysis"}
 
 
 if __name__ == "__main__":

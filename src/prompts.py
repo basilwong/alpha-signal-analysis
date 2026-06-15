@@ -1,5 +1,5 @@
 """
-System prompts and shared context for the Quantum Alpha Intelligence pipeline.
+System prompts and shared context for the Alpha Signal Analysis pipeline.
 
 Incorporates:
 - Fix 1: Updated ticker universe (MSFT/GOOGL/NVDA inactive, QNT added)

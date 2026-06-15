@@ -1,4 +1,4 @@
-// Quantum Alpha Intelligence — Frontend Application
+// Alpha Signal Analysis — Frontend Application
 
 const API_BASE = '';  // Same origin
 

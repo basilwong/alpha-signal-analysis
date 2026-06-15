@@ -1,5 +1,5 @@
 """
-Historical Article Collection Script for Quantum Alpha Intelligence Platform
+Historical Article Collection Script for Alpha Signal Analysis Platform
 
 Collects quantum computing news and papers from the last 2 years (mid-2024 to present)
 to build a comprehensive training dataset that can be correlated with ticker price data.
