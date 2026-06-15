@@ -29,17 +29,23 @@ QUANTUM_TICKERS = ["IONQ", "RGTI", "QBTS", "QUBT", "QNT", "IBM", "GOOGL", "MSFT"
 
 # Model prediction files (historical comparison)
 MODEL_FILES = {
-    # Fine-tuned models (OpenReasoning-Nemotron-7B)
+    # Fine-tuned models (Manus Teacher)
     "Nemotron-7B (SFT + GRPO, Manus Teacher)": EVAL_DIR / "predictions_v7d_grpo_clean.jsonl",
     "Nemotron-7B (Best-of-4 SFT, Manus Teacher)": EVAL_DIR / "predictions_v7b_clean.jsonl",
     "Nemotron-7B (SFT + DPO, Manus Teacher)": EVAL_DIR / "predictions_v7c_clean.jsonl",
     "Nemotron-7B (SFT + Thinking, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v7a.jsonl",
     "Nemotron-7B (SFT + Bearish, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v6.jsonl",
     "Nemotron-7B (SFT, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v4.jsonl",
+    # Fine-tuned models (GPT-5.5 Teacher)
+    "Nemotron-7B (SFT, GPT-5.5 Teacher)": EVAL_DIR / "predictions_v8_sft_fixed.jsonl",
+    "Nemotron-7B (SFT + GRPO, GPT-5.5 Teacher)": EVAL_DIR / "predictions_v8_grpo.jsonl",
     # Teacher models
     "Manus (Teacher, Direct)": EVAL_DIR / "predictions_manus_teacher_v2.jsonl",
+    "GPT-5.5 (Teacher, Direct)": EVAL_DIR / "predictions_codex_teacher.jsonl",
     # Base models
-    "Nemotron-7B (Base, No Fine-Tuning)": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
+    "Nemotron-7B (Base, No Fine-Tuning)": EVAL_DIR / "predictions_base_7b_fixed.jsonl",
+    "Nemotron-14B (Base, No Fine-Tuning)": EVAL_DIR / "predictions_base_14b_fixed.jsonl",
+    "Nemotron-32B (Base, No Fine-Tuning)": EVAL_DIR / "predictions_base_32b_fixed.jsonl",
 }
 
 # Models available for live inference (only fine-tuned models)

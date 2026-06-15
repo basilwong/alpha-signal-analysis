@@ -239,6 +239,86 @@
       "n": 665
     }
   },
+  "Nemotron-7B (SFT, GPT-5.5 Teacher)": {
+    "n_predictions": 311,
+    "n_observations": 2236,
+    "decay_curve": [
+      {
+        "horizon": 1,
+        "ic": -0.012449958147774658,
+        "p_value": 0.7532489491651047,
+        "n": 640
+      },
+      {
+        "horizon": 2,
+        "ic": 0.04937556372078573,
+        "p_value": 0.25649298900834255,
+        "n": 530
+      },
+      {
+        "horizon": 5,
+        "ic": 0.0694607041997462,
+        "p_value": 0.15631124648713524,
+        "n": 418
+      },
+      {
+        "horizon": 10,
+        "ic": 0.09092840152484534,
+        "p_value": 0.0778496001130096,
+        "n": 377
+      },
+      {
+        "horizon": 20,
+        "ic": 0.0997090126631559,
+        "p_value": 0.10143955322543599,
+        "n": 271
+      }
+    ],
+    "direction_accuracy_5d": {
+      "accuracy": 0.5456730769230769,
+      "n": 416
+    }
+  },
+  "Nemotron-7B (SFT + GRPO, GPT-5.5 Teacher)": {
+    "n_predictions": 321,
+    "n_observations": 2333,
+    "decay_curve": [
+      {
+        "horizon": 1,
+        "ic": -0.059233100334789464,
+        "p_value": 0.12252486835804242,
+        "n": 681
+      },
+      {
+        "horizon": 2,
+        "ic": -0.04442037171246653,
+        "p_value": 0.2846862335515659,
+        "n": 582
+      },
+      {
+        "horizon": 5,
+        "ic": 0.0462351420377592,
+        "p_value": 0.316687090194408,
+        "n": 471
+      },
+      {
+        "horizon": 10,
+        "ic": 0.09465903779557103,
+        "p_value": 0.07364898626683457,
+        "n": 358
+      },
+      {
+        "horizon": 20,
+        "ic": 0.0026168814674867595,
+        "p_value": 0.9677632450224569,
+        "n": 241
+      }
+    ],
+    "direction_accuracy_5d": {
+      "accuracy": 0.5415778251599147,
+      "n": 469
+    }
+  },
   "Manus (Teacher, Direct)": {
     "n_predictions": 421,
     "n_observations": 4465,
@@ -279,244 +359,164 @@
       "n": 860
     }
   },
-  "Nemotron-7B (Base, No Fine-Tuning)": {
+  "GPT-5.5 (Teacher, Direct)": {
     "n_predictions": 421,
-    "n_observations": 3214,
+    "n_observations": 786,
     "decay_curve": [
       {
         "horizon": 1,
-        "ic": -0.005877727953293481,
-        "p_value": 0.8728378609668824,
-        "n": 744
+        "ic": 0.22341486850535283,
+        "p_value": 0.0010269317091460065,
+        "n": 213
       },
       {
         "horizon": 2,
-        "ic": 0.019611386348112776,
-        "p_value": 0.6006046581469278,
-        "n": 715
+        "ic": 0.16379795800127228,
+        "p_value": 0.02079235834676979,
+        "n": 199
       },
       {
         "horizon": 5,
-        "ic": 0.014580206000683752,
-        "p_value": 0.7078582262818297,
-        "n": 663
+        "ic": 0.06197806591113748,
+        "p_value": 0.4006963654412396,
+        "n": 186
       },
       {
         "horizon": 10,
-        "ic": -0.031164382780548717,
-        "p_value": 0.44305440341126073,
-        "n": 608
+        "ic": -0.03621800696767055,
+        "p_value": 0.6801262930580105,
+        "n": 132
       },
       {
         "horizon": 20,
-        "ic": -0.12762429204378872,
-        "p_value": 0.004923731386859442,
-        "n": 484
+        "ic": 0.052385851150254126,
+        "p_value": 0.7013924221150697,
+        "n": 56
       }
     ],
     "direction_accuracy_5d": {
-      "accuracy": 0.5373134328358209,
-      "n": 469
+      "accuracy": 0.725,
+      "n": 160
     }
   },
-  "Nemotron-7B (SFT, GPT-5.5 Teacher)": {
-    "n_predictions": 312,
-    "n_observations": 0,
+  "Nemotron-7B (Base, No Fine-Tuning)": {
+    "n_predictions": 278,
+    "n_observations": 2539,
     "decay_curve": [
       {
         "horizon": 1,
-        "ic": 0.0,
-        "p_value": 1.0,
-        "n": 0
+        "ic": -0.12450125217808267,
+        "p_value": 0.0005915450558105003,
+        "n": 758
       },
       {
         "horizon": 2,
-        "ic": 0.0,
-        "p_value": 1.0,
-        "n": 0
+        "ic": -0.017953408844330117,
+        "p_value": 0.6557354377722434,
+        "n": 619
       },
       {
         "horizon": 5,
-        "ic": 0.087,
-        "p_value": 0.086,
-        "n": 312
+        "ic": -0.10723387476125326,
+        "p_value": 0.015608197712822108,
+        "n": 508
       },
       {
         "horizon": 10,
-        "ic": 0.092,
-        "p_value": 0.083,
-        "n": 312
+        "ic": -0.009266803005239055,
+        "p_value": 0.8572991005825865,
+        "n": 379
       },
       {
         "horizon": 20,
-        "ic": 0.068,
-        "p_value": 0.28,
-        "n": 312
+        "ic": 0.08551424811314301,
+        "p_value": 0.15729563140518094,
+        "n": 275
       }
     ],
     "direction_accuracy_5d": {
-      "accuracy": null,
-      "n": 0
-    }
-  },
-  "Nemotron-7B (SFT + GRPO, GPT-5.5 Teacher)": {
-    "n_predictions": 320,
-    "n_observations": 0,
-    "decay_curve": [
-      {
-        "horizon": 1,
-        "ic": 0.0,
-        "p_value": 1.0,
-        "n": 0
-      },
-      {
-        "horizon": 2,
-        "ic": 0.0,
-        "p_value": 1.0,
-        "n": 0
-      },
-      {
-        "horizon": 5,
-        "ic": 0.035,
-        "p_value": 0.455,
-        "n": 320
-      },
-      {
-        "horizon": 10,
-        "ic": 0.081,
-        "p_value": 0.133,
-        "n": 320
-      },
-      {
-        "horizon": 20,
-        "ic": -0.004,
-        "p_value": 0.957,
-        "n": 320
-      }
-    ],
-    "direction_accuracy_5d": {
-      "accuracy": null,
-      "n": 0
+      "accuracy": 0.5531496062992126,
+      "n": 508
     }
   },
   "Nemotron-14B (Base, No Fine-Tuning)": {
-    "n_predictions": 387,
-    "n_observations": 151,
+    "n_predictions": 389,
+    "n_observations": 4438,
     "decay_curve": [
       {
         "horizon": 1,
-        "ic": 0.0,
-        "p_value": 1.0,
-        "n": 0
+        "ic": -0.1273644649387756,
+        "p_value": 4.733436207654943e-06,
+        "n": 1283
       },
       {
         "horizon": 2,
-        "ic": 0.0,
-        "p_value": 1.0,
-        "n": 0
+        "ic": -0.10074822966768027,
+        "p_value": 0.001021218531663946,
+        "n": 1060
       },
       {
         "horizon": 5,
-        "ic": -0.176,
-        "p_value": 0.031,
-        "n": 151
+        "ic": -0.07181355454160375,
+        "p_value": 0.03357021319509315,
+        "n": 876
       },
       {
         "horizon": 10,
-        "ic": -0.007,
-        "p_value": 0.944,
-        "n": 151
+        "ic": 0.05476606382334482,
+        "p_value": 0.14922528546860614,
+        "n": 695
       },
       {
         "horizon": 20,
-        "ic": 0.27,
-        "p_value": 0.007,
-        "n": 151
+        "ic": 0.09434363317195438,
+        "p_value": 0.030828052680672444,
+        "n": 524
       }
     ],
     "direction_accuracy_5d": {
-      "accuracy": null,
-      "n": 0
+      "accuracy": 0.49336550060313633,
+      "n": 829
     }
   },
   "Nemotron-32B (Base, No Fine-Tuning)": {
-    "n_predictions": 417,
-    "n_observations": 806,
+    "n_predictions": 416,
+    "n_observations": 5791,
     "decay_curve": [
       {
         "horizon": 1,
-        "ic": 0.0,
-        "p_value": 1.0,
-        "n": 0
+        "ic": -0.0930898472112231,
+        "p_value": 9.622608795803237e-05,
+        "n": 1750
       },
       {
         "horizon": 2,
-        "ic": 0.0,
-        "p_value": 1.0,
-        "n": 0
+        "ic": -0.012070648554869624,
+        "p_value": 0.6493731737991248,
+        "n": 1421
       },
       {
         "horizon": 5,
-        "ic": -0.011,
-        "p_value": 0.748,
-        "n": 806
+        "ic": 0.02585212403158173,
+        "p_value": 0.3931880030191568,
+        "n": 1093
       },
       {
         "horizon": 10,
-        "ic": 0.021,
-        "p_value": 0.598,
-        "n": 806
+        "ic": 0.03609213312411273,
+        "p_value": 0.2840260403108237,
+        "n": 883
       },
       {
         "horizon": 20,
-        "ic": 0.018,
-        "p_value": 0.708,
-        "n": 806
+        "ic": 0.08442602950404149,
+        "p_value": 0.03218094587377862,
+        "n": 644
       }
     ],
     "direction_accuracy_5d": {
-      "accuracy": null,
-      "n": 0
-    }
-  },
-  "GPT-5.5 (Teacher, Direct)": {
-    "n_predictions": 417,
-    "n_observations": 0,
-    "decay_curve": [
-      {
-        "horizon": 1,
-        "ic": 0.0,
-        "p_value": 1.0,
-        "n": 0
-      },
-      {
-        "horizon": 2,
-        "ic": 0.0,
-        "p_value": 1.0,
-        "n": 0
-      },
-      {
-        "horizon": 5,
-        "ic": 0.062,
-        "p_value": 0.401,
-        "n": 417
-      },
-      {
-        "horizon": 10,
-        "ic": -0.036,
-        "p_value": 0.68,
-        "n": 417
-      },
-      {
-        "horizon": 20,
-        "ic": 0.052,
-        "p_value": 0.701,
-        "n": 417
-      }
-    ],
-    "direction_accuracy_5d": {
-      "accuracy": null,
-      "n": 0
+      "accuracy": 0.5199619771863118,
+      "n": 1052
     }
   }
 }

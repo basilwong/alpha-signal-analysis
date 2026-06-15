@@ -22,17 +22,23 @@ MARKET_TICKER = "SPY"
 
 # Models to evaluate
 MODELS = {
-    # Fine-tuned models (OpenReasoning-Nemotron-7B)
+    # Fine-tuned models (Manus Teacher)
     "Nemotron-7B (SFT + GRPO, Manus Teacher)": EVAL_DIR / "predictions_v7d_grpo_clean.jsonl",
     "Nemotron-7B (Best-of-4 SFT, Manus Teacher)": EVAL_DIR / "predictions_v7b_clean.jsonl",
     "Nemotron-7B (SFT + DPO, Manus Teacher)": EVAL_DIR / "predictions_v7c_clean.jsonl",
     "Nemotron-7B (SFT + Thinking, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v7a.jsonl",
     "Nemotron-7B (SFT + Bearish, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v6.jsonl",
     "Nemotron-7B (SFT, Manus Teacher)": EVAL_DIR / "predictions_openreasoning7b_v4.jsonl",
+    # Fine-tuned models (GPT-5.5 Teacher)
+    "Nemotron-7B (SFT, GPT-5.5 Teacher)": EVAL_DIR / "predictions_v8_sft_fixed.jsonl",
+    "Nemotron-7B (SFT + GRPO, GPT-5.5 Teacher)": EVAL_DIR / "predictions_v8_grpo.jsonl",
     # Teacher models
     "Manus (Teacher, Direct)": EVAL_DIR / "predictions_manus_teacher_v2.jsonl",
+    "GPT-5.5 (Teacher, Direct)": EVAL_DIR / "predictions_codex_teacher.jsonl",
     # Base models
-    "Nemotron-7B (Base, No Fine-Tuning)": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
+    "Nemotron-7B (Base, No Fine-Tuning)": EVAL_DIR / "predictions_base_7b_fixed.jsonl",
+    "Nemotron-14B (Base, No Fine-Tuning)": EVAL_DIR / "predictions_base_14b_fixed.jsonl",
+    "Nemotron-32B (Base, No Fine-Tuning)": EVAL_DIR / "predictions_base_32b_fixed.jsonl",
 }
 
 
@@ -71,11 +77,30 @@ def compute_abnormal_returns(predictions, returns_df, horizons=[1, 2, 5, 10, 20]
         except:
             continue
 
+        # Normalize signal_vector to dict format {ticker: score}
+        if isinstance(signal_vector, list):
+            # Format: [{"ticker": "IONQ", "score": 1.5, ...}, ...]
+            sv_dict = {}
+            for item in signal_vector:
+                if isinstance(item, dict) and "ticker" in item:
+                    sv_dict[item["ticker"]] = item
+            signal_vector = sv_dict
+
         for ticker in QUANTUM_TICKERS:
             if ticker not in signal_vector or ticker not in returns_df.columns:
                 continue
             val = signal_vector[ticker]
-            predicted_score = val.get("score", 0) if isinstance(val, dict) else val if isinstance(val, (int, float)) else 0
+            if isinstance(val, dict):
+                predicted_score = val.get("score", 0)
+            elif isinstance(val, (int, float)):
+                predicted_score = val
+            else:
+                continue
+            # Ensure numeric
+            try:
+                predicted_score = float(predicted_score)
+            except (TypeError, ValueError):
+                continue
             if predicted_score == 0:
                 continue
 
