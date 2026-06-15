@@ -1,35 +1,37 @@
 /* Quantum Alpha Intelligence — Trading Terminal Theme */
 
 :root {
-    --bg-primary: #0a0e17;
-    --bg-secondary: #111827;
-    --bg-card: #1a2035;
-    --bg-input: #0f1629;
-    --border: #1e2a3a;
-    --border-active: #3b82f6;
-    --text-primary: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --accent-green: #10b981;
-    --accent-red: #ef4444;
-    --accent-blue: #3b82f6;
-    --accent-yellow: #f59e0b;
-    --accent-purple: #8b5cf6;
-    --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --radius: 8px;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --bg-primary: #0c0c0c;
+    --bg-secondary: #121212;
+    --bg-card: #1a1a1a;
+    --bg-input: #0e0e0e;
+    --border: #2a2a2a;
+    --border-active: #00ff88;
+    --text-primary: #d4d4d4;
+    --text-secondary: #808080;
+    --text-muted: #555555;
+    --accent-green: #00ff88;
+    --accent-red: #ff4444;
+    --accent-blue: #00aaff;
+    --accent-yellow: #ffcc00;
+    --accent-purple: #aa66ff;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+    --font-sans: var(--font-mono);
+    --radius: 2px;
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    font-family: var(--font-sans);
+    font-family: var(--font-mono);
     background: var(--bg-primary);
     color: var(--text-primary);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    font-size: 13px;
+    line-height: 1.5;
 }
 
 /* Header */
@@ -49,29 +51,34 @@ body {
 }
 
 .logo {
-    font-size: 24px;
-    width: 40px;
-    height: 40px;
+    font-size: 20px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    background: transparent;
+    border: 1px solid var(--accent-green);
     border-radius: var(--radius);
+    color: var(--accent-green);
 }
 
 .header h1 {
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: -0.5px;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent-green);
 }
 
 .badge {
-    font-size: 11px;
-    padding: 3px 8px;
-    background: var(--accent-blue);
-    border-radius: 4px;
-    font-weight: 500;
-    opacity: 0.8;
+    font-size: 10px;
+    padding: 2px 6px;
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    border-radius: var(--radius);
+    font-weight: 400;
+    color: var(--text-muted);
 }
 
 .header-right {
@@ -105,15 +112,17 @@ body {
 }
 
 .tab-btn {
-    padding: 12px 20px;
+    padding: 10px 16px;
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 400;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
+    border-bottom: 1px solid transparent;
     transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .tab-btn:hover {
@@ -121,8 +130,8 @@ body {
 }
 
 .tab-btn.active {
-    color: var(--accent-blue);
-    border-bottom-color: var(--accent-blue);
+    color: var(--accent-green);
+    border-bottom-color: var(--accent-green);
 }
 
 /* Content */
@@ -147,14 +156,17 @@ body {
 }
 
 .panel-header h2 {
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 400;
     margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent-green);
 }
 
 .panel-desc {
-    color: var(--text-secondary);
-    font-size: 14px;
+    color: var(--text-muted);
+    font-size: 12px;
 }
 
 /* Controls */
@@ -248,18 +260,23 @@ textarea {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 24px;
-    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-    border: none;
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
+    padding: 10px 20px;
+    background: transparent;
+    border: 1px solid var(--accent-green);
+    color: var(--accent-green);
+    font-size: 13px;
+    font-weight: 400;
     border-radius: var(--radius);
     cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
+    transition: background 0.2s, color 0.2s;
+    font-family: var(--font-mono);
 }
 
-.btn-primary:hover { opacity: 0.9; }
+.btn-primary:hover {
+    background: var(--accent-green);
+    color: #000;
+}
+
 .btn-primary:active { transform: scale(0.98); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -615,11 +632,11 @@ textarea {
 }
 
 .context-card h4 {
-    color: var(--accent-blue);
-    font-size: 13px;
-    font-weight: 600;
+    color: var(--accent-green);
+    font-size: 11px;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     margin-bottom: 8px;
 }
 
@@ -645,17 +662,19 @@ textarea {
 }
 
 .overview-card {
-    background: linear-gradient(135deg, #1a2035 0%, #0f1629 100%);
-    border: 1px solid var(--accent-blue);
+    background: var(--bg-card);
+    border: 1px solid var(--accent-green);
     border-radius: var(--radius);
-    padding: 24px 28px;
+    padding: 20px 24px;
 }
 
 .overview-card h3 {
-    color: var(--text-primary);
-    font-size: 18px;
-    font-weight: 700;
+    color: var(--accent-green);
+    font-size: 14px;
+    font-weight: 400;
     margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .overview-card p {
@@ -682,12 +701,12 @@ textarea {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(5, 8, 15, 0.97);
+    background: rgba(0, 0, 0, 0.97);
     z-index: 10000;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(4px);
     animation: fadeIn 0.3s ease;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -715,26 +734,28 @@ textarea {
 }
 
 .welcome-logo {
-    font-size: 48px;
+    font-size: 36px;
     margin-bottom: 16px;
-    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+    filter: drop-shadow(0 0 12px rgba(0, 255, 136, 0.4));
+    color: var(--accent-green);
 }
 
 .welcome-title {
-    font-size: 32px;
-    font-weight: 800;
-    color: var(--text-primary);
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--accent-green);
     margin-bottom: 8px;
-    letter-spacing: -0.5px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .welcome-tagline {
-    font-size: 16px;
-    color: var(--accent-blue);
-    font-weight: 500;
-    margin-bottom: 32px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 400;
+    margin-bottom: 24px;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
 }
 
 .welcome-body {
@@ -767,8 +788,8 @@ textarea {
 
 .stat-value {
     display: block;
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 400;
     color: var(--accent-green);
     font-family: var(--font-mono);
 }
@@ -803,26 +824,28 @@ textarea {
 
 .welcome-cta {
     display: inline-block;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    border: none;
-    padding: 16px 36px;
-    font-size: 16px;
-    font-weight: 600;
+    background: transparent;
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green);
+    padding: 12px 32px;
+    font-size: 14px;
+    font-weight: 400;
+    font-family: var(--font-mono);
     border-radius: var(--radius);
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    transition: background 0.2s, color 0.2s;
     margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .welcome-cta:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    background: var(--accent-green);
+    color: #000;
 }
 
 .welcome-cta:active {
-    transform: translateY(0);
+    transform: scale(0.98);
 }
 
 .welcome-footer {
@@ -926,12 +949,13 @@ textarea {
 }
 
 .feed-model-badge {
-    background: var(--accent-green);
-    color: #000;
+    background: transparent;
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green);
     padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
+    border-radius: var(--radius);
+    font-size: 10px;
+    font-weight: 400;
 }
 
 .feed-source-badge {
@@ -1264,21 +1288,24 @@ textarea {
 
 .btn-info {
     background: transparent;
-    border: 1px solid var(--accent-blue);
-    color: var(--accent-blue);
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 500;
+    border: 1px solid var(--text-muted);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 400;
+    font-family: var(--font-mono);
     border-radius: var(--radius);
     cursor: pointer;
     white-space: nowrap;
-    transition: background 0.15s, color 0.15s;
+    transition: border-color 0.15s, color 0.15s;
     flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .btn-info:hover {
-    background: var(--accent-blue);
-    color: white;
+    border-color: var(--accent-green);
+    color: var(--accent-green);
 }
 
 @media (max-width: 480px) {
