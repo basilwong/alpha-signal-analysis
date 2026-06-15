@@ -309,6 +309,13 @@ def _do_inference(text: str, source: str, model_name: str, enable_thinking: bool
 
     model_id = LIVE_MODELS.get(model_name, MODEL_ID)
 
+    # Truncate input to first 4000 chars — the model only needs key facts,
+    # not the full document. Abstract + first paragraphs contain all signal info.
+    text = text[:4000]
+
+    # Cap generation tokens: thinking mode produces long traces before JSON
+    max_tokens = 3000 if enable_thinking else 4000
+
     tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(
         model_id, torch_dtype=torch.bfloat16, device_map="auto", trust_remote_code=True
@@ -328,7 +335,7 @@ def _do_inference(text: str, source: str, model_name: str, enable_thinking: bool
     start = time.time()
     with torch.no_grad():
         outputs = model.generate(
-            **inputs, max_new_tokens=10000, temperature=0.3, do_sample=True,
+            **inputs, max_new_tokens=max_tokens, temperature=0.3, do_sample=True,
             pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
         )
 
@@ -404,7 +411,7 @@ def _do_inference(text: str, source: str, model_name: str, enable_thinking: bool
 try:
     import spaces
 
-    @spaces.GPU(duration=300)
+    @spaces.GPU(duration=120)
     def gpu_inference(text: str, source: str, model_name: str, enable_thinking: bool) -> str:
         return _do_inference(text, source, model_name, enable_thinking)
 except ImportError:
