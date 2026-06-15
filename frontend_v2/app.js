@@ -264,7 +264,12 @@ document.getElementById('live-analyze-btn').addEventListener('click', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, source, model, enable_thinking: thinking }),
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) {
+            return r.text().then(t => { throw new Error(`Server error (${r.status}): ${t.substring(0, 100)}`); });
+        }
+        return r.json();
+    })
     .then(data => renderFeedResult(id, data))
     .catch(e => renderFeedResult(id, { error: e.message }));
 });
