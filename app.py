@@ -333,32 +333,61 @@ def _do_inference(text: str, source: str, model_name: str, enable_thinking: bool
         )
 
     generated = outputs[0][inputs["input_ids"].shape[-1]:]
+    # Decode with special tokens first to detect think tags
+    raw_with_tags = tokenizer.decode(generated, skip_special_tokens=False)
     raw = tokenizer.decode(generated, skip_special_tokens=True)
     latency = time.time() - start
 
-    # Parse
+    # Parse thinking trace
     thinking = ""
     content = raw
-    if "<think>" in raw:
+
+    # Try to extract thinking from the version with special tokens
+    if "<think>" in raw_with_tags:
+        parts = raw_with_tags.split("</think>")
+        if len(parts) > 1:
+            thinking = parts[0].split("<think>")[-1].strip()
+            # The content after </think> may still have special tokens
+            after_think = parts[-1].strip()
+            # Find the JSON in the after-think portion
+            json_start = after_think.find("{")
+            if json_start != -1:
+                content = after_think[json_start:]
+            else:
+                content = after_think
+    elif "<think>" in raw:
         parts = raw.split("</think>")
         if len(parts) > 1:
             thinking = parts[0].replace("<think>", "").strip()
             content = parts[-1].strip()
 
+    # Clean any remaining special tokens from content
+    for token in ["<|end|>", "<|endoftext|>", "<|im_end|>", "</s>"]:
+        content = content.replace(token, "")
+    content = content.strip()
+
+    # Parse JSON from content
     try:
         s = content.find("{")
         e = content.rfind("}") + 1
-        signal = json.loads(content[s:e]) if s != -1 else json.loads(content)
+        if s != -1 and e > s:
+            signal = json.loads(content[s:e])
+        else:
+            signal = json.loads(content)
     except Exception:
-        # Try to salvage partial JSON by finding the outermost complete object
+        # Try to salvage partial JSON
         try:
-            # Sometimes the model outputs a wrapper like {"signal_vector": ...}
-            # that gets truncated. Try to parse what we have.
-            partial = content[s:e] if s != -1 else content
-            # Add closing braces if truncated
+            partial = content[s:e] if (s != -1 and e > s) else content
+            # Close unclosed braces and brackets
             open_braces = partial.count("{") - partial.count("}")
+            open_brackets = partial.count("[") - partial.count("]")
+            if open_brackets > 0:
+                partial += "]" * open_brackets
             if open_braces > 0:
                 partial += "}" * open_braces
+            # Remove trailing commas before closing braces
+            import re
+            partial = re.sub(r',\s*([}\]])', r'\1', partial)
             signal = json.loads(partial)
         except Exception:
             signal = {"error": "Failed to parse JSON (output may have been truncated)", "raw": content[:500]}
