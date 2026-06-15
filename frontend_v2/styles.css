@@ -1286,3 +1286,129 @@ textarea {
         flex-direction: column;
     }
 }
+
+/* ============================================================
+   MOBILE FIXES: Live Signal Debugging + Historical Prediction Analysis
+   ============================================================ */
+
+@media (max-width: 768px) {
+    /* Live tab: textarea and button full width */
+    .live-controls textarea {
+        min-height: 100px;
+        font-size: 13px;
+    }
+    .live-controls .btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+    .live-controls .control-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .live-controls .control-group {
+        width: 100%;
+    }
+    .live-controls select {
+        width: 100%;
+    }
+
+    /* Feed cards: tighter on mobile */
+    .feed-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    .feed-card-preview {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+    .feed-translation {
+        font-size: 12px;
+    }
+    .feed-json {
+        font-size: 10px;
+        max-height: 200px;
+    }
+
+    /* Historical tab: event select full width, text wrapping */
+    .historical-controls select {
+        width: 100%;
+        font-size: 12px;
+        white-space: normal;
+        word-wrap: break-word;
+    }
+
+    /* Historical results panel */
+    #hist-results {
+        padding: 12px;
+    }
+    #hist-results h3 {
+        font-size: 14px;
+        flex-wrap: wrap;
+    }
+
+    /* Article info block */
+    .article-info {
+        font-size: 12px;
+        padding: 10px 12px;
+    }
+    .article-info .title {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    /* Chart containers: allow horizontal scroll, reduce min-height */
+    .chart-container {
+        min-height: 250px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Model details grid: single column on mobile */
+    .model-details-grid {
+        grid-template-columns: 1fr;
+    }
+    .model-detail-card {
+        padding: 12px;
+    }
+    .model-detail-card h4 {
+        font-size: 12px;
+    }
+    .model-detail-card p {
+        font-size: 11px;
+    }
+
+    /* Historical checkbox group: smaller pills */
+    .historical-controls .checkbox-group {
+        gap: 6px;
+    }
+    .historical-controls .checkbox-group label {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Extra small: stack everything aggressively */
+    .feed-signal-row {
+        grid-template-columns: 36px 1fr 42px;
+        height: 20px;
+    }
+    .feed-bar-container {
+        height: 12px;
+    }
+
+    /* Historical: even tighter */
+    #hist-results {
+        padding: 8px;
+    }
+    .chart-container {
+        min-height: 220px;
+    }
+
+    /* Model filter checkboxes wrap tighter */
+    .checkbox-group label {
+        padding: 5px 8px;
+        font-size: 10px;
+    }
+}
