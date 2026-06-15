@@ -480,12 +480,18 @@ async function initEvalTab() {
 
     const container = document.getElementById('eval-model-checkboxes');
     container.innerHTML = '';
+    // Only show the best model and teacher models checked by default
+    const defaultChecked = [
+        'Nemotron-7B (SFT + GRPO, Manus Teacher)',
+        'Manus (Teacher, Direct)',
+        'GPT-5.5 (Teacher, Direct)',
+    ];
     Object.keys(evalData).forEach(modelName => {
         const label = document.createElement('label');
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.value = modelName;
-        checkbox.checked = true;
+        checkbox.checked = defaultChecked.includes(modelName);
         checkbox.addEventListener('change', updateEvalCharts);
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(` ${modelName}`));
