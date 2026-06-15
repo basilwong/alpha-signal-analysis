@@ -52,12 +52,13 @@ document.querySelectorAll('.expand-btn').forEach(btn => {
 
 const MODEL_COLORS = {
     'V7d GRPO (best)': '#10b981',
-    'V7b Rejection Sampling': '#22c55e',
+    'V7b Rejection': '#22c55e',
     'V7c DPO': '#8b5cf6',
-    'V4 Baseline (LoRA)': '#f59e0b',
+    'V7a SFT (thinking)': '#a78bfa',
+    'V6 SFT (bearish)': '#f472b6',
+    'V4 SFT (Manus)': '#f59e0b',
     'Manus Teacher': '#06b6d4',
-    'Qwen3-8B Base': '#ef4444',
-    'Qwen3.7-Max Base': '#f97316',
+    '7B Base': '#ef4444',
 };
 
 function getModelColor(name) {
@@ -258,7 +259,7 @@ let allEvents = [];
 
 async function initHistoricalTab() {
     // Load events from the first available model
-    const resp = await fetch(`${API_BASE}/api/events?model=V7d GRPO (best)`);
+    const resp = await fetch(`${API_BASE}/api/events?model=V4 SFT (Manus)`);
     const data = await resp.json();
     allEvents = data.events || [];
 

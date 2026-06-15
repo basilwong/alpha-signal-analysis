@@ -29,13 +29,17 @@ QUANTUM_TICKERS = ["IONQ", "RGTI", "QBTS", "QUBT", "QNT", "IBM", "GOOGL", "MSFT"
 
 # Model prediction files (historical comparison)
 MODEL_FILES = {
+    # Fine-tuned models (OpenReasoning-Nemotron-7B)
     "V7d GRPO (best)": EVAL_DIR / "predictions_v7d_grpo_clean.jsonl",
-    "V7b Rejection Sampling": EVAL_DIR / "predictions_v7b_clean.jsonl",
+    "V7b Rejection": EVAL_DIR / "predictions_v7b_clean.jsonl",
     "V7c DPO": EVAL_DIR / "predictions_v7c_clean.jsonl",
-    "V4 Baseline (LoRA)": EVAL_DIR / "predictions_finetuned_all.jsonl",
+    "V7a SFT (thinking)": EVAL_DIR / "predictions_openreasoning7b_v7a.jsonl",
+    "V6 SFT (bearish)": EVAL_DIR / "predictions_openreasoning7b_v6.jsonl",
+    "V4 SFT (Manus)": EVAL_DIR / "predictions_openreasoning7b_v4.jsonl",
+    # Teacher models
     "Manus Teacher": EVAL_DIR / "predictions_manus_teacher_v2.jsonl",
-    "Qwen3-8B Base": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
-    "Qwen3.7-Max Base": EVAL_DIR / "predictions_qwen37_max_base.jsonl",
+    # Base models
+    "7B Base": EVAL_DIR / "predictions_qwen3_8b_base.jsonl",
 }
 
 # Models available for live inference (only fine-tuned models)
@@ -163,7 +167,7 @@ async def get_models():
 
 
 @app.get("/api/events")
-async def get_events(model: str = "V7d GRPO (best)"):
+async def get_events(model: str = "V4 SFT (Manus)"):
     """List all events for a given model."""
     preds = ALL_PREDICTIONS.get(model, [])
     events = []
@@ -318,7 +322,7 @@ def _do_inference(text: str, source: str, model_name: str, enable_thinking: bool
     start = time.time()
     with torch.no_grad():
         outputs = model.generate(
-            **inputs, max_new_tokens=2048, temperature=0.3, do_sample=True,
+            **inputs, max_new_tokens=10000, temperature=0.3, do_sample=True,
             pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
         )
 
