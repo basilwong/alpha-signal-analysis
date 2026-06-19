@@ -19,20 +19,36 @@ env/
 *.swp
 *.swo
 
-# Environment variables
+# Environment variables and secrets
 .env
-.env.local
+.env.*
+!.env.example
 
-# Data (large files)
+# Generated/local data
 data/raw/*
 data/processed/*
+data/memory/*
+data/runs/*
+data/logs/*
+data/eval/
+data/market/
+data/training/
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+!data/memory/.gitkeep
+!data/runs/.gitkeep
+!data/logs/.gitkeep
 
-# Model weights (use HF Hub instead)
+# Model weights
 *.bin
 *.safetensors
 *.gguf
+
+# Logs
+*.log
+logs/
+!data/logs/
+!data/logs/.gitkeep
 
 # OS
 .DS_Store
@@ -40,7 +56,3 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
-
-# Logs
-*.log
-logs/

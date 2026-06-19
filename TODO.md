@@ -1,94 +1,21 @@
-# Project TODO
+# TODO
 
-## Phase 1: MVP (Standard SFT + LoRA) — Target: June 15
+## Next
 
-### Data Collection
-- [ ] Run `collect_articles.py` with sample articles (immediate test)
-- [ ] Collect 50+ real arXiv papers via API
-- [ ] Collect 50+ real news articles via RSS feeds
-- [ ] Collect SEC filings for quantum tickers (IONQ, RGTI, QBTS)
-- [ ] Target: 200+ raw articles in `data/raw/articles.jsonl`
+- [ ] Define the trade adapter interface for paper/live fills.
+- [ ] Add aggregate reporting over `data/runs/*.jsonl`.
+- [ ] Add structured validation for `signal_vector` outputs.
+- [ ] Add memory snapshot IDs to backtest records.
+- [ ] Add a small non-sensitive fixture for tracker/report tests.
+- [ ] Decide whether JSONL remains sufficient or needs SQLite once records grow.
+- [ ] Rebuild frontend deployment automation using environment variables or platform secrets.
+- [ ] Connect frontend dashboard data to `data/runs/` outputs.
 
-### Training Data Generation (Teacher Model)
-- [ ] Test teacher pipeline with 5 articles (verify qwen3-max output quality)
-- [ ] Review and validate teacher outputs manually (spot check 10-20 examples)
-- [ ] Run full generation on all 200+ articles
-- [ ] Split dataset 90/10 into train/validation
-- [ ] Target: `data/training/alpha_signal_train.jsonl` ready
+## Done
 
-### Fine-Tuning (Modal)
-- [ ] Verify Modal environment works (test_setup passes)
-- [ ] Upload training data to Modal volume
-- [ ] Run fine-tuning (standard QLoRA, LoRA rank 64, 4 epochs)
-- [ ] Verify training loss converges
-- [ ] Push model to HF Hub: `basilwong/quantum-alpha-qwen3-8b`
-
-### Evaluation
-- [ ] Run base qwen3-8b on validation set (baseline metrics)
-- [ ] Run fine-tuned model on validation set (comparison metrics)
-- [ ] Calculate: Sentiment Accuracy, Event F1, Ticker Jaccard, JSON pass rate
-- [ ] Document improvement delta
-
-### App Integration
-- [ ] Wire fine-tuned model into Gradio Server `/analyze_news` endpoint
-- [ ] Implement `/get_signals` with live data ingestion
-- [ ] Implement `/get_briefing` with daily narrative generation
-- [ ] Implement `/get_sector_overview` with aggregated sentiment
-- [ ] Test end-to-end: paste article → get structured signal back
-
-### Frontend Polish
-- [ ] Populate dashboard with real signals
-- [ ] Fix any UI bugs
-- [ ] Ensure responsive design works
-- [ ] Add loading states and error handling
-
-### Submission (Build Small Hackathon — June 15)
-- [ ] Deploy to HF Space: `build-small-hackathon/alpha-signal-analysis`
-- [ ] Verify app runs on ZeroGPU
-- [ ] Record 2-minute demo video
-- [ ] Write social media post
-- [ ] Submit: Space link + video + social post
-
----
-
-## Phase 2: Experimentation (Post-MVP) — Target: July 9
-
-### Alternative Fine-Tuning Approaches
-- [ ] Experiment: DoRA (`use_dora=True`) — compare metrics vs standard LoRA
-- [ ] Experiment: Curriculum ordering (sort training data by complexity)
-- [ ] Experiment: GRPO with price-based reward signal
-- [ ] Experiment: Larger training dataset (500+ examples)
-- [ ] Document performance comparison across approaches
-
-### Memory Agent (Qwen Cloud Hackathon)
-- [ ] Set up ChromaDB vector store for persistent memory
-- [ ] Implement memory ingestion (store past analyses)
-- [ ] Implement memory retrieval (RAG for contextual recall)
-- [ ] Implement memory forgetting (TTL for outdated info)
-- [ ] Deploy backend on Alibaba Cloud ECS
-- [ ] Connect to qwen3-max API for V1 inference
-
-### Qwen Cloud Hackathon Submission (July 9)
-- [ ] Create public GitHub repo with open-source license
-- [ ] Create architecture diagram
-- [ ] Record 3-minute demo video
-- [ ] Write blog post (for bonus prize)
-- [ ] Submit on DevPost: repo + video + deck + description
-
----
-
-## Completed
-- [x] Research hackathon rules and requirements
-- [x] Set up GitHub repo (basilwong/alpha-signal-analysis)
-- [x] Create HF Space (build-small-hackathon/alpha-signal-analysis)
-- [x] Build frontend skeleton (custom trading terminal UI)
-- [x] Write Gradio Server app skeleton with API endpoints
-- [x] Research prior art (NLP alpha generation papers)
-- [x] Research evaluation methodology
-- [x] Research hackathon/credit opportunities
-- [x] Confirm Qwen Cloud API access (Singapore, free tier, qwen3-max working)
-- [x] Confirm Modal access (authenticated, workspace connected)
-- [x] Write Modal fine-tuning script
-- [x] Write teacher data generation pipeline
-- [x] Write article collection script
-- [x] Write end-to-end system design document
+- [x] Rename repo references to `alpha-signal-analysis`.
+- [x] Remove prior hackathon generated data, logs, duplicate apps, old frontends, and submission docs.
+- [x] Remove current-tree hardcoded API keys by deleting old experimental scripts.
+- [x] Remove the UI framework from the active runtime.
+- [x] Add append-only tracking for trades, evals, and backtests.
+- [x] Restore the deployable frontend assets and server entry point.

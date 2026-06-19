@@ -1,25 +1,11 @@
-# Core (HF Spaces deployment)
-gradio>=5.0.0
+gradio>=5.29.0
+fastapi
 spaces
 transformers>=4.45.0
 torch>=2.0.0
-accelerate
-peft
-bitsandbytes
-sentencepiece
-protobuf
-
-# Data Ingestion (for local/development use)
-requests
-feedparser
-arxiv
-beautifulsoup4
-
-# Signal Processing
 pandas
 numpy
-plotly
 pyarrow
-
-# Utilities
+requests
 tqdm
+openai>=1.0.0

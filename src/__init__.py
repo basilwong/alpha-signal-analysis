@@ -1,1 +1,1 @@
-# Alpha Signal Analysis Platform
+"""Alpha Signal Analysis memory-agent package."""

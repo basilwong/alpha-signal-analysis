@@ -51,7 +51,7 @@ MODEL_FILES = {
 # Models available for live inference (only fine-tuned models)
 LIVE_MODELS = {
     "Nemotron-7B (SFT + GRPO, Manus Teacher)": "basilwong/quantum-alpha-openreasoning-7b-grpo",
-    "Nemotron-7B (SFT, Manus Teacher)": "build-small-hackathon/quantum-alpha-qwen3-8b",
+    "Nemotron-7B (SFT, Manus Teacher)": "basilwong/quantum-alpha-qwen3-8b",
 }
 
 MODEL_ID = "basilwong/quantum-alpha-openreasoning-7b-grpo"
