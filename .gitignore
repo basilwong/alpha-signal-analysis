@@ -56,3 +56,10 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/*.tfvars
+!infra/variables.tfvars.example

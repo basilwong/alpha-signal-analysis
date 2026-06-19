@@ -1,5 +1,6 @@
 gradio>=5.29.0
-fastapi
+fastapi>=0.100.0
+uvicorn>=0.23.0
 spaces
 transformers>=4.45.0
 torch>=2.0.0
@@ -9,3 +10,6 @@ pyarrow
 requests
 tqdm
 openai>=1.0.0
+httpx>=0.24.0
+sqlite-utils>=3.35
+pydantic>=2.0.0
