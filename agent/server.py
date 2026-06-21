@@ -90,8 +90,14 @@ async def analyze(req: AnalyzeRequest):
     except:
         signal = {"error": "Failed to parse", "raw": content[:500]}
 
-    # 4. Store in memory
-    signal_vector = signal.get("signal_vector", {})
+    # 4. Store in memory — handle multiple LLM response formats
+    signal_vector = signal.get("signal_vector", signal.get("signals", {}))
+    if not signal_vector:
+        # LLM may return tickers at top level: {"IONQ": 1.8, "RGTI": -0.4, ...}
+        from .config import QUANTUM_TICKERS
+        flat_signals = {k: v for k, v in signal.items() if k in QUANTUM_TICKERS and isinstance(v, (int, float))}
+        if flat_signals:
+            signal_vector = flat_signals
     if signal_vector:
         memory.store_signal(
             article_date=datetime.utcnow().strftime("%Y-%m-%d"),
@@ -107,11 +113,17 @@ async def analyze(req: AnalyzeRequest):
         if cot and len(cot) > 50:
             # Store key facts mentioned in reasoning
             for ticker, data in signal_vector.items():
-                if abs(data.get("score", 0)) > 0.3:
+                if isinstance(data, dict):
+                    score = abs(data.get("score", 0))
+                    reasoning_text = data.get("reasoning", "")[:200]
+                else:
+                    score = abs(float(data)) if data is not None else 0
+                    reasoning_text = ""
+                if score > 0.3:
                     memory.store_knowledge(
                         ticker=ticker,
                         fact_type="signal_context",
-                        content=f"On {datetime.utcnow().strftime('%Y-%m-%d')}: {data.get('reasoning', '')[:200]}",
+                        content=f"On {datetime.utcnow().strftime('%Y-%m-%d')}: score={data} {reasoning_text}",
                         source=req.source
                     )
 

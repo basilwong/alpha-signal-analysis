@@ -81,7 +81,14 @@ class MemoryStore:
 
     def store_signal(self, article_date: str, article_title: str, article_source: str, signal_vector: dict, reasoning: str, model_used: str):
         now = datetime.utcnow().isoformat()
-        predicted = {t: "bullish" if s.get("score", 0) > 0.1 else "bearish" if s.get("score", 0) < -0.1 else "neutral" for t, s in signal_vector.items()}
+        # Handle both formats: {ticker: score} and {ticker: {"score": x, ...}}
+        predicted = {}
+        for t, s in signal_vector.items():
+            if isinstance(s, dict):
+                score = s.get("score", 0)
+            else:
+                score = float(s) if s is not None else 0
+            predicted[t] = "bullish" if score > 0.1 else "bearish" if score < -0.1 else "neutral"
         self.conn.execute(
             "INSERT INTO signal_history (article_date, article_title, article_source, signal_vector, reasoning, predicted_direction, model_used, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (article_date, article_title, article_source, json.dumps(signal_vector), reasoning, json.dumps(predicted), model_used, now)
