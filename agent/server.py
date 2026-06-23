@@ -4,11 +4,14 @@ Deployed on Alibaba Cloud ECS (free tier).
 """
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import json
 import time
 from datetime import datetime
 from typing import List, Optional
+from pathlib import Path
 
 from .memory import MemoryStore
 from .retrieval import MemoryRetriever
@@ -17,6 +20,11 @@ from .inference import generate_signal
 from .config import MEMORY_DB_PATH
 
 app = FastAPI(title="Alpha Signal Analysis - Memory Agent")
+
+# Serve frontend static files
+FRONTEND_DIR = Path(__file__).parent.parent / "frontend_v2"
+if FRONTEND_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -143,6 +151,15 @@ async def trigger_forgetting():
     """Manually trigger a forgetting cycle."""
     result = forgetting.run_forgetting_cycle()
     return {"forgetting_result": result, "memory_stats": memory.get_memory_stats()}
+
+
+@app.get("/")
+async def serve_index():
+    """Serve the custom frontend."""
+    index_path = FRONTEND_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    return {"message": "Alpha Signal Analysis Memory Agent API. Frontend not found."}
 
 
 @app.post("/api/memory/seed")
