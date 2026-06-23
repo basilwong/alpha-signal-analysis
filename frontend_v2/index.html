@@ -3,249 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha Signal Analysis</title>
+    <title>Alpha Signal Analysis — Memory Agent</title>
     <link rel="stylesheet" href="/static/styles.css">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body>
-    <!-- Welcome Overlay -->
-    <div id="welcome-overlay" class="welcome-overlay">
-        <div class="welcome-modal">
-            <div class="welcome-top">
-                <div class="welcome-logo">⚛</div>
-                <h1 class="welcome-title">Alpha Signal Analysis</h1>
-                <p class="welcome-tagline">NLP-Driven Alpha Signal for Quantitative Trading</p>
-                <button id="welcome-enter-btn" class="welcome-cta">Explore →</button>
-            </div>
-
-            <div class="welcome-body">
-
-                <div class="welcome-stats">
-                    <div class="welcome-stat">
-                        <span class="stat-value">+0.157</span>
-                        <span class="stat-label">IC @ 5 Days</span>
-                    </div>
-                    <div class="welcome-stat">
-                        <span class="stat-value">p = 0.006</span>
-                        <span class="stat-label">Statistical Significance</span>
-                    </div>
-                    <div class="welcome-stat">
-                        <span class="stat-value">9 Tickers</span>
-                        <span class="stat-label">Signal Coverage</span>
-                    </div>
-                    <div class="welcome-stat">
-                        <span class="stat-value">7 Iterations</span>
-                        <span class="stat-label">Model Versions Tested</span>
-                    </div>
-                </div>
-
-                <p class="welcome-description">The model ingests news articles, press releases, SEC filings, and research papers, then outputs a structured signal vector scoring each ticker from -2.0 (strongly bearish) to +2.0 (strongly bullish). Designed for consumption by quantitative trading systems and portfolio construction engines.</p>
-
-                <p class="welcome-context">Hedge funds like <a href="https://finance.yahoo.com/markets/stocks/articles/citadel-set-pay-trading-ideas-094103745.html" target="_blank">Citadel are actively seeking to purchase alternative signal sources</a>. This platform demonstrates that a small, fine-tuned open-source model can produce statistically significant predictive signal using reinforcement learning (GRPO) trained directly on realized market returns.</p>
-            </div>
-
-
-        </div>
-    </div>
-
-    <!-- Header -->
     <header class="header">
         <div class="header-left">
             <div class="logo">⚛</div>
             <h1>Alpha Signal Analysis</h1>
-            <span class="badge">Research Harness</span>
+            <span class="badge">Memory Agent</span>
         </div>
         <div class="header-right">
+            <div class="memory-indicator">
+                <span class="memory-dot"></span>
+                <span id="memory-count">0 memories</span>
+            </div>
             <span class="status-dot"></span>
-            <span class="status-text">System Online</span>
+            <span class="status-text">Agent Online</span>
         </div>
     </header>
 
-    <!-- Tab Navigation -->
     <nav class="tab-nav">
-        <button class="tab-btn active" data-tab="evaluation">Evaluation Dashboard</button>
-        <button class="tab-btn" data-tab="live">Live Signal Debugging</button>
-        <button class="tab-btn" data-tab="historical">Historical Prediction Analysis</button>
-        <button class="tab-btn" data-tab="sector">Sector Map</button>
+        <button class="tab-btn active" data-tab="chat">Chat with Agent</button>
+        <button class="tab-btn" data-tab="memory">Memory Timeline</button>
+        <button class="tab-btn" data-tab="compare">Before / After Memory</button>
+        <button class="tab-btn" data-tab="signals">Signal History</button>
     </nav>
 
-    <!-- Tab Content -->
     <main class="content">
-        <!-- Tab 1: Evaluation Dashboard -->
-        <section id="tab-evaluation" class="tab-panel active">
-            <div class="panel-header">
-                <div class="panel-header-row">
-                    <div>
-                        <h2>Evaluation Dashboard</h2>
-                        <p class="panel-desc">Fine-tuning and debugging tool for LLMs generating alpha signals. Compare model iterations using Information Coefficient (IC) to measure predictive power against realized market returns.</p>
+        <!-- Tab 1: Chat Interface -->
+        <section id="tab-chat" class="tab-panel active">
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message agent">
+                        <div class="message-avatar">⚛</div>
+                        <div class="message-content">
+                            <p>I'm your quantum computing market intelligence agent. I accumulate knowledge over time and use it to generate increasingly accurate trading signals.</p>
+                            <p>Paste an article, ask me about a ticker, or ask how my predictions have been performing.</p>
+                        </div>
                     </div>
-                    <button id="show-welcome-btn" class="btn-info">About This Project</button>
                 </div>
-            </div>
-
-            <div class="product-overview">
-                <div class="overview-card">
-                    <h3>Alpha Signal Analysis</h3>
-                    <p>The product is <strong>alpha signal</strong>. A fine-tuned 7B parameter language model that ingests quantum computing news, press releases, and research papers, then outputs structured trading signals scoring 9 sector tickers from -2.0 (strongly bearish) to +2.0 (strongly bullish). The signal is designed to be consumed by quantitative trading systems and portfolio construction engines. Funds like <a href="https://finance.yahoo.com/markets/stocks/articles/citadel-set-pay-trading-ideas-094103745.html" target="_blank" style="color: var(--accent-blue);">Citadel are actively looking to purchase alternative signal sources</a> exactly like this.</p>
-                    <p>This dashboard is the <strong>development and evaluation tool</strong> for iterating on that signal. It tracks predictive power across 7 model iterations (base model through LoRA, rejection sampling, DPO, and GRPO), measures Information Coefficient against realized market returns, and provides live debugging for model outputs. The best model (V7d GRPO) achieves IC = +0.157 at the 5-day horizon with p = 0.006, meaning its rankings meaningfully predict which quantum stocks will outperform the market over the following week.</p>
-                </div>
-            </div>
-
-            <div class="eval-context">
-                <div class="context-card">
-                    <h4>What is Information Coefficient (IC)?</h4>
-                    <p>IC is the <strong>Spearman rank correlation</strong> between a model's predicted signal scores and the realized abnormal returns (stock return minus market return) over a given holding period. An IC of +0.15 at 5 days means the model's signal rankings meaningfully predict which stocks will outperform over the next week. In quantitative finance, IC > 0.05 with statistical significance (p < 0.10) is considered a usable signal for portfolio construction.</p>
-                </div>
-                <div class="context-card">
-                    <h4>How to Read This Dashboard</h4>
-                    <p>The <strong>Signal Decay Curve</strong> shows how predictive power changes over time. A model with high IC at short horizons but rapid decay is useful for short-term trading. A model with sustained IC across horizons (like V7d GRPO) suggests the signal captures fundamental value that the market prices in gradually. <strong>Bright markers</strong> indicate statistical significance (p < 0.10). The table below provides exact IC values and direction accuracy (% of predictions where the sign was correct).</p>
-                </div>
-            </div>
-
-            <div class="eval-controls">
-                <label>Select Models to Compare:</label>
-                <div id="eval-model-checkboxes" class="checkbox-group"></div>
-            </div>
-
-            <div class="eval-metrics-summary" id="eval-summary"></div>
-
-            <div class="eval-charts">
-                <div class="chart-section">
-                    <h3>Signal Decay Curve <span class="info-btn" title="IC (Spearman rank correlation) between predicted signals and realized abnormal returns at different holding periods. Higher = better predictive power. Bright markers = statistically significant (p < 0.10).">ⓘ</span></h3>
-                    <div id="eval-decay-chart" class="chart-container"></div>
-                </div>
-                <div class="chart-section">
-                    <h3>IC Comparison Table <span class="info-btn" title="IC values at different horizons. Statistically significant values (p<0.05) are highlighted. Direction accuracy shows % of non-trivial predictions where the predicted sign matched the realized return sign.">ⓘ</span></h3>
-                    <div id="eval-table" class="table-container"></div>
-                </div>
-            </div>
-
-            <div class="limitations">
-                <h4>Limitations</h4>
-                <ul>
-                    <li>Evaluation period: Jan-Jun 2026 (single market regime)</li>
-                    <li>Daily granularity (no intraday timing)</li>
-                    <li>Single-factor market model (SPY benchmark)</li>
-                    <li>Correlation does not imply causation</li>
-                    <li>Small sample size limits statistical power for subset analyses</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Tab 2: Live Signal Debugging -->
-        <section id="tab-live" class="tab-panel">
-            <div class="panel-header">
-                <h2>Live Signal Debugging</h2>
-                <p class="panel-desc">Run multiple analyses and compare outputs. Results accumulate in the feed below. Submit new articles while previous analyses are still running.</p>
-            </div>
-
-            <div class="live-controls">
-                <div class="control-row">
-                    <div class="control-group flex-grow">
-                        <label>Model</label>
-                        <select id="live-model">
-                            <!-- Populated by JS -->
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label>Source Type</label>
-                        <select id="live-source">
+                <div class="chat-input-area">
+                    <textarea id="chat-input" placeholder="Paste an article or ask a question about the quantum computing sector..." rows="3"></textarea>
+                    <div class="chat-controls">
+                        <select id="chat-source">
                             <option value="news">News</option>
-                            <option value="arxiv">arXiv Paper</option>
+                            <option value="arxiv">arXiv</option>
                             <option value="sec_filing">SEC Filing</option>
                             <option value="press_release">Press Release</option>
-                            <option value="social_media">Social Media</option>
-                            <option value="earnings_call">Earnings Call</option>
+                            <option value="question">Question</option>
                         </select>
-                    </div>
-                    <div class="control-group">
-                        <label>Thinking</label>
-                        <label class="toggle">
-                            <input type="checkbox" id="live-thinking">
-                            <span class="toggle-slider"></span>
-                        </label>
+                        <button id="chat-send" class="btn-primary">
+                            <span class="btn-icon">⚡</span> Analyze
+                        </button>
                     </div>
                 </div>
-                <textarea id="live-input" placeholder="Paste article text here..."></textarea>
-                <button id="live-analyze-btn" class="btn-primary">
-                    <span class="btn-icon">⚡</span> Analyze
+            </div>
+        </section>
+
+        <!-- Tab 2: Memory Timeline -->
+        <section id="tab-memory" class="tab-panel">
+            <div class="panel-header">
+                <h2>Agent Memory</h2>
+                <p class="panel-desc">What the agent knows, when it learned it, and what it has forgotten.</p>
+                <div class="memory-actions">
+                    <button id="btn-refresh-memory" class="btn-secondary">Refresh</button>
+                    <button id="btn-forget" class="btn-danger">Trigger Forgetting Cycle</button>
+                </div>
+            </div>
+            <div class="memory-stats" id="memory-stats">
+                <div class="stat-card">
+                    <label>Knowledge Facts</label>
+                    <span id="stat-knowledge">--</span>
+                </div>
+                <div class="stat-card">
+                    <label>Signals Stored</label>
+                    <span id="stat-signals">--</span>
+                </div>
+                <div class="stat-card">
+                    <label>Accuracy</label>
+                    <span id="stat-accuracy">--</span>
+                </div>
+                <div class="stat-card">
+                    <label>Pending Outcomes</label>
+                    <span id="stat-pending">--</span>
+                </div>
+            </div>
+            <div class="memory-sections">
+                <div class="memory-section">
+                    <h3>Sector Knowledge <span class="info-btn" title="Facts the agent has accumulated about quantum computing companies, technologies, and competitive dynamics.">ⓘ</span></h3>
+                    <div class="memory-filter">
+                        <select id="knowledge-ticker-filter">
+                            <option value="">All Tickers</option>
+                            <option value="IONQ">IONQ</option>
+                            <option value="RGTI">RGTI</option>
+                            <option value="QBTS">QBTS</option>
+                            <option value="QUBT">QUBT</option>
+                            <option value="QNT">QNT</option>
+                            <option value="IBM">IBM</option>
+                            <option value="HON">HON</option>
+                        </select>
+                    </div>
+                    <div id="knowledge-list" class="memory-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: Before/After Comparison -->
+        <section id="tab-compare" class="tab-panel">
+            <div class="panel-header">
+                <h2>Memory Impact: Before vs After</h2>
+                <p class="panel-desc">See how the agent's predictions differ with and without accumulated memory context. This demonstrates the value of persistent memory.</p>
+            </div>
+            <div class="compare-input">
+                <textarea id="compare-article" placeholder="Paste an article to compare predictions with and without memory..." rows="3"></textarea>
+                <button id="btn-compare" class="btn-primary">
+                    <span class="btn-icon">⚡</span> Compare With/Without Memory
                 </button>
             </div>
-
-            <div class="feed-header">
-                <h3>Results Feed <span id="feed-count" class="feed-count">0 analyses</span></h3>
-                <button id="feed-clear-btn" class="btn-secondary">Clear Feed</button>
-            </div>
-            <div id="live-feed" class="live-feed">
-                <div class="feed-empty">No analyses yet. Paste an article above and click Analyze.</div>
+            <div id="compare-results" class="compare-results hidden">
+                <div class="compare-grid">
+                    <div class="compare-card">
+                        <h3>Without Memory <span class="compare-badge cold">Cold Start</span></h3>
+                        <p class="compare-desc">Model sees only this article, no prior context.</p>
+                        <div id="compare-without-chart" class="chart-container"></div>
+                        <div id="compare-without-reasoning" class="reasoning-box"></div>
+                    </div>
+                    <div class="compare-card">
+                        <h3>With Memory <span class="compare-badge warm">Memory-Augmented</span></h3>
+                        <p class="compare-desc">Model has access to <span id="compare-memory-count">0</span> accumulated memories.</p>
+                        <div id="compare-with-chart" class="chart-container"></div>
+                        <div id="compare-with-reasoning" class="reasoning-box"></div>
+                    </div>
+                </div>
+                <div class="compare-diff">
+                    <h3>Key Differences</h3>
+                    <div id="compare-diff-content"></div>
+                </div>
             </div>
         </section>
 
-        <!-- Tab 3: Historical Prediction Analysis -->
-        <section id="tab-historical" class="tab-panel">
+        <!-- Tab 4: Signal History -->
+        <section id="tab-signals" class="tab-panel">
             <div class="panel-header">
-                <h2>Historical Prediction Analysis</h2>
-                <p class="panel-desc">Browse evaluation articles and compare predictions across all model iterations side-by-side against realized market outcomes.</p>
+                <h2>Signal History</h2>
+                <p class="panel-desc">All signals the agent has generated, with outcomes tracked over time.</p>
             </div>
-
-            <div class="historical-controls">
-                <div class="control-row">
-                    <div class="control-group flex-grow">
-                        <label>Select Event</label>
-                        <select id="hist-event-select">
-                            <option value="">Loading events...</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="control-row">
-                    <div class="control-group flex-grow">
-                        <label>Filter Models</label>
-                        <div id="hist-model-checkboxes" class="checkbox-group"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="hist-results" class="results-panel">
-                <div id="hist-article-info" class="article-info"></div>
-                <h3>Signal Comparison (<span id="hist-model-count">All</span> Models)</h3>
-                <div id="hist-comparison-chart" class="chart-container"></div>
-                <h3>Raw Price Movement (20 days post-event)</h3>
-                <div id="hist-price-chart" class="chart-container"></div>
-                <h3>Abnormal Returns vs. Market (SPY) <span class="info-btn" title="Stock return minus SPY return over the same period. This is what the model's IC is evaluated against — positive abnormal return means the stock outperformed the broad market.">ⓘ</span></h3>
-                <div id="hist-abnormal-chart" class="chart-container"></div>
-                <h3>Abnormal Returns vs. Sector (Equal-Weight Quantum Basket) <span class="info-btn" title="Stock return minus the equal-weighted average return of all pure-play quantum tickers (IONQ, RGTI, QBTS, QUBT). Shows whether the signal correctly identified relative winners within the sector.">ⓘ</span></h3>
-                <div id="hist-sector-abnormal-chart" class="chart-container"></div>
-                <div id="hist-model-details" class="model-details-grid"></div>
-            </div>
-        </section>
-
-        <!-- Tab 4: Sector Map -->
-        <section id="tab-sector" class="tab-panel">
-            <div class="panel-header">
-                <h2>Quantum Computing Sector Map</h2>
-                <p class="panel-desc">Understanding the competitive structure and how signals propagate across the sector.</p>
-            </div>
-
-            <div class="sector-content">
-                <div class="chart-section">
-                    <h3>Signal Weight by Company</h3>
-                    <div id="sector-weight-chart" class="chart-container"></div>
-                </div>
-
-                <div class="sector-clusters" id="sector-clusters"></div>
-
-                <div class="sector-dynamics">
-                    <h3>Signal Propagation Rules</h3>
-                    <div id="sector-dynamics-table"></div>
-                </div>
-            </div>
+            <div id="signals-list" class="signals-list"></div>
         </section>
     </main>
-
-    <footer class="footer">
-        <span>Alpha Signal Analysis | Signal Research Harness</span>
-        <span>Model: OpenReasoning-7B GRPO | ≤7B Parameters</span>
-    </footer>
 
     <script src="/static/app.js"></script>
 </body>
