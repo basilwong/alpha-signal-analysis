@@ -240,11 +240,12 @@ class ProceduralMemory:
 class FeedbackLoop:
     """Analyzes prediction outcomes and generates procedural rules."""
     
-    def __init__(self, memory_store: MemoryStore, llm_client=None):
+    def __init__(self, memory_store: MemoryStore, llm_client=None, model_name: str = "qwen-plus"):
         self.memory = memory_store
         self.episodic = EpisodicMemory(memory_store)
         self.procedural = ProceduralMemory(memory_store)
         self.llm_client = llm_client  # OpenAI-compatible client for rule generation
+        self.model_name = model_name
     
     def record_outcome(self, prediction: dict, actual_return_5d: float):
         """Record the outcome of a prediction and store as an episode."""
@@ -409,8 +410,10 @@ Focus on:
 Output ONLY valid JSON array."""
 
         try:
+            # Use the same model as the client is configured for
+            model_name = getattr(self, 'model_name', 'qwen-plus')
             response = self.llm_client.chat.completions.create(
-                model="gpt-5-nano",
+                model=model_name,
                 messages=[
                     {"role": "system", "content": "You are an expert quantitative analyst reviewing prediction performance data. Generate concise, actionable behavioral rules."},
                     {"role": "user", "content": prompt}
