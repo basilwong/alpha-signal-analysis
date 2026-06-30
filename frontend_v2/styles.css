@@ -161,3 +161,8 @@ body { font-family: var(--font-mono); background: var(--bg-primary); color: var(
 .welcome-tech { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .tech-tag { font-size: 11px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-secondary); }
 @media (max-width: 600px) { .welcome-stats { grid-template-columns: repeat(2, 1fr); } }
+
+/* Input Helper */
+.input-helper { display: flex; align-items: center; gap: 8px; padding: 4px 0; margin-top: 4px; }
+.input-helper .info-btn { cursor: help; color: var(--accent-blue); font-size: 14px; }
+.input-helper .helper-text { font-size: 11px; color: var(--text-muted); }

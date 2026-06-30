@@ -86,7 +86,11 @@
                     </div>
                 </div>
                 <div class="chat-input-area">
-                    <textarea id="chat-input" placeholder="Paste an article or ask a question about the quantum computing sector..." rows="3"></textarea>
+                    <textarea id="chat-input" placeholder="Paste the full article text here (headline + body, plain text, no URLs or HTML)..." rows="3"></textarea>
+                    <div class="input-helper">
+                        <span class="info-btn" title="For best results: paste the full article text (not just a headline). Select the correct source type. The model analyzes quantum computing companies: IONQ, RGTI, QBTS, QUBT, QNT, IBM, HON.">ⓘ</span>
+                        <span class="helper-text">Paste full article text (headline + body). Plain text only, no URLs or HTML. Select source type below.</span>
+                    </div>
                     <div class="chat-controls">
                         <select id="chat-source">
                             <option value="news">News</option>
