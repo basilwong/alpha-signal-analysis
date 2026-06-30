@@ -1,6 +1,15 @@
 // Alpha Signal Analysis — Memory Agent Frontend
 const API_BASE = window.location.origin;
 
+// Welcome overlay dismiss
+const welcomeOverlay = document.getElementById('welcome-overlay');
+const welcomeBtn = document.getElementById('welcome-enter-btn');
+if (welcomeBtn) {
+    welcomeBtn.addEventListener('click', () => {
+        welcomeOverlay.classList.add('hidden');
+    });
+}
+
 // Tab navigation
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
