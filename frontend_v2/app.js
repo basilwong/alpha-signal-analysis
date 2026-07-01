@@ -27,7 +27,7 @@ async function updateMemoryCount() {
     try {
         const resp = await fetch(`${API_BASE}/api/health`);
         const data = await resp.json();
-        const stats = data.memory_stats || {};
+        const stats = data.memory || data.memory_stats || {};
         document.getElementById('memory-count').textContent = `${stats.knowledge_facts || 0} memories`;
     } catch(e) {}
 }
@@ -157,7 +157,7 @@ async function loadMemory() {
         // Load stats
         const statsResp = await fetch(`${API_BASE}/api/health`);
         const statsData = await statsResp.json();
-        const stats = statsData.memory_stats || {};
+        const stats = statsData.memory || statsData.memory_stats || {};
         document.getElementById('stat-knowledge').textContent = stats.knowledge_facts || 0;
         document.getElementById('stat-signals').textContent = stats.signals_stored || 0;
         document.getElementById('stat-accuracy').textContent = stats.accuracy ? `${(stats.accuracy * 100).toFixed(0)}%` : 'N/A';
@@ -171,7 +171,7 @@ async function loadMemory() {
 
         const list = document.getElementById('knowledge-list');
         list.innerHTML = '';
-        for (const item of (knData.knowledge || [])) {
+        for (const item of (knData.facts || knData.knowledge || [])) {
             list.innerHTML += `<div class="memory-item">
                 <span class="ticker-badge">${item.ticker}</span>
                 <span style="font-size:10px;color:var(--text-muted)">${item.fact_type}</span>
